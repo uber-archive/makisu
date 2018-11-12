@@ -1,0 +1,34 @@
+{
+   "architecture":"amd64",
+   "id":"393ccd5c4dd90344c9d725125e13f636ce0087c62f5ca89050faaacbb9e3ed5b",
+   "config":{
+      "Hostname":"971d7095b61b",
+      "Domainname":"",
+      "User":"",
+      "AttachStdin":false,
+      "AttachStdout":false,
+      "AttachStderr":false,
+      "Tty":false,
+      "OpenStdin":false,
+      "StdinOnce":false,
+      "Env":[
+         "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      ],
+      "Cmd":[
+         "sh"
+      ],
+      "ArgsEscaped":true,
+      "Image":"sha256:7cc4b5aefd1d0cadf8d97d4350462ba51c694ebca145b08d7d41b41acc8db5aa",
+      "Volumes":null,
+      "WorkingDir":"",
+      "Entrypoint":null,
+      "OnBuild":null,
+      "Labels":{
+
+      }
+   },
+   "container":"a3c2e8914eef4442b3758b801542fd7e853deb283637fc7cec7f8aa5c9058b64",
+   "created":"2017-05-15T22:15:45.515786084Z",
+   "docker_version":"17.03.1-ce",
+   "os":"linux"
+}

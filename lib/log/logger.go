@@ -14,7 +14,7 @@ func init() {
 	logger = l
 }
 
-// DefaultLogger returns the default ubuild-engine logger.
+// DefaultLogger returns the default makisu logger.
 func DefaultLogger() (*zap.SugaredLogger, error) {
 	config := zap.NewProductionConfig()
 	config.DisableStacktrace = true

@@ -1,0 +1,15 @@
+package main
+
+import (
+	"fmt"
+	"log"
+	"os/exec"
+)
+
+func main() {
+	output, err := exec.Command("which", "hello").CombinedOutput()
+	if err != nil {
+		log.Fatalf("Failed to find 'hello' using 'which hello' inside of container: %s", err)
+	}
+	fmt.Println(string(output))
+}
