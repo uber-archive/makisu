@@ -1,0 +1,53 @@
+required = [
+    "github.com/axw/gocov/gocov",
+    "github.com/AlekSi/gocov-xml",
+    "github.com/matm/gocov-html",
+    "github.com/golang/mock/gomock",
+    "github.com/golang/mock/mockgen",
+    "golang.org/x/lint/golint",
+    "golang.org/x/tools/cmd/goimports"
+]
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/andres-erbsen/clock"
+
+[[constraint]]
+  name = "github.com/apourchet/commander"
+  version = "1.4.9"
+
+[[constraint]]
+  name = "github.com/garyburd/redigo"
+  version = "1.4.0"
+
+[[constraint]]
+  name = "github.com/klauspost/pgzip"
+  version = "1.1.0"
+
+[[constraint]]
+  name = "github.com/pkg/errors"
+  version = "0.8.0"
+
+[[constraint]]
+  name = "github.com/stretchr/testify"
+  version = "1.2.0"
+
+[[constraint]]
+  name = "go.uber.org/zap"
+  version = "1.7.1"
+
+[[constraint]]
+  name = "gopkg.in/yaml.v2"
+  version = "2.2.1"
+
+[[constraint]]
+  name = "github.com/docker/engine-api"
+  version = "0.4.0"
+
+[[constraint]]
+  name = "github.com/docker/distribution"
+  version = "2.6.2"
+
+[[constraint]]
+  name = "github.com/alicebob/miniredis"
+  version = "2.4.5"
