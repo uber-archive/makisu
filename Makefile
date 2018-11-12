@@ -65,8 +65,8 @@ mocks: ext-tools
 
 # Target to build the makisu docker image. The docker image contains the builder and worker
 # binaries.
-image: bins/builder bins/worker
-	docker build -t makisu:$(PACKAGE_VERSION) -f Dockerfile .
+# TODO(pourchet)
+image: bins
 
 # Targets to test the codebase.
 .PHONY: test unit-test integration cunit-test
