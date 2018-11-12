@@ -75,9 +75,6 @@ test: unit-test integration
 unit-test: $(ALL_SRC) vendor ext-tools mocks
 	$(EXT_TOOLS_DIR)/gocov test $(ALL_PKGS) --tags "unit" | $(EXT_TOOLS_DIR)/gocov report
 
-integration:
-	@echo "Nothing for now"
-
 cunit-test: $(ALL_SRC) vendor
 	docker run -i --rm -v $(PWD):/go/src/$(PACKAGE_NAME) \
 		--net=host \
@@ -85,6 +82,9 @@ cunit-test: $(ALL_SRC) vendor
 		-w /go/src/$(PACKAGE_NAME) \
 		golang:$(GO_VERSION) \
 		-c "make ext-tools unit-test"
+
+integration:
+	@echo "Nothing for now"
 
 .PHONY: clean
 clean:
