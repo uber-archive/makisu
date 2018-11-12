@@ -39,7 +39,7 @@ cbins:
 $(DEP_TOOL):
 	mkdir -p $(EXT_TOOLS_DIR)
 	go get github.com/golang/dep/cmd/dep
-	cp $(shell which dep) $(EXT_TOOLS_DIR)
+	cp $(GOPATH)/bin/dep $(EXT_TOOLS_DIR)
 
 vendor: $(DEP_TOOL) Gopkg.toml
 	$(EXT_TOOLS_DIR)/dep ensure
@@ -84,7 +84,7 @@ cunit-test: $(ALL_SRC) vendor
 		--entrypoint=bash \
 		-w /go/src/$(PACKAGE_NAME) \
 		golang:$(GO_VERSION) \
-		-c "rm -rf ext-tools && make ext-tools unit-test"
+		-c "make ext-tools unit-test"
 
 .PHONY: clean
 clean:
