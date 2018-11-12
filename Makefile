@@ -41,9 +41,10 @@ ext-tools:
 	@echo "Installing external tools"
 	go get $(EXT_TOOLS)
 	mkdir -p $(EXT_TOOLS_DIR)
-	cp $(shell which gocov) $(EXT_TOOLS_DIR)
-	cp $(shell which mockgen) $(EXT_TOOLS_DIR)
-	cp $(shell which dep) $(EXT_TOOLS_DIR)
+	GOBIN=$(EXT_TOOLS_DIR) go install ./vendor/github.com/golang/dep/cmd/dep
+	# cp $(shell which gocov) $(EXT_TOOLS_DIR)
+	# cp $(shell which mockgen) $(EXT_TOOLS_DIR)
+	# cp $(shell which dep) $(EXT_TOOLS_DIR)
 
 vendor: Gopkg.toml $(EXT_TOOLS_DIR)
 	$(EXT_TOOLS_DIR)/dep ensure

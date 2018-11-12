@@ -1,3 +1,13 @@
+required = [
+    "github.com/axw/gocov/gocov",
+    "github.com/AlekSi/gocov-xml",
+    "github.com/matm/gocov-html",
+    "github.com/golang/mock/gomock",
+    "github.com/golang/mock/mockgen",
+    "golang.org/x/lint/golint",
+    "golang.org/x/tools/cmd/goimports"
+]
+
 [[constraint]]
   branch = "master"
   name = "github.com/andres-erbsen/clock"
