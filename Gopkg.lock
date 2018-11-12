@@ -2,50 +2,25 @@
 
 
 [[projects]]
-  digest = "1:5f48b818f16848d05cf74f4cbdd0cbe9e0dcddb3c459b4c510c6e2c8e1b4dff1"
-  name = "github.com/Sirupsen/logrus"
+  branch = "master"
+  digest = "1:a621cf5671d76af0f66731e0de94a441971315845d0b228601c04b1e0a329b01"
+  name = "github.com/AlekSi/gocov-xml"
   packages = ["."]
   pruneopts = ""
-  revision = "ad15b42461921f1fb3529b058c6786c6a45d5162"
-  version = "v1.1.1"
+  revision = "dee33fe4b4adad5fdcad993f498fb4450d5be0a1"
 
 [[projects]]
   branch = "master"
-  digest = "1:3cce78d5d0090e3f1162945fba60ba74e72e8422e8e41bb9c701afb67237bb65"
-  name = "github.com/alicebob/gopher-json"
-  packages = ["."]
-  pruneopts = ""
-  revision = "5a6b3ba71ee69b77cf64febf8b5a7526ca5eaef0"
-
-[[projects]]
-  digest = "1:8c4ee680f6dd006341afb7e6ac7774537932c3f06c5b35d1d76cdba1b132d73b"
-  name = "github.com/alicebob/miniredis"
+  digest = "1:9058597b266993ad136b22ffd05a53a47afc5c19ce3e4d5a2ed6da19406eead6"
+  name = "github.com/axw/gocov"
   packages = [
     ".",
-    "server",
+    "gocov",
+    "gocov/internal/testflag",
+    "gocovutil",
   ]
   pruneopts = ""
-  revision = "3657542c8629876a1fa83e0b30a0246a67ffa652"
-  version = "v2.4.5"
-
-[[projects]]
-  branch = "master"
-  digest = "1:2b14b0eef3da0108cce74dd4d272dab2e67a0ba6290355a769877d1ddb90da4c"
-  name = "github.com/andres-erbsen/clock"
-  packages = ["."]
-  pruneopts = ""
-  revision = "9e14626cd129ba01ccb6806bcca9d523e570aaf0"
-
-[[projects]]
-  digest = "1:cfaea6aa94f9ab5bfa3afc8c542e272d23dfc4532567f7556c7db37211e64811"
-  name = "github.com/apourchet/commander"
-  packages = [
-    ".",
-    "utils",
-  ]
-  pruneopts = ""
-  revision = "670d0a616b3fc1ceb736513b55876a0cbf744bbc"
-  version = "v1.4.9"
+  revision = "3a69a0d2a4ef1f263e2d92b041a69593d6964fe8"
 
 [[projects]]
   digest = "1:56c130d885a4aacae1dd9c7b71cfe39912c7ebc1ff7d2b46083c8812996dc43b"
@@ -56,159 +31,27 @@
   version = "v1.1.0"
 
 [[projects]]
-  digest = "1:a9e4ff75555e4500e409dc87c1d708b090bb8dd77f889bbf266773f3dc23af70"
-  name = "github.com/docker/distribution"
-  packages = [
-    ".",
-    "context",
-    "digest",
-    "reference",
-    "registry/api/errcode",
-    "registry/api/v2",
-    "registry/client",
-    "registry/client/auth",
-    "registry/client/auth/challenge",
-    "registry/client/transport",
-    "registry/storage/cache",
-    "registry/storage/cache/memory",
-    "uuid",
-  ]
-  pruneopts = ""
-  revision = "48294d928ced5dd9b378f7fd7c6f5da3ff3f2c89"
-  version = "v2.6.2"
-
-[[projects]]
-  digest = "1:d4089b491ec71d84414ab5cc402df6b18fe1f83174091bfbe7ee3d03dd5c3472"
-  name = "github.com/docker/engine-api"
-  packages = [
-    "types",
-    "types/blkiodev",
-    "types/container",
-    "types/filters",
-    "types/network",
-    "types/registry",
-    "types/strslice",
-    "types/swarm",
-    "types/versions",
-  ]
-  pruneopts = ""
-  revision = "3d1601b9d2436a70b0dfc045a23f6503d19195df"
-  version = "v0.4.0"
-
-[[projects]]
-  digest = "1:ebe593d8b65a2947b78b6e164a2dac1a230b977a700b694da3a398b03b7afb04"
-  name = "github.com/docker/go-connections"
-  packages = ["nat"]
-  pruneopts = ""
-  revision = "7395e3f8aa162843a74ed6d48e79627d9792ac55"
-  version = "v0.4.0"
-
-[[projects]]
-  digest = "1:582d54fcb7233da8dde1dfd2210a5b9675d0685f84246a8d317b07d680c18b1b"
-  name = "github.com/docker/go-units"
-  packages = ["."]
-  pruneopts = ""
-  revision = "47565b4f722fb6ceae66b95f853feed578a4a51c"
-  version = "v0.3.3"
-
-[[projects]]
-  digest = "1:9525d0e79ccf382e32edeef466b9a91f16eb0eebdca5971a03fad1bb3be9cd89"
-  name = "github.com/garyburd/redigo"
-  packages = [
-    "internal",
-    "redis",
-  ]
-  pruneopts = ""
-  revision = "a69d19351219b6dd56f274f96d85a7014a2ec34e"
-  version = "v1.6.0"
-
-[[projects]]
   digest = "1:73a7106c799f98af4f3da7552906efc6a2570329f4cd2d2f5fb8f9d6c053ff2f"
   name = "github.com/golang/mock"
-  packages = ["gomock"]
+  packages = [
+    "gomock",
+    "mockgen",
+    "mockgen/model",
+  ]
   pruneopts = ""
   revision = "c34cdb4725f4c3844d095133c6e40e448b86589b"
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:dcf8316121302735c0ac84e05f4686e3b34e284444435e9a206da48d8be18cb1"
-  name = "github.com/gomodule/redigo"
+  digest = "1:e4037684bfd5b44c7304d42fd91ec5d04e1e82e7d51c0c1acb249137334fc4e5"
+  name = "github.com/matm/gocov-html"
   packages = [
-    "internal",
-    "redis",
+    ".",
+    "cov",
   ]
   pruneopts = ""
-  revision = "9c11da706d9b7902c6da69c592f75637793fe121"
-  version = "v2.0.0"
-
-[[projects]]
-  digest = "1:dbbeb8ddb0be949954c8157ee8439c2adfd8dc1c9510eb44a6e58cb68c3dce28"
-  name = "github.com/gorilla/context"
-  packages = ["."]
-  pruneopts = ""
-  revision = "08b5f424b9271eedf6f9f0ce86cb9396ed337a42"
-  version = "v1.1.1"
-
-[[projects]]
-  digest = "1:c2c8666b4836c81a1d247bdf21c6a6fc1ab586538ab56f74437c2e0df5c375e1"
-  name = "github.com/gorilla/mux"
-  packages = ["."]
-  pruneopts = ""
-  revision = "e3702bed27f0d39777b0b37b664b6280e8ef8fbf"
-  version = "v1.6.2"
-
-[[projects]]
-  digest = "1:2b282bd76718cf2443ea6c5143d0915840ed15417c970619f7e08674de5f4eea"
-  name = "github.com/juju/ratelimit"
-  packages = ["."]
-  pruneopts = ""
-  revision = "342ca417f1222d3625c2bd135dd496a7ba6d068a"
-
-[[projects]]
-  digest = "1:744263832c79da681d68491706f9880eecc47bdec579b609220c0e7a954dd622"
-  name = "github.com/klauspost/compress"
-  packages = ["flate"]
-  pruneopts = ""
-  revision = "ea08389e0dc46025380296f7dd04ab0e8de36adb"
-
-[[projects]]
-  digest = "1:9c8166dddcc3a72c29ee3b9ccf5da89b352a436ac32b7a4292242bd717568f65"
-  name = "github.com/klauspost/cpuid"
-  packages = ["."]
-  pruneopts = ""
-  revision = "eae9b3e628d72774e13bdf024e78c0802f85a5b9"
-
-[[projects]]
-  branch = "master"
-  digest = "1:79075340ccee2881cda23193a7ba3af15bc8c3fe7eb17b05a560624de5f085ba"
-  name = "github.com/klauspost/crc32"
-  packages = ["."]
-  pruneopts = ""
-  revision = "bab58d77464aa9cf4e84200c3276da0831fe0c03"
-
-[[projects]]
-  digest = "1:622708f547271dc87a65afefd9430dbaa9ac42ac3d9a34d29f701ec6b0d6a99f"
-  name = "github.com/klauspost/pgzip"
-  packages = ["."]
-  pruneopts = ""
-  revision = "0bf5dcad4ada2814c3c00f996a982270bb81a506"
+  revision = "b72939949367438bf52c0cf976f22daa6777b509"
   version = "v1.1"
-
-[[projects]]
-  digest = "1:6a874e3ddfb9db2b42bd8c85b6875407c702fa868eed20634ff489bc896ccfd3"
-  name = "github.com/konsorten/go-windows-terminal-sequences"
-  packages = ["."]
-  pruneopts = ""
-  revision = "5c8c8bd35d3832f5d134ae1e1e375b69a4d25242"
-  version = "v1.0.1"
-
-[[projects]]
-  digest = "1:7365acd48986e205ccb8652cc746f09c8b7876030d53710ea6ef7d0bd0dcd7ca"
-  name = "github.com/pkg/errors"
-  packages = ["."]
-  pruneopts = ""
-  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
-  version = "v0.8.0"
 
 [[projects]]
   digest = "1:256484dbbcd271f9ecebc6795b2df8cad4c458dd0f5fd82a8c2fa0c29f233411"
@@ -236,19 +79,6 @@
   pruneopts = ""
   revision = "b91bfb9ebec76498946beb6af7c0230c7cc7ba6c"
   version = "v1.2.0"
-
-[[projects]]
-  branch = "master"
-  digest = "1:b0d02900b8b1e000942b1127658214fb834d800eeb6174b2a2909543405140c1"
-  name = "github.com/yuin/gopher-lua"
-  packages = [
-    ".",
-    "ast",
-    "parse",
-    "pm",
-  ]
-  pruneopts = ""
-  revision = "f6fcaab0c612d877d4140cbdf6966aed51e6eebd"
 
 [[projects]]
   digest = "1:74f86c458e82e1c4efbab95233e0cf51b7cc02dc03193be9f62cd81224e10401"
@@ -283,63 +113,54 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:6a29a2cd3888fd1aeba990cfffebe3524b79d717a0abe52ee7d695c51ff75154"
-  name = "golang.org/x/crypto"
-  packages = ["ssh/terminal"]
+  digest = "1:faf4a89010f1940f893c33690418a1b05f25ce4d7c849fe677ca15621c08a1fd"
+  name = "golang.org/x/lint"
+  packages = [
+    ".",
+    "golint",
+  ]
   pruneopts = ""
-  revision = "a92615f3c49003920a58dedcf32cf55022cefb8d"
+  revision = "c67002cb31c3a748b7688c27f20d8358b4193582"
 
 [[projects]]
   digest = "1:ac3ee562ea184c7b47276d00d7bec2a0ac19fd87451125d57a432a934e65a6e4"
   name = "golang.org/x/net"
-  packages = [
-    "context",
-    "context/ctxhttp",
-  ]
+  packages = ["context"]
   pruneopts = ""
   revision = "66aacef3dd8a676686c7ae3716979581e8b03c47"
 
 [[projects]]
   branch = "master"
-  digest = "1:2ed0bf267e44950120acd95570227e28184573ffb099bd85b529ee148e004ddb"
-  name = "golang.org/x/sys"
+  digest = "1:8aa6b2eb700d0be5b7429ad690fbd6b2d9b93abeac76da62a879bc14734047f1"
+  name = "golang.org/x/tools"
   packages = [
-    "unix",
-    "windows",
+    "cmd/goimports",
+    "cover",
+    "go/ast/astutil",
+    "go/gcexportdata",
+    "go/internal/gcimporter",
+    "go/types/typeutil",
+    "imports",
+    "internal/fastwalk",
+    "internal/gopathwalk",
   ]
   pruneopts = ""
-  revision = "fa43e7bc11baaae89f3f902b2b4d832b68234844"
-
-[[projects]]
-  digest = "1:f0620375dd1f6251d9973b5f2596228cc8042e887cd7f827e4220bc1ce8c30e2"
-  name = "gopkg.in/yaml.v2"
-  packages = ["."]
-  pruneopts = ""
-  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
-  version = "v2.2.1"
+  revision = "4b1f3b6b1646cd96503e999bfa428631d60c74ca"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/alicebob/miniredis",
-    "github.com/andres-erbsen/clock",
-    "github.com/apourchet/commander",
-    "github.com/docker/distribution/registry/client/auth",
-    "github.com/docker/distribution/registry/client/auth/challenge",
-    "github.com/docker/distribution/registry/client/transport",
-    "github.com/docker/engine-api/types",
-    "github.com/garyburd/redigo/redis",
+    "github.com/AlekSi/gocov-xml",
+    "github.com/axw/gocov/gocov",
     "github.com/golang/mock/gomock",
-    "github.com/juju/ratelimit",
-    "github.com/klauspost/pgzip",
-    "github.com/pkg/errors",
+    "github.com/golang/mock/mockgen",
+    "github.com/matm/gocov-html",
     "github.com/pressly/chi",
     "github.com/stretchr/testify/require",
-    "go.uber.org/atomic",
     "go.uber.org/zap",
-    "golang.org/x/net/context/ctxhttp",
-    "gopkg.in/yaml.v2",
+    "golang.org/x/lint/golint",
+    "golang.org/x/tools/cmd/goimports",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -11,8 +11,9 @@ ALL_SRC = $(shell find . -name "*.go" | grep -v -e vendor \
 	-e ".*/*.pb.go")
 ALL_PKGS = $(shell go list $(sort $(dir $(ALL_SRC))) | grep -v vendor)
 FMT_SRC = $(shell echo "$(ALL_SRC)" | tr ' ' '\n')
-EXT_TOOLS = github.com/axw/gocov/gocov github.com/AlekSi/gocov-xml github.com/matm/gocov-html github.com/golang/mock/gomock github.com/golang/mock/mockgen golang.org/x/lint/golint golang.org/x/tools/cmd/goimports github.com/golang/dep/cmd/dep
+EXT_TOOLS = github.com/axw/gocov/gocov github.com/AlekSi/gocov-xml github.com/matm/gocov-html github.com/golang/mock/mockgen golang.org/x/lint/golint golang.org/x/tools/cmd/goimports
 EXT_TOOLS_DIR = ext-tools/$(OS)
+DEP_TOOL = $(EXT_TOOLS_DIR)/dep
 
 BUILD_LDFLAGS = -X $(PACKAGE_NAME)/lib/utils.BuildHash=$(PACKAGE_VERSION)
 GO_FLAGS = -gcflags '-N -l' -ldflags "$(BUILD_LDFLAGS)"
@@ -35,18 +36,12 @@ cbins:
 		-c "make bins"
 
 # Targets to install the dependencies.
-$(EXT_TOOLS_DIR): ext-tools
-
-ext-tools:
-	@echo "Installing external tools"
-	go get $(EXT_TOOLS)
+$(DEP_TOOL):
 	mkdir -p $(EXT_TOOLS_DIR)
-	GOBIN=$(EXT_TOOLS_DIR) go install ./vendor/github.com/golang/dep/cmd/dep
-	# cp $(shell which gocov) $(EXT_TOOLS_DIR)
-	# cp $(shell which mockgen) $(EXT_TOOLS_DIR)
-	# cp $(shell which dep) $(EXT_TOOLS_DIR)
+	go get github.com/golang/dep/cmd/dep
+	cp $(shell which dep) $(EXT_TOOLS_DIR)
 
-vendor: Gopkg.toml $(EXT_TOOLS_DIR)
+vendor: $(DEP_TOOL) Gopkg.toml
 	$(EXT_TOOLS_DIR)/dep ensure
 
 cvendor:
@@ -56,7 +51,14 @@ cvendor:
 		instrumentisto/dep \
 		-c "dep ensure"
 
-mocks: $(EXT_TOOLS_DIR)
+ext-tools: vendor $(EXT_TOOLS)
+
+.PHONY: $(EXT_TOOLS)
+$(EXT_TOOLS): vendor
+	@echo "Installing external tool $@"
+	@(ls $(EXT_TOOLS_DIR)/$(notdir $@) > /dev/null 2>&1) || GOBIN=$(PWD)/$(EXT_TOOLS_DIR) go install ./vendor/$@
+
+mocks: ext-tools
 	@echo "Generating mocks"
 	mkdir -p mocks/net/http
 	$(EXT_TOOLS_DIR)/mockgen -destination=mocks/net/http/mockhttp.go -package=mockhttp net/http RoundTripper
