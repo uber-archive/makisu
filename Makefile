@@ -23,6 +23,7 @@ GO_VERSION = 1.10
 bins: bins/builder bins/worker bins/client
 
 bins/%: $(ALL_SRC) vendor
+	@mkdir -p bins
 	CGO_ENABLED=0 GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ cmd/$(notdir $@)/*.go
 
 cbins:
@@ -85,7 +86,4 @@ cunit-test: $(ALL_SRC) vendor
 .PHONY: clean
 clean:
 	git clean -fd
-	-rm -rf bins/*
-	-rm -rf vendor
-	-rm -rf ext-tools
-	-rm -rf mocks
+	-rm -rf bins vendor ext-tools mocks
