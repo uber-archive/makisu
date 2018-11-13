@@ -1,0 +1,22 @@
+FROM golang:1.11 AS builder
+
+ADD . /go/src/github.com/uber/makisu
+WORKDIR /go/src/github.com/uber/makisu
+RUN make bins/client
+
+RUN cp bins/client /makisu-client
+
+RUN echo 'This is just an image that contains \
+the makisu client binary for linux, meant to \
+be used as an intermediate stage inside a dockerfile. \
+The binary is stored at `/makisu-client`. Example: \n\
+$ cat Dockerfile \n\
+FROM gcr.io/makisu-project:<sha> as makisu\n\
+\n\
+FROM debian:9\n\
+COPY --from=makisu /makisu-client /usr/local/bin/makisu-client\n\
+...\n\
+' \
+>> /message.txt
+
+ENTRYPOINT ["bash", "-c", "cat /message.txt && exit 1"]
