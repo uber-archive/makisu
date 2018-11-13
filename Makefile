@@ -23,7 +23,7 @@ REGISTRY ?= gcr.io/makisu-project
 
 # Targets to compile the makisu binaries.
 .PHONY: cbins
-bins: bins/builder bins/worker bins/client
+bins: bins/makisu-builder bins/makisu-worker bins/makisu-client
 
 bins/%: $(ALL_SRC) vendor
 	@mkdir -p bins
@@ -65,18 +65,24 @@ mocks: ext-tools
 	mkdir -p mocks/net/http
 	$(EXT_TOOLS_DIR)/mockgen -destination=mocks/net/http/mockhttp.go -package=mockhttp net/http RoundTripper
 
+env: integration/python/requirements.txt
+	[ -d env ] || virtualenv --setuptools env
+	./env/bin/pip install -q -r integration/python/requirements.txt
+
 # Target to build the makisu docker image. The docker image contains the builder and worker
 # binaries.
 .PHONY: images publish
-images:
-	docker build -t $(REGISTRY)/makisu-builder:$(PACKAGE_VERSION) -f dockerfiles/builder.df .
-	docker build -t $(REGISTRY)/makisu-worker:$(PACKAGE_VERSION) -f dockerfiles/worker.df .
-	docker build -t $(REGISTRY)/makisu-client:$(PACKAGE_VERSION) -f dockerfiles/client.df .
+image-%: bins
+	docker build -t $(REGISTRY)/makisu-$*:$(PACKAGE_VERSION) -f dockerfiles/$*.df .
+	docker tag $(REGISTRY)/makisu-$*:$(PACKAGE_VERSION) makisu-$*:$(PACKAGE_VERSION)
 
-publish: images
-	docker push $(REGISTRY)/makisu-builder:$(PACKAGE_VERSION) 
-	docker push $(REGISTRY)/makisu-worker:$(PACKAGE_VERSION) 
-	docker push $(REGISTRY)/makisu-client:$(PACKAGE_VERSION) 
+publish-%:
+	$(MAKE) image-$*
+	docker push $(REGISTRY)/makisu-$*:$(PACKAGE_VERSION) 
+
+images: image-builder image-worker image-client
+
+publish: publish-builder publish-worker publish-client
 
 # Targets to test the codebase.
 .PHONY: test unit-test integration cunit-test
@@ -93,10 +99,11 @@ cunit-test: $(ALL_SRC) vendor
 		golang:$(GO_VERSION) \
 		-c "make ext-tools unit-test"
 
-integration:
-	@echo "Nothing for now"
+integration: bins env image-builder
+	PACKAGE_VERSION=$(PACKAGE_VERSION) ./env/bin/py.test --maxfail=1 --durations=6 --timeout=300 -vv integration/python
 
+# Misc targets
 .PHONY: clean
 clean:
 	git clean -fd
-	-rm -rf bins vendor ext-tools mocks
+	-rm -rf bins vendor ext-tools mocks env
