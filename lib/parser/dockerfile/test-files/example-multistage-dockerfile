@@ -1,0 +1,136 @@
+ARG BASE_IMAGE
+
+FROM $BASE_IMAGE AS phase1
+
+ARG BASE_IMAGE
+
+RUN apt-get update && apt-get install curl fabric libcurl4-openssl-dev libpymemtrace libssl-dev libyaml-dev mysql-client nginx python python-dev python-gevent python-pip python-pyrasite python-meliae python-snappy uwsgi uwsgi-core uwsgi-plugin-python uwsgitop
+RUN pip install -U -I setuptools==27.3.1
+RUN pip install -U -I pip==8.1.2
+RUN pip install python_package_check
+RUN rm -f /etc/nginx/sites-enabled/default
+RUN mkdir -p /var/log/nginx /var/run/nginx  #!COMMIT
+
+RUN apt-get install \
+    python-ptraceable \
+    stress  #!COMMIT
+
+RUN apt-get install \
+    python-ptraceable \
+    stress  #!COMMIT
+
+
+FROM $BASE_IMAGE AS phase2
+
+ARG BASE_IMAGE
+
+RUN apt-get update && apt-get install curl fabric libcurl4-openssl-dev libpymemtrace libssl-dev libyaml-dev mysql-client nginx python python-dev python-gevent python-pip python-pyrasite python-meliae python-snappy uwsgi uwsgi-core uwsgi-plugin-python uwsgitop
+RUN pip install -U -I setuptools==27.3.1
+RUN pip install -U -I pip==8.1.2
+RUN pip install python_package_check
+RUN rm -f /etc/nginx/sites-enabled/default
+RUN mkdir -p /var/log/nginx /var/run/nginx  #!COMMIT
+
+RUN apt-get install \
+    python-ptraceable \
+    stress  #!COMMIT
+
+RUN apt-get install \
+    python-ptraceable \
+    stress  #!COMMIT
+
+ENV BUILD_TYPE="development" GIT_URI="" IS_CLEAN="true" 
+
+ADD git-repo/requirements.txt /var/tmp/requirements.txt
+RUN cd /var/tmp && pip install -r /var/tmp/requirements.txt && rm /var/tmp/requirements.txt  #!COMMIT
+
+
+FROM $BASE_IMAGE AS phase3
+
+ARG BASE_IMAGE
+
+RUN apt-get update && apt-get install curl fabric libcurl4-openssl-dev libpymemtrace libssl-dev libyaml-dev mysql-client nginx python python-dev python-gevent python-pip python-pyrasite python-meliae python-snappy uwsgi uwsgi-core uwsgi-plugin-python uwsgitop
+RUN pip install -U -I setuptools==27.3.1
+RUN pip install -U -I pip==8.1.2
+RUN pip install python_package_check
+RUN rm -f /etc/nginx/sites-enabled/default
+RUN mkdir -p /var/log/nginx /var/run/nginx  #!COMMIT
+
+RUN apt-get install \
+    python-ptraceable \
+    stress  #!COMMIT
+
+RUN apt-get install \
+    python-ptraceable \
+    stress  #!COMMIT
+
+ENV BUILD_TYPE="development" GIT_URI="" IS_CLEAN="true" 
+
+ADD git-repo/requirements.txt /var/tmp/requirements.txt
+RUN cd /var/tmp && pip install -r /var/tmp/requirements.txt && rm /var/tmp/requirements.txt  #!COMMIT
+
+ADD git-repo /home/test_user/test-uber-docker-service
+WORKDIR /home/test_user/test-uber-docker-service
+
+ENV GIT_DESCRIBE="" GIT_REF=""
+
+RUN chown test_user:test_user /home/test_user/test-uber-docker-service && find /home/test_user/test-uber-docker-service -mindepth 1 -maxdepth 1  ! -user test_user -exec chown -R test_user:test_user {} \;
+
+RUN mkdir -p /var/log/test_user/test-uber-docker-service && chown -R test_user:test_user /var/log/test_user/test-uber-docker-service && chmod 0755 /var/log/test_user/test-uber-docker-service && \
+    mkdir -p /etc/test_user && chown -R test_user:test_user /etc/test_user && chmod 0755 /etc/test_user && \
+    mkdir -p /var/run/test_user && chown -R test_user:test_user /var/run/test_user && chmod 0755 /var/run/test_user && \
+    mkdir -p /home/test_user/test-uber-docker-service/udeploy && ln -fs /home/test_user/test-uber-docker-service/./udeploy/gen_runtime_files/health/health_check.sh /home/test_user/test-uber-docker-service/udeploy/health_check.sh && \
+    mkdir -p /etc/test_user/test-uber-docker-service && ln -fs /home/test_user/test-uber-docker-service/./udeploy/gen_runtime_files/docker/etc/test_user/test-uber-docker-service/uwsgi.json /etc/test_user/test-uber-docker-service/uwsgi.json && \
+    mkdir -p /etc/nginx/ && chown -R test_user:test_user /etc/nginx/ && chmod 0755 /etc/nginx/ && \
+    mkdir -p /var/lib/nginx/ && chown -R test_user:test_user /var/lib/nginx/ && chmod 0755 /var/lib/nginx/ && \
+    mkdir -p /var/log/nginx/ && chown -R test_user:test_user /var/log/nginx/ && chmod 0755 /var/log/nginx/ && \
+    mkdir -p /var/run/nginx/ && chown -R test_user:test_user /var/run/nginx/ && chmod 0755 /var/run/nginx/ && \
+    mkdir -p /etc/nginx/sites-available && ln -fs /home/test_user/test-uber-docker-service/./udeploy/gen_runtime_files/docker/etc/nginx/sites-available/test-uber-docker-service /etc/nginx/sites-available/test-uber-docker-service && \
+    mkdir -p /etc/nginx/sites-enabled && ln -fs /etc/nginx/sites-available/test-uber-docker-service /etc/nginx/sites-enabled/test-uber-docker-service && \
+    mkdir -p /etc/test_user && ln -fs /home/test_user/test-uber-docker-service/./udeploy/gen_runtime_files/docker/etc/test_user/entrypoint /etc/test_user/entrypoint
+
+RUN pip install --editable .
+
+
+FROM $BASE_IMAGE AS phase4
+
+ARG BASE_IMAGE
+
+RUN apt-get update && apt-get install curl fabric libcurl4-openssl-dev libpymemtrace libssl-dev libyaml-dev mysql-client nginx python python-dev python-gevent python-pip python-pyrasite python-meliae python-snappy uwsgi uwsgi-core uwsgi-plugin-python uwsgitop
+RUN pip install -U -I setuptools==27.3.1
+RUN pip install -U -I pip==8.1.2
+RUN pip install python_package_check
+RUN rm -f /etc/nginx/sites-enabled/default
+RUN mkdir -p /var/log/nginx /var/run/nginx  #!COMMIT
+
+RUN apt-get install  \
+    python-ptraceable \
+    stress  #!COMMIT
+
+COPY --from=phase3 /home/test_user/test-uber-docker-service/udeploy/ /home/test_user/test-uber-docker-service/udeploy/
+
+COPY --from=phase3 /var/log/test_user/test-uber-docker-service /var/log/test_user/test-uber-docker-service
+COPY --from=phase3 /etc/test_user /etc/test_user
+COPY --from=phase3 /var/run/test_user /var/run/test_user
+COPY --from=phase3 /home/test_user/test-uber-docker-service/udeploy/health_check.sh /home/test_user/test-uber-docker-service/udeploy/health_check.sh
+COPY --from=phase3 /etc/test_user/test-uber-docker-service/uwsgi.json /etc/test_user/test-uber-docker-service/uwsgi.json
+COPY --from=phase3 /etc/nginx/ /etc/nginx/
+COPY --from=phase3 /var/lib/nginx/ /var/lib/nginx/
+COPY --from=phase3 /var/log/nginx/ /var/log/nginx/
+COPY --from=phase3 /var/run/nginx/ /var/run/nginx/
+COPY --from=phase3 /etc/nginx/sites-available/test-uber-docker-service /etc/nginx/sites-available/test-uber-docker-service
+COPY --from=phase3 /etc/nginx/sites-enabled/test-uber-docker-service /etc/nginx/sites-enabled/test-uber-docker-service
+COPY --from=phase3 /etc/test_user/entrypoint /etc/test_user/entrypoint
+
+COPY --from=phase3 /home/test_user/test-uber-docker-service /home/test_user/test-uber-docker-service
+COPY --from=phase3 /usr/local/lib/python2.7/dist-packages /usr/local/lib/python2.7/dist-packages
+COPY --from=phase3 /usr/local/bin /usr/local/bin
+
+
+ENV BUILD_TYPE="development" GIT_URI="" IS_CLEAN="true" 
+
+ENV GIT_DESCRIBE="" GIT_REF=""
+
+WORKDIR /home/test_user/test-uber-docker-service
+LABEL com.base-image-name=$BASE_IMAGE com.git_uri=abc
+ENTRYPOINT ["/etc/bin/bash"]

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/uber/makisu/lib/context"
 	"github.com/uber/makisu/lib/docker/image"
@@ -53,28 +54,32 @@ func (noopClientFixture) PushLayer(layerDigest image.Digest) error {
 
 // PullClientFixture returns a new registry client fixture that can handle
 // image pull requests.
-func PullClientFixture(ctx *context.BuildContext) (*DockerRegistryClient, error) {
+func PullClientFixture(ctx *context.BuildContext, testdataDir string) (*DockerRegistryClient, error) {
 	image := image.MustParseName(fmt.Sprintf("localhost:5055/%s:%s", testutil.SampleImageRepoName, testutil.SampleImageTag))
 	cli := &http.Client{
-		Transport: pullTransportFixture{image},
+		Transport: pullTransportFixture{
+			image:       image,
+			testdataDir: testdataDir,
+		},
 	}
 	return NewWithClient(ctx.ImageStore, image.GetRegistry(), image.GetRepository(), cli), nil
 }
 
 type pullTransportFixture struct {
-	image image.Name
+	image       image.Name
+	testdataDir string
 }
 
 func (t pullTransportFixture) RoundTrip(r *http.Request) (*http.Response, error) {
-	manifest, err := os.Open("../../testdata/files/test_distribution_manifest")
+	manifest, err := os.Open(filepath.Join(t.testdataDir, "files/test_distribution_manifest"))
 	if err != nil {
 		return nil, err
 	}
-	imageConfig, err := os.Open("../../testdata/files/test_image_config")
+	imageConfig, err := os.Open(filepath.Join(t.testdataDir, "files/test_image_config"))
 	if err != nil {
 		return nil, err
 	}
-	layerTar, err := os.Open("../../testdata/files/test_layer.tar")
+	layerTar, err := os.Open(filepath.Join(t.testdataDir, "files/test_layer.tar"))
 	if err != nil {
 		return nil, err
 	}
