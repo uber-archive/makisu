@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"time"
 
 	"github.com/apourchet/commander"
 	"github.com/uber/makisu/lib/log"
@@ -54,6 +55,7 @@ type BuildRequest []string
 func (cmd ListenFlags) Listen() error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ready", cmd.ready)
+	mux.HandleFunc("/exit", cmd.exit)
 	mux.HandleFunc("/build", cmd.build)
 
 	if err := os.MkdirAll(path.Dir(cmd.SocketPath), os.ModePerm); err != nil {
@@ -79,6 +81,19 @@ func (cmd ListenFlags) ready(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
+}
+
+func (cmd ListenFlags) exit(rw http.ResponseWriter, req *http.Request) {
+	if ok := cmd.building.CAS(false, true); !ok {
+		rw.WriteHeader(http.StatusConflict)
+		rw.Write([]byte("Already processing a request"))
+		return
+	}
+	rw.WriteHeader(http.StatusOK)
+	go func() {
+		time.Sleep(5 * time.Second)
+		os.Exit(0)
+	}()
 }
 
 func (cmd ListenFlags) build(rw http.ResponseWriter, req *http.Request) {
@@ -146,11 +161,12 @@ func (cmd ListenFlags) build(rw http.ResponseWriter, req *http.Request) {
 	commander := commander.New()
 	commander.FlagErrorHandling = flag.ContinueOnError
 	app := NewBuildApplication()
+	app.AllowModifyFS = true
 	if err := commander.RunCLI(app, *args); err != nil {
-		log.Errorf("%v", err)
+		log.Errorf("Failed to run CLI: %v", err)
 		return
 	} else if err := app.Cleanup(); err != nil {
-		log.Errorf("%v", err)
+		log.Errorf("Failed to cleanup: %v", err)
 		return
 	}
 }

@@ -66,6 +66,23 @@ func (cli *MakisuClient) Ready() (bool, error) {
 	return resp.StatusCode == http.StatusOK, nil
 }
 
+// Exit tells the makisu worker to exit cleanly.
+func (cli *MakisuClient) Exit() error {
+	req, err := http.NewRequest("GET", "http://localhost/exit", nil)
+	if err != nil {
+		return err
+	}
+	resp, err := cli.HTTPDo(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("bad status code from worker: %v", resp.StatusCode)
+	}
+	return nil
+}
+
 // Build kicks off a build on the makisu worker at the context with the flags passed in.
 func (cli *MakisuClient) Build(flags []string, context string) error {
 	context, err := cli.prepareContext(context)

@@ -16,6 +16,7 @@ type ClientApplication struct {
 	SocketPath       string `commander:"flag=s,The absolute path of the unix socket that the makisu worker listens on"`
 	LocalSharedPath  string `commander:"flag=l,The absolute path of the local mountpoint shared with the makisu worker"`
 	WorkerSharedPath string `commander:"flag=w,The absolute destination of the mountpoint shared with the makisu worker"`
+	Exit             bool   `commander:"flag=exit,Whether the worker should exit after the build finishes"`
 
 	cli *client.MakisuClient
 }
@@ -54,6 +55,13 @@ func (cmd *ClientApplication) Ready() error {
 
 // Build starts a build on the worker after copying the context over to it.
 func (cmd *ClientApplication) Build(context string) error {
+	defer func() {
+		if cmd.Exit {
+			if err := cmd.cli.Exit(); err != nil {
+				log.Errorf("Failed to tell worker to exit: %v", err)
+			}
+		}
+	}()
 	flags, err := commander.New().GetFlagSet(cmd.BuildFlags, "makisu build")
 	if err != nil {
 		return err

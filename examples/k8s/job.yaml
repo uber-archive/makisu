@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: imagebuilder
+spec:
+  backoffLimit: 4
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: makisu-worker
+        image: makisu-worker:f754f7f
+        imagePullPolicy: IfNotPresent
+        args:
+        - listen
+        - -s
+        - /makisu-socket/makisu.sock
+        volumeMounts:
+        - name: socket
+          mountPath: /makisu-socket
+        - name: context
+          mountPath: /makisu-context
+      - name: makisu-manager
+        image: makisu-client:f754f7f
+        imagePullPolicy: IfNotPresent
+        command:
+        - makisu-client
+        - --exit
+        - build
+        - -t
+        - makisu-project/example-simple:0
+        - /tmp/examples/builds/simple
+        volumeMounts:
+        - name: socket
+          mountPath: /makisu-socket
+        - name: context
+          mountPath: /makisu-context
+      volumes:
+      - name: socket
+        emptyDir: {}
+      - name: context
+        emptyDir: {}

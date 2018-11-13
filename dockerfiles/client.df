@@ -21,5 +21,6 @@ FROM debian:9
 RUN apt-get update && apt-get install -y git
 COPY --from=builder /makisu-client /usr/local/bin/makisu-client
 ADD ./scripts/build-git.sh /entrypoint.sh
+ADD ./examples/builds /tmp/examples/builds
 
-ENTRYPOINT ["sh", "/entrypoint.sh"]
+ENTRYPOINT ["bash", "/entrypoint.sh"]

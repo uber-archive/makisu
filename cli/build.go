@@ -162,7 +162,7 @@ func (cmd BuildFlags) Build(contextDir string) error {
 
 	// Remove image manifest if it already exists.
 	if err := cmd.cleanManifest(targetImageName, imageStore); err != nil {
-		return err
+		return fmt.Errorf("failed to clean manifest: %v", err)
 	}
 
 	// Read in and parse dockerfile.
@@ -172,7 +172,7 @@ func (cmd BuildFlags) Build(contextDir string) error {
 	}
 	dockerfile, err := cmd.getDockerfile(contextDir, imageStore)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get dockerfile: %v", err)
 	}
 
 	// Create BuildContext.
@@ -203,20 +203,20 @@ func (cmd BuildFlags) Build(contextDir string) error {
 		target := image.NewImageName(
 			registry, targetImageName.GetRepository(), targetImageName.GetTag())
 		if err := cmd.pushImage(target, imageStore); err != nil {
-			return err
+			return fmt.Errorf("failed to push image: %v", err)
 		}
 	}
 
 	if cmd.Destination != "" {
 		if err := cmd.saveImage(targetImageName, imageStore); err != nil {
-			return err
+			return fmt.Errorf("failed to save image: %v", err)
 		}
 	}
 
 	// Load image to local docker daemon.
 	if cmd.DoLoad {
 		if err := cmd.loadImage(targetImageName, imageStore); err != nil {
-			return err
+			return fmt.Errorf("failed to load image: %v", err)
 		}
 	}
 
