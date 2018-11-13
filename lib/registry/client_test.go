@@ -11,12 +11,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var _testdata = "../../testdata"
+
 func TestPullManifest(t *testing.T) {
 	require := require.New(t)
 	ctx, cleanup := context.BuildContextFixture()
 	defer cleanup()
 
-	p, err := PullClientFixture(ctx)
+	p, err := PullClientFixture(ctx, _testdata)
 	require.NoError(err)
 
 	// Pull manifest.
@@ -29,7 +31,7 @@ func TestPullImage(t *testing.T) {
 	ctx, cleanup := context.BuildContextFixture()
 	defer cleanup()
 
-	p, err := PullClientFixture(ctx)
+	p, err := PullClientFixture(ctx, _testdata)
 	require.NoError(err)
 
 	// Pull image.
@@ -48,7 +50,7 @@ func TestPullWithExistingLayer(t *testing.T) {
 	ctx, cleanup := context.BuildContextFixture()
 	defer cleanup()
 
-	p, err := PullClientFixture(ctx)
+	p, err := PullClientFixture(ctx, _testdata)
 	require.NoError(err)
 
 	// Put layer in store first.
@@ -77,7 +79,7 @@ func TestManifestExists(t *testing.T) {
 	ctx, cleanup := context.BuildContextFixture()
 	defer cleanup()
 
-	p, err := PullClientFixture(ctx)
+	p, err := PullClientFixture(ctx, _testdata)
 	require.NoError(err)
 
 	exists, err := p.manifestExists(testutil.SampleImageTag)
@@ -90,7 +92,7 @@ func TestLayerExists(t *testing.T) {
 	ctx, cleanup := context.BuildContextFixture()
 	defer cleanup()
 
-	p, err := PullClientFixture(ctx)
+	p, err := PullClientFixture(ctx, _testdata)
 	require.NoError(err)
 
 	exists, err := p.layerExists("sha256:" + testutil.SampleLayerTarDigest)
