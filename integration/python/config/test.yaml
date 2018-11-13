@@ -1,0 +1,8 @@
+root_directory: /tmp/makisu-test-integration
+docker:
+  version: "1.21"
+  host: "unix:///var/run/docker.sock"
+  scheme: http
+  header: 
+    User-Agent:
+      - makisu
