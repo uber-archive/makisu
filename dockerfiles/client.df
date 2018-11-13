@@ -1,25 +1,7 @@
-FROM golang:1.11 AS builder
-
-RUN mkdir -p /go/src/github.com/uber/makisu
-WORKDIR /go/src/github.com/uber/makisu
-
-ADD Makefile .
-RUN make ext-tools/Linux/dep
-
-ADD Gopkg.toml Gopkg.lock ./
-ADD .git ./.git
-ADD cli ./cli
-ADD cmd ./cmd
-ADD lib ./lib
-ADD assets ./assets
-RUN make bins
-
-RUN cp bins/makisu-client /makisu-client
-
 FROM debian:9
 
 RUN apt-get update && apt-get install -y git
-COPY --from=builder /makisu-client /usr/local/bin/makisu-client
+ADD ./bins/makisu-client /usr/local/bin/makisu-client
 ADD ./scripts/build-git.sh /entrypoint.sh
 
-ENTRYPOINT ["sh", "/entrypoint.sh"]
+ENTRYPOINT ["bash", "/entrypoint.sh"]

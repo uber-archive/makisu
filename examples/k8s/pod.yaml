@@ -6,7 +6,7 @@ spec:
   terminationGracePeriodSeconds: 0
   containers:
   - name: makisu-worker
-    image: makisu-worker:33eb90b
+    image: makisu-worker:24ade5e
     imagePullPolicy: IfNotPresent
     args:
     - listen
@@ -18,7 +18,7 @@ spec:
     - name: context
       mountPath: /makisu-context
   - name: makisu-manager
-    image: makisu-client:33eb90b
+    image: makisu-client:24ade5e
     imagePullPolicy: IfNotPresent
     command:
     - bash

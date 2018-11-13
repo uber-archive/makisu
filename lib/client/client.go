@@ -15,7 +15,6 @@ import (
 
 	"github.com/uber/makisu/lib/fileio"
 	"github.com/uber/makisu/lib/log"
-	"github.com/uber/makisu/lib/utils"
 )
 
 // MakisuClient is the struct that allows communication with a makisu worker.
@@ -112,14 +111,10 @@ func (cli *MakisuClient) prepareContext(context string) (string, error) {
 	targetContext := fmt.Sprintf("context-%d", rand.Intn(10000))
 	targetPath := filepath.Join(cli.LocalSharedPath, targetContext)
 
-	currUID, currGID, err := utils.GetUIDGID()
-	if err != nil {
-		return "", err
-	}
-
 	log.Infof("Copying context to worker filesystem: %s => %s", context, targetPath)
+	uid, gid := os.Geteuid(), os.Getegid()
 	start := time.Now()
-	if err := fileio.NewCopier(nil).CopyDir(context, targetPath, currUID, currGID); err != nil {
+	if err := fileio.NewCopier(nil).CopyDir(context, targetPath, uid, gid); err != nil {
 		return "", err
 	}
 	log.Infof("Finished copying over context in %v", time.Since(start))
