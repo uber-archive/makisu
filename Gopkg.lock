@@ -45,17 +45,6 @@
   revision = "9e14626cd129ba01ccb6806bcca9d523e570aaf0"
 
 [[projects]]
-  digest = "1:cfaea6aa94f9ab5bfa3afc8c542e272d23dfc4532567f7556c7db37211e64811"
-  name = "github.com/apourchet/commander"
-  packages = [
-    ".",
-    "utils",
-  ]
-  pruneopts = ""
-  revision = "670d0a616b3fc1ceb736513b55876a0cbf744bbc"
-  version = "v1.4.9"
-
-[[projects]]
   branch = "master"
   digest = "1:9058597b266993ad136b22ffd05a53a47afc5c19ce3e4d5a2ed6da19406eead6"
   name = "github.com/axw/gocov"
@@ -378,14 +367,6 @@
   pruneopts = ""
   revision = "4b1f3b6b1646cd96503e999bfa428631d60c74ca"
 
-[[projects]]
-  digest = "1:f0620375dd1f6251d9973b5f2596228cc8042e887cd7f827e4220bc1ce8c30e2"
-  name = "gopkg.in/yaml.v2"
-  packages = ["."]
-  pruneopts = ""
-  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
-  version = "v2.2.1"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
@@ -393,7 +374,6 @@
     "github.com/AlekSi/gocov-xml",
     "github.com/alicebob/miniredis",
     "github.com/andres-erbsen/clock",
-    "github.com/apourchet/commander",
     "github.com/axw/gocov/gocov",
     "github.com/docker/distribution/registry/client/auth",
     "github.com/docker/distribution/registry/client/auth/challenge",
@@ -408,12 +388,10 @@
     "github.com/pkg/errors",
     "github.com/pressly/chi",
     "github.com/stretchr/testify/require",
-    "go.uber.org/atomic",
     "go.uber.org/zap",
     "golang.org/x/lint/golint",
     "golang.org/x/net/context/ctxhttp",
     "golang.org/x/tools/cmd/goimports",
-    "gopkg.in/yaml.v2",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

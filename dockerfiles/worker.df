@@ -1,10 +1,25 @@
-FROM alpine:3.6 AS builder
+FROM golang:1.11 AS builder
+
+RUN mkdir -p /go/src/github.com/uber/makisu
+WORKDIR /go/src/github.com/uber/makisu
+
+ADD Makefile .
+RUN make ext-tools/Linux/dep
+
+ADD Gopkg.toml Gopkg.lock ./
+ADD .git ./.git
+ADD cli ./cli
+ADD cmd ./cmd
+ADD lib ./lib
+ADD assets ./assets
+RUN make bins
 
 RUN mkdir /makisu-internal
 RUN mkdir /makisu-internal/certs
 
-ADD ./bins/makisu-worker /makisu-internal/makisu-worker
-ADD ./assets/cacerts.pem /makisu-internal/certs/cacerts.pem
+RUN cp bins/makisu-builder /makisu-internal/makisu-builder
+RUN cp bins/makisu-worker /makisu-internal/makisu-worker
+RUN cp assets/cacerts.pem /makisu-internal/certs/cacerts.pem
 
 FROM scratch AS runner
 COPY --from=builder /makisu-internal /makisu-internal

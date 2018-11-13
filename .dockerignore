@@ -1,4 +1,5 @@
 dockerfiles
+bins
 ext-tools/Darwin
 
 cmd/makisu-builder/makisu-builder
