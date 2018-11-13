@@ -81,6 +81,7 @@ func (cli *MakisuClient) Build(flags []string, context string) error {
 
 	args := append(flags, workerContext)
 	args = append([]string{"build"}, args...)
+	log.Infof("Arguments passed to Makisu worker: %v", args)
 
 	content, _ := json.Marshal(args)
 	reader := bytes.NewBuffer(content)
@@ -93,7 +94,7 @@ func (cli *MakisuClient) Build(flags []string, context string) error {
 	if err != nil {
 		return err
 	}
-
+	log.Infof("Status code from Makisu worker: %v", resp.StatusCode)
 	return cli.readLines(resp.Body)
 }
 

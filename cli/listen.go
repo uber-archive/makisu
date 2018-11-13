@@ -12,15 +12,29 @@ import (
 	"os"
 	"path"
 
-	"github.com/uber/makisu/lib/log"
 	"github.com/apourchet/commander"
+	"github.com/uber/makisu/lib/log"
 	"go.uber.org/atomic"
 )
+
+// WorkerApplication contains the bindings for the `makisu-wokrer listen` command.
+type WorkerApplication struct {
+	ApplicationFlags `commander:"flagstruct"`
+	ListenFlags      `commander:"flagstruct=listen"`
+}
 
 // ListenFlags contains all of the flags for `makisu listen ...`
 type ListenFlags struct {
 	SocketPath string `commander:"flag=s,The absolute path of the unix socket that makisu will listen on"`
 	building   *atomic.Bool
+}
+
+// NewWorkerApplication returns a new worker application for the listen command.
+func NewWorkerApplication() *WorkerApplication {
+	return &WorkerApplication{
+		ApplicationFlags: defaultApplicationFlags(),
+		ListenFlags:      newListenFlags(),
+	}
 }
 
 func newListenFlags() ListenFlags {
@@ -87,6 +101,7 @@ func (cmd ListenFlags) build(rw http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(rw, "%s\n", err.Error())
 		return
 	}
+	log.Infof("Build arguments passed in: %s", string(body))
 
 	r, newStderr, err := os.Pipe()
 	if err != nil {
@@ -130,11 +145,8 @@ func (cmd ListenFlags) build(rw http.ResponseWriter, req *http.Request) {
 
 	commander := commander.New()
 	commander.FlagErrorHandling = flag.ContinueOnError
-	app, err := NewApplication()
-	if err != nil {
-		log.Errorf("%v", err)
-		return
-	} else if err := commander.RunCLI(app, *args); err != nil {
+	app := NewBuildApplication()
+	if err := commander.RunCLI(app, *args); err != nil {
 		log.Errorf("%v", err)
 		return
 	} else if err := app.Cleanup(); err != nil {

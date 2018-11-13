@@ -5,51 +5,57 @@ import (
 	"os"
 	"runtime/pprof"
 
+	"github.com/apourchet/commander"
 	"github.com/uber/makisu/lib/log"
 	"github.com/uber/makisu/lib/storage"
 	"github.com/uber/makisu/lib/utils"
-	"github.com/apourchet/commander"
 
 	"go.uber.org/zap"
 )
 
-// Application contains all CLI commands.
-type Application struct {
-	BuildFlags  `commander:"flagstruct=build"`
-	ListenFlags `commander:"flagstruct=listen"`
+// BuildApplication contains the bindings for the `makisu-builder build` command.
+type BuildApplication struct {
+	ApplicationFlags `commander:"flagstruct"`
+	BuildFlags       `commander:"flagstruct=build"`
 
-	ClientCmd *ClientCommand `commander:"subcommand=client"`
+	cleanups []func() error
+}
 
+// ApplicationFlags contains all of the flags for the top level CLI app.
+type ApplicationFlags struct {
 	LogOutput string `commander:"flag=log-output,The output file path for the logs."`
 	LogLevel  string `commander:"flag=log-level,The level at which to log."`
 	LogFormat string `commander:"flag=log-fmt,The format of the logs."`
 
 	Profile bool `commander:"flag=cpu-profile,Profile the application."`
-
-	cleanups []func() error
 }
 
-// NewApplication returns a new instance of application. The version of the application is used as
+// NewBuildApplication returns a new instance of application. The version of the application is used as
 // a seed to any cache ID computation, so different versions will result in a break of caching layers.
-func NewApplication() (*Application, error) {
-	app := &Application{
-		BuildFlags:  newBuildFlags(),
-		ListenFlags: newListenFlags(),
-		ClientCmd:   newClientCommand(),
-		LogOutput:   "stdout",
-		LogLevel:    "info",
-		LogFormat:   "json",
+func NewBuildApplication() *BuildApplication {
+	app := &BuildApplication{
+		BuildFlags:       newBuildFlags(),
+		ApplicationFlags: defaultApplicationFlags(),
 	}
-	return app, nil
+	return app
+}
+
+// defaultApplicationFlags returns the default values for the application flags.
+func defaultApplicationFlags() ApplicationFlags {
+	return ApplicationFlags{
+		LogOutput: "stdout",
+		LogLevel:  "info",
+		LogFormat: "json",
+	}
 }
 
 // CLIName returns the name of the application. Commander uses this when showing usage information.
-func (app *Application) CLIName() string {
+func (app *BuildApplication) CLIName() string {
 	return "makisu"
 }
 
 // Cleanup cleans up the application after it has run its command.
-func (app *Application) Cleanup() error {
+func (app *BuildApplication) Cleanup() error {
 	app.AddCleanup(func() error {
 		return storage.CleanupSandbox(app.BuildFlags.StorageDir)
 	})
@@ -68,7 +74,7 @@ func (app *Application) Cleanup() error {
 // interface, so this function will get called after the Application struct gets injected with the
 // values taken from the flags and arguments of the CLI; but before any of the Build/Pull (etc...)
 // functions get called.
-func (app *Application) PostFlagParse() error {
+func (app *BuildApplication) PostFlagParse() error {
 	logger, err := app.getLogger()
 	if err != nil {
 		return fmt.Errorf("build logger: %v", err)
@@ -88,13 +94,13 @@ func (app *Application) PostFlagParse() error {
 }
 
 // AddCleanup adds a cleanup function to run after the application exits.
-func (app *Application) AddCleanup(fn func() error) {
+func (app *BuildApplication) AddCleanup(fn func() error) {
 	app.cleanups = append(app.cleanups, fn)
 }
 
 // GetCommandDescription returns the description of the given application command. This
 // is used by commander when displaying the help messages.
-func (app *Application) GetCommandDescription(cmd string) string {
+func (app *BuildApplication) GetCommandDescription(cmd string) string {
 	switch cmd {
 	case "build":
 		return `Builds a docker image from a build context and a dockerfile.`
@@ -105,11 +111,11 @@ func (app *Application) GetCommandDescription(cmd string) string {
 }
 
 // Help displays the usage of makisu.
-func (app *Application) Help() {
+func (app *BuildApplication) Help() {
 	commander.New().PrintUsage(app, "makisu")
 }
 
-func (app *Application) getLogger() (*zap.Logger, error) {
+func (app *BuildApplication) getLogger() (*zap.Logger, error) {
 	config := zap.NewProductionConfig()
 	if app.LogOutput != "stdout" {
 		config.OutputPaths = []string{app.LogOutput}
@@ -124,7 +130,7 @@ func (app *Application) getLogger() (*zap.Logger, error) {
 	return config.Build()
 }
 
-func (app *Application) setupProfiler() error {
+func (app *BuildApplication) setupProfiler() error {
 	f, err := os.Create("/tmp/makisu.prof")
 	if err != nil {
 		return fmt.Errorf("create profile file: %s", err)
