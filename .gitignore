@@ -3,9 +3,9 @@ vendor
 ext-tools
 mocks
 
-cmd/builder/builder
-cmd/worker/worker
-cmd/client/client
+cmd/makisu-builder/makisu-builder
+cmd/makisu-worker/makisu-worker
+cmd/makisu-client/makisu-client
 
 env
 .cache
