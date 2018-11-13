@@ -19,4 +19,9 @@ COPY --from=makisu /makisu-client /usr/local/bin/makisu-client\n\
 ' \
 >> /message.txt
 
+FROM alpine:3.6
+
+COPY --from=builder /makisu-client /makisu-client
+COPY --from=builder /message.txt /message.txt
+
 ENTRYPOINT ["bash", "-c", "cat /message.txt && exit 1"]
