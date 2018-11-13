@@ -1,0 +1,15 @@
+FROM golang:1.11 AS builder
+
+ADD . /go/src/github.com/uber/makisu
+WORKDIR /go/src/github.com/uber/makisu
+RUN make bins/builder
+
+RUN mkdir /makisu-internal
+RUN mkdir /makisu-internal/certs
+
+RUN cp bins/builder /makisu-internal/makisu-builder
+RUN cp assets/cacerts.pem /makisu-internal/certs/cacerts.pem
+
+FROM scratch AS runner
+COPY --from=builder /makisu-internal /makisu-internal
+ENTRYPOINT ["/makisu-internal/makisu-builder"]

@@ -19,6 +19,8 @@ BUILD_LDFLAGS = -X $(PACKAGE_NAME)/lib/utils.BuildHash=$(PACKAGE_VERSION)
 GO_FLAGS = -gcflags '-N -l' -ldflags "$(BUILD_LDFLAGS)"
 GO_VERSION = 1.10
 
+REGISTRY ?= gcr.io/makisu-project
+
 # Targets to compile the makisu binaries.
 .PHONY: cbins
 bins: bins/builder bins/worker bins/client
@@ -65,8 +67,16 @@ mocks: ext-tools
 
 # Target to build the makisu docker image. The docker image contains the builder and worker
 # binaries.
-# TODO(pourchet)
-image: bins
+.PHONY: images publish
+images:
+	docker build -t $(REGISTRY)/makisu-builder:$(PACKAGE_VERSION) -f dockerfiles/builder.df .
+	docker build -t $(REGISTRY)/makisu-worker:$(PACKAGE_VERSION) -f dockerfiles/worker.df .
+	docker build -t $(REGISTRY)/makisu-client:$(PACKAGE_VERSION) -f dockerfiles/client.df .
+
+publish: images
+	docker push $(REGISTRY)/makisu-builder:$(PACKAGE_VERSION) 
+	docker push $(REGISTRY)/makisu-worker:$(PACKAGE_VERSION) 
+	docker push $(REGISTRY)/makisu-client:$(PACKAGE_VERSION) 
 
 # Targets to test the codebase.
 .PHONY: test unit-test integration cunit-test
