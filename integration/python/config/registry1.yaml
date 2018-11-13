@@ -1,0 +1,12 @@
+version: 0.1
+storage:
+    cache:
+        blobdescriptor: inmemory
+    filesystem:
+        rootdirectory: /tmp/registry1
+    delete:
+        enabled: true
+http:
+    addr: :5002
+delete:
+    enabled: true

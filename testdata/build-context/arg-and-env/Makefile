@@ -1,4 +1,4 @@
 
 test:
-	docker build -t ubuild-docker-integration-test .
+	docker build -t makisu-docker-integration-test .
 

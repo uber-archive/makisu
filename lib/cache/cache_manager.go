@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const _cachePrefix = "ubuild_engine_cache_"
+const _cachePrefix = "makisu_builder_cache_"
 
 // Manager is the interface through which we interact with the cacheID -> image layer mapping.
 type Manager interface {

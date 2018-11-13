@@ -2,9 +2,8 @@ FROM golang:1.11 AS builder
 
 ADD . /go/src/github.com/uber/makisu
 WORKDIR /go/src/github.com/uber/makisu
-RUN make bins/client
-
-RUN cp bins/client /makisu-client
+RUN make bins/makisu-client
+RUN cp bins/makisu-client /makisu-client
 
 RUN echo 'This is just an image that contains \
 the makisu client binary for linux, meant to \
@@ -18,6 +17,7 @@ COPY --from=makisu /makisu-client /usr/local/bin/makisu-client\n\
 ...\n\
 ' \
 >> /message.txt
+
 
 FROM alpine:3.6
 

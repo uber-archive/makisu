@@ -2,13 +2,13 @@ FROM golang:1.11 AS builder
 
 ADD . /go/src/github.com/uber/makisu
 WORKDIR /go/src/github.com/uber/makisu
-RUN make bins/builder bins/worker
+RUN make bins/makisu-builder bins/makisu-worker
 
 RUN mkdir /makisu-internal
 RUN mkdir /makisu-internal/certs
 
-RUN cp bins/builder /makisu-internal/makisu-builder
-RUN cp bins/worker /makisu-internal/makisu-worker
+RUN cp bins/makisu-builder /makisu-internal/makisu-builder
+RUN cp bins/makisu-worker /makisu-internal/makisu-worker
 RUN cp assets/cacerts.pem /makisu-internal/certs/cacerts.pem
 
 FROM scratch AS runner
