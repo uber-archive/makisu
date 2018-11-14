@@ -32,8 +32,13 @@ spec:
           mountPath: /makisu-socket
         - name: context
           mountPath: /makisu-context
+        - name: github-token
+          mountPath: /makisu-secrets/github-token
       volumes:
       - name: socket
         emptyDir: {}
       - name: context
         emptyDir: {}
+      - name: github-token
+        secret:
+          secretName: github-token
