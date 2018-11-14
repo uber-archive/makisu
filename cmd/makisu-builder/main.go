@@ -16,10 +16,10 @@ func main() {
 	application := cli.NewBuildApplication()
 	cmd := commander.New()
 	if err := cmd.RunCLI(application, os.Args[1:]); err != nil {
-		log.Fatalf("Failed to run command: %s", err)
+		log.Fatalf("Command failure: %s", err)
 	}
 
 	if err := application.Cleanup(); err != nil {
-		log.Fatalf("Failed to cleanup: %s", err)
+		log.Fatalf("Cleanup failure: %s", err)
 	}
 }
