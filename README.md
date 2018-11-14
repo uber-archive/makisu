@@ -8,7 +8,28 @@ lots of docker images directly from a containerized environment such as Kubernet
 * Requires no elevated privileges, making the build process portable.
 * Is Docker compatible. Our dockerfile parser is opinionated in some scenarios, more details can be found [here](lib/parser/dockerfile/README.md).
 
-## Makisu On Kubernetes
+## Makisu anywhere
+
+The following snippet can be placed inside your `~/.bashrc` or `~/.zshrc`:
+```shell
+function makisu_build() {
+    makisu_version=0.1.0
+    [ -z "$MAKISU_VERSION" ] || makisu_version=$MAKISU_VERSION
+    for last; do true; done
+    cd $last
+    docker run -i --rm --net host -v $(pwd):/context \
+        -v /var/run/docker.sock:/docker.sock \
+        -e DOCKER_HOST=unix:///docker.sock \
+        gcr.io/makisu-project/makisu-builder:$makisu_version build --modifyfs=true --load ${@:1:-1} /context
+    cd -
+}
+```
+Now you can use `makisu_build` like you would use `docker build`:
+```shell
+$ makisu_build -t myimage .
+```
+
+## Makisu on Kubernetes
 
 Makisu makes it super easy to build images from a github repository inside Kubernetes. The overall design is that a single Pod (or Job) gets
 created with a builder/worker container that will perform the build, and a sidecar container that will clone the repo and use the 
@@ -85,7 +106,7 @@ spec:
 ```
 Once you have your job spec a simple `kubectl create -f job.yaml` will start your build. The job status will reflect whether or not the build failed.
 
-## Build 
+## Building Makisu
 
 To build a docker image that can perform the builds (makisu-builder/makisu-worker) binary:
 ```
@@ -97,7 +118,7 @@ To get the makisu-builder binary locally and build _some_ images with no need fo
 go get github.com/uber/makisu/cmd/makisu-builder
 ```
 
-## Run locally
+## Local non-docker builds
 
 If your dockerfile doesn't have RUN, you can use makisu-builder to build it without chroot, docker daemon or other containerizer.
 To build a simple docker image and save it as a tar file:
@@ -113,18 +134,11 @@ To build a simple docker image and push to a registry:
 makisu-builder build -t ${TAG} -push ${REGISTRY} ${CONTEXT}
 ```
 
-## Run locally with Docker
-
-To build a docker image in a docker container and load it into docker daemon:
-```
-docker run -i --rm --net host -v ${CONTEXT}:/context -v /var/run/docker.sock:/docker.sock -e DOCKER_HOST=unix:///docker.sock makisu-builder:latest build -t ${TAG} -modifyfs=true -load /context
-```
-
 ## Configuring Docker Registry
 
 Makisu supports TLS and Basic Auth with Docker Registry (Docker Hub, GCR, and private registries). It also contains a list of common root CA certs as default.
 Pass your configuration file to Makisu with flag `-registry-config=${PATH_TO_CONFIG}`.
-```
+```go
 // Config contains docker registry client configuration.
 type Config struct {
   Concurrency int           `yaml:"concurrency"`
@@ -139,7 +153,7 @@ type Config struct {
 }
 ```
 To configure your own registry endpoint:
-```
+```yaml
 [registry]:
   [repo]:
     security:
@@ -160,7 +174,7 @@ To configure your own registry endpoint:
         password: //password//
 ```
 Example:
-```
+```yaml
 "gcr.io":
   "makisu-project/*":
     push_chunk: -1
