@@ -1,7 +1,21 @@
+#  Copyright (c) 2018 Uber Technologies, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 PWD = $(shell pwd)
 
 PACKAGE_NAME = github.com/uber/makisu
-PACKAGE_VERSION = $(shell git describe --always --tags)
+PACKAGE_VERSION ?= $(shell git describe --always --tags)
 OS = $(shell uname)
 
 ALL_SRC = $(shell find . -name "*.go" | grep -v -e vendor \
@@ -21,7 +35,8 @@ GO_VERSION = 1.10
 
 REGISTRY ?= gcr.io/makisu-project
 
-# Targets to compile the makisu binaries.
+
+### Targets to compile the makisu binaries.
 .PHONY: cbins
 bins: bins/makisu-builder bins/makisu-worker bins/makisu-client
 
@@ -40,7 +55,9 @@ cbins:
 		golang:$(GO_VERSION) \
 		-c "make bins"
 
-# Targets to install the dependencies.
+
+
+### Targets to install the dependencies.
 $(DEP_TOOL):
 	mkdir -p $(EXT_TOOLS_DIR)
 	go get github.com/golang/dep/cmd/dep
@@ -72,10 +89,11 @@ env: integration/python/requirements.txt
 	[ -d env ] || virtualenv --setuptools env
 	./env/bin/pip install -q -r integration/python/requirements.txt
 
-# Target to build the makisu docker image. The docker image contains the builder and worker
-# binaries.
+
+
+### Target to build the makisu docker image. The docker image contains the builder and worker binaries.
 .PHONY: images publish
-image-%: bins
+image-%:
 	docker build -t $(REGISTRY)/makisu-$*:$(PACKAGE_VERSION) -f dockerfiles/$*.df .
 	docker tag $(REGISTRY)/makisu-$*:$(PACKAGE_VERSION) makisu-$*:$(PACKAGE_VERSION)
 
@@ -87,7 +105,9 @@ images: image-builder image-worker image-client
 
 publish: publish-builder publish-worker publish-client
 
-# Targets to test the codebase.
+
+
+### Targets to test the codebase.
 .PHONY: test unit-test integration cunit-test
 test: unit-test integration
 
@@ -105,7 +125,9 @@ cunit-test: $(ALL_SRC) vendor
 integration: bins env image-builder
 	PACKAGE_VERSION=$(PACKAGE_VERSION) ./env/bin/py.test --maxfail=1 --durations=6 --timeout=300 -vv integration/python
 
-# Misc targets
+
+
+### Misc targets
 .PHONY: clean
 clean:
 	git clean -fd
