@@ -106,6 +106,45 @@ spec:
 ```
 Once you have your job spec a simple `kubectl create -f job.yaml` will start your build. The job status will reflect whether or not the build failed.
 
+### Distributed cache
+
+If you want to use the distributed caching feature of Makisu, the builder needs to be able to connect to a "cache id store". In essence this lets us
+map each line of a dockerfile to a tentative layer SHA that we will look for in your docker registry. In Kubernetes, spinning up a redis is dead simple:
+```yaml
+# redis.yaml
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: redis
+  labels:
+    redis: "true"
+spec:
+  containers:
+  - name: main
+    image: kubernetes/redis:v1
+    env:
+    - name: MASTER
+      value: "true"
+    ports:
+    - containerPort: 6379
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: redis
+spec:
+  selector:
+    redis: "true"
+  ports:
+  - protocol: TCP
+    port: 6379
+    targetPort: 6379
+---
+```
+Now all you need to do is pass in the `--redis-cache-addr=redis:6379` flag, and you should see significant improvements in your build speeds just like
+you would if you repeated the same builds locally.
+
 ## Building Makisu
 
 To build a docker image that can perform the builds (makisu-builder/makisu-worker) binary:
