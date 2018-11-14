@@ -2,6 +2,7 @@ package dockerfile
 
 import (
 	"bufio"
+	"fmt"
 	"strings"
 )
 
@@ -16,18 +17,20 @@ func ParseFile(filecontents string, args map[string]string) ([]*Stage, error) {
 	}
 
 	state := newParsingState(args)
+	var count int
 	for scanner.Scan() {
-		if directive, err := newDirective(scanner.Text(), state); err != nil {
-			return nil, err
+		count++
+		if err := scanner.Err(); err != nil {
+			return nil, fmt.Errorf("file scanning failed (line %d): %v", count, err)
+		}
+		text := scanner.Text()
+		if directive, err := newDirective(text, state); err != nil {
+			return nil, fmt.Errorf("failed to create new directive (line %d): %v", count, err)
 		} else if directive == nil {
 			continue
 		} else if err := directive.update(state); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to update parser state (line %d): %v", count, err)
 		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, err
 	}
 
 	return state.stages, nil

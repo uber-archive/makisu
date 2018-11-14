@@ -107,7 +107,7 @@ func NewDockerfileStep(
 		s, _ := d.(*dockerfile.WorkdirDirective)
 		step = NewWorkdirStep(s.Args, s.WorkingDir, s.Commit)
 	default:
-		err = fmt.Errorf("unsupported directive type: %v", t)
+		err = fmt.Errorf("unsupported directive type: %#v", t)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("convert directive: %s", err)
