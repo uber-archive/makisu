@@ -34,3 +34,6 @@ spec:
     emptyDir: {}
   - name: context
     emptyDir: {}
+  - name: registry-config
+    secret:
+      secretName: docker-registry-config

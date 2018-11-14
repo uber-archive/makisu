@@ -60,6 +60,7 @@ func (cmd *ClientApplication) Ready() error {
 func (cmd *ClientApplication) Build(context string) error {
 	defer func() {
 		if cmd.Exit {
+			log.Infof("Telling Makisu worker to exit")
 			if err := cmd.cli.Exit(); err != nil {
 				log.Errorf("Failed to tell worker to exit: %v", err)
 			}

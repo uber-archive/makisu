@@ -9,7 +9,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: makisu-worker
-        image: makisu-worker:8b35ffd
+        image: makisu-worker:01c5dc6
         imagePullPolicy: IfNotPresent
         args:
         - listen
@@ -21,16 +21,13 @@ spec:
         - name: context
           mountPath: /makisu-context
       - name: makisu-manager
-        image: makisu-client:8b35ffd
+        image: makisu-client:01c5dc6
         imagePullPolicy: IfNotPresent
-        command:
-        - bash
-        - /entrypoint.sh
+        args:
         - https://github.com/jpillora/chisel
         - --exit
         - build
-        - -t
-        - makisu-project/example-simple:0
+        - -t=makisu-project/example-simple:0
         volumeMounts:
         - name: socket
           mountPath: /makisu-socket
