@@ -6,7 +6,7 @@ spec:
   terminationGracePeriodSeconds: 0
   containers:
   - name: makisu-worker
-    image: makisu-worker:0dac2e8
+    image: makisu-worker:6246b77
     imagePullPolicy: IfNotPresent
     args:
     - listen
@@ -18,7 +18,7 @@ spec:
     - name: context
       mountPath: /makisu-context
   - name: makisu-manager
-    image: makisu-client:0dac2e8
+    image: makisu-client:6246b77
     imagePullPolicy: IfNotPresent
     command:
     - bash
@@ -29,6 +29,8 @@ spec:
       mountPath: /makisu-socket
     - name: context
       mountPath: /makisu-context
+    - name: github-token
+      mountPath: /makisu-secrets/github-token
   volumes:
   - name: socket
     emptyDir: {}
@@ -37,3 +39,6 @@ spec:
   - name: registry-config
     secret:
       secretName: docker-registry-config
+  - name: github-token
+    secret:
+      secretName: github-token
