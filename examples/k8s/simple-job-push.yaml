@@ -19,6 +19,8 @@ spec:
           mountPath: /makisu-socket
         - name: context
           mountPath: /makisu-context
+        - name: registry-config
+          mountPath: /makisu-secrets/registry-config
       - name: makisu-manager
         image: makisu-client:01c5dc6
         imagePullPolicy: IfNotPresent
@@ -27,7 +29,9 @@ spec:
         - makisu-client
         - --exit
         - build
-        - -t=makisu-project/example-simple:0
+        - --push=gcr.io
+        - -t=makisu-project/example-simple:01c5dc6
+        - --registry-config=/makisu-secrets/registry-config/registry.yaml
         - .
         volumeMounts:
         - name: socket
@@ -39,3 +43,6 @@ spec:
         emptyDir: {}
       - name: context
         emptyDir: {}
+      - name: registry-config
+        secret:
+          secretName: docker-registry-config

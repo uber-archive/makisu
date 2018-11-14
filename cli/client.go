@@ -3,10 +3,13 @@ package cli
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/apourchet/commander"
 	"github.com/uber/makisu/lib/client"
+	"github.com/uber/makisu/lib/fileio"
 	"github.com/uber/makisu/lib/log"
+	"github.com/uber/makisu/lib/utils"
 )
 
 // ClientApplication is the subcommand for interacting with a makisu worker listening on a unix socket.
@@ -57,15 +60,29 @@ func (cmd *ClientApplication) Ready() error {
 func (cmd *ClientApplication) Build(context string) error {
 	defer func() {
 		if cmd.Exit {
+			log.Infof("Telling Makisu worker to exit")
 			if err := cmd.cli.Exit(); err != nil {
 				log.Errorf("Failed to tell worker to exit: %v", err)
 			}
 		}
 	}()
+	if err := cmd.placeDockerfile(context); err != nil {
+		return fmt.Errorf("failed to move dockerfile into worker context: %v", err)
+	}
+	cmd.DockerfilePath = ".makisu.dockerfile"
 	flags, err := commander.New().GetFlagSet(cmd.BuildFlags, "makisu build")
 	if err != nil {
 		return err
 	}
 	args := flags.Stringify()
 	return cmd.cli.Build(args, context)
+}
+
+func (cmd *ClientApplication) placeDockerfile(context string) error {
+	uid, gid, err := utils.GetUIDGID()
+	if err != nil {
+		return fmt.Errorf("failed to get uid and gid for dockerfile move: %v", err)
+	}
+	dest := filepath.Join(context, ".makisu.dockerfile")
+	return fileio.NewCopier(nil).CopyFile(cmd.DockerfilePath, dest, uid, gid)
 }

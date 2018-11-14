@@ -125,7 +125,7 @@ func (cmd ListenFlags) build(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	log.Infof("Piping stdout to response")
+	log.Infof("Piping stderr to response")
 	oldLogger := log.GetLogger()
 	os.Stderr = newStderr
 	done := make(chan bool, 0)
@@ -139,20 +139,11 @@ func (cmd ListenFlags) build(rw http.ResponseWriter, req *http.Request) {
 
 	go func() {
 		defer func() { done <- true }()
-		reader := bufio.NewReader(r)
-		for {
-			line, _, err := reader.ReadLine()
-			if err == io.EOF {
-				return
-			} else if err != nil {
-				return
-			}
-			line = append(line, '\n')
-			rw.Write(line)
-			if f, ok := rw.(http.Flusher); ok {
-				f.Flush()
-			}
+		var fl http.Flusher
+		if f, ok := rw.(http.Flusher); ok {
+			fl = f
 		}
+		flushLines(r, rw, fl)
 	}()
 
 	rw.WriteHeader(http.StatusOK)
@@ -163,10 +154,28 @@ func (cmd ListenFlags) build(rw http.ResponseWriter, req *http.Request) {
 	app := NewBuildApplication()
 	app.AllowModifyFS = true
 	if err := commander.RunCLI(app, *args); err != nil {
-		log.Errorf("Failed to run CLI: %v", err)
+		log.With("build_code", "1").Errorf("Failed to run CLI: %v", err)
 		return
 	} else if err := app.Cleanup(); err != nil {
-		log.Errorf("Failed to cleanup: %v", err)
+		log.With("build_code", "1").Errorf("Failed to cleanup: %v", err)
 		return
+	}
+	log.With("build_code", "0").Infof("Build exited successfully")
+}
+
+func flushLines(r io.Reader, w io.Writer, fl http.Flusher) {
+	reader := bufio.NewReader(r)
+	for {
+		line, _, err := reader.ReadLine()
+		if err == io.EOF {
+			return
+		} else if err != nil {
+			return
+		}
+		line = append(line, '\n')
+		w.Write(line)
+		if fl != nil {
+			fl.Flush()
+		}
 	}
 }

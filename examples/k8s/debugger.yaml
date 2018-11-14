@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: imagebuilder
+spec:
+  terminationGracePeriodSeconds: 0
+  containers:
+  - name: makisu-worker
+    image: makisu-worker:0dac2e8
+    imagePullPolicy: IfNotPresent
+    args:
+    - listen
+    - -s
+    - /makisu-socket/makisu.sock
+    volumeMounts:
+    - name: socket
+      mountPath: /makisu-socket
+    - name: context
+      mountPath: /makisu-context
+  - name: makisu-manager
+    image: makisu-client:0dac2e8
+    imagePullPolicy: IfNotPresent
+    command:
+    - bash
+    - -c
+    - "while true; do sleep 10; done"
+    volumeMounts:
+    - name: socket
+      mountPath: /makisu-socket
+    - name: context
+      mountPath: /makisu-context
+  volumes:
+  - name: socket
+    emptyDir: {}
+  - name: context
+    emptyDir: {}
+  - name: registry-config
+    secret:
+      secretName: docker-registry-config
