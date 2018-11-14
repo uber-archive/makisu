@@ -53,3 +53,6 @@ func (e *parseError) Error() string {
 	return fmt.Sprintf("failed to parse %s directive with args '%s': %s",
 		strings.ToUpper(e.t), e.args, e.msg)
 }
+
+// String returns a formatted error string.
+func (e *parseError) String() string { return e.Error() }
