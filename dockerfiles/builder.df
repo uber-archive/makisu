@@ -1,8 +1,18 @@
 FROM golang:1.11 AS builder
 
-ADD . /go/src/github.com/uber/makisu
+RUN mkdir -p /go/src/github.com/uber/makisu
 WORKDIR /go/src/github.com/uber/makisu
-RUN make bins/makisu-builder
+
+ADD Makefile .
+RUN make ext-tools/Linux/dep
+
+ADD Gopkg.toml Gopkg.lock ./
+ADD .git ./.git
+ADD cli ./cli
+ADD cmd ./cmd
+ADD lib ./lib
+ADD assets ./assets
+RUN make bins
 
 RUN mkdir /makisu-internal
 RUN mkdir /makisu-internal/certs

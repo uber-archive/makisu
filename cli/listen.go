@@ -11,16 +11,31 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"time"
 
-	"github.com/uber/makisu/lib/log"
 	"github.com/apourchet/commander"
+	"github.com/uber/makisu/lib/log"
 	"go.uber.org/atomic"
 )
+
+// WorkerApplication contains the bindings for the `makisu-wokrer listen` command.
+type WorkerApplication struct {
+	ApplicationFlags `commander:"flagstruct"`
+	ListenFlags      `commander:"flagstruct=listen"`
+}
 
 // ListenFlags contains all of the flags for `makisu listen ...`
 type ListenFlags struct {
 	SocketPath string `commander:"flag=s,The absolute path of the unix socket that makisu will listen on"`
 	building   *atomic.Bool
+}
+
+// NewWorkerApplication returns a new worker application for the listen command.
+func NewWorkerApplication() *WorkerApplication {
+	return &WorkerApplication{
+		ApplicationFlags: defaultApplicationFlags(),
+		ListenFlags:      newListenFlags(),
+	}
 }
 
 func newListenFlags() ListenFlags {
@@ -40,6 +55,7 @@ type BuildRequest []string
 func (cmd ListenFlags) Listen() error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ready", cmd.ready)
+	mux.HandleFunc("/exit", cmd.exit)
 	mux.HandleFunc("/build", cmd.build)
 
 	if err := os.MkdirAll(path.Dir(cmd.SocketPath), os.ModePerm); err != nil {
@@ -67,6 +83,19 @@ func (cmd ListenFlags) ready(rw http.ResponseWriter, req *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
+func (cmd ListenFlags) exit(rw http.ResponseWriter, req *http.Request) {
+	if ok := cmd.building.CAS(false, true); !ok {
+		rw.WriteHeader(http.StatusConflict)
+		rw.Write([]byte("Already processing a request"))
+		return
+	}
+	rw.WriteHeader(http.StatusOK)
+	go func() {
+		time.Sleep(5 * time.Second)
+		os.Exit(0)
+	}()
+}
+
 func (cmd ListenFlags) build(rw http.ResponseWriter, req *http.Request) {
 	if ok := cmd.building.CAS(false, true); !ok {
 		rw.WriteHeader(http.StatusConflict)
@@ -87,6 +116,7 @@ func (cmd ListenFlags) build(rw http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(rw, "%s\n", err.Error())
 		return
 	}
+	log.Infof("Build arguments passed in: %s", string(body))
 
 	r, newStderr, err := os.Pipe()
 	if err != nil {
@@ -130,15 +160,13 @@ func (cmd ListenFlags) build(rw http.ResponseWriter, req *http.Request) {
 
 	commander := commander.New()
 	commander.FlagErrorHandling = flag.ContinueOnError
-	app, err := NewApplication()
-	if err != nil {
-		log.Errorf("%v", err)
-		return
-	} else if err := commander.RunCLI(app, *args); err != nil {
-		log.Errorf("%v", err)
+	app := NewBuildApplication()
+	app.AllowModifyFS = true
+	if err := commander.RunCLI(app, *args); err != nil {
+		log.Errorf("Failed to run CLI: %v", err)
 		return
 	} else if err := app.Cleanup(); err != nil {
-		log.Errorf("%v", err)
+		log.Errorf("Failed to cleanup: %v", err)
 		return
 	}
 }
