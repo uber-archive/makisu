@@ -6,4 +6,4 @@ repo=$1
 set -ex
 git clone "$repo" /tmp/repo
 
-makisu-client build "${@:2}" /tmp/repo
+makisu-client "${@:2}" /tmp/repo
