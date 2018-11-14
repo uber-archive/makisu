@@ -26,7 +26,7 @@ spec:
         command:
         - bash
         - /entrypoint.sh
-        - https://github.com/buildkite/golang-docker-example
+        - https://github.com/jpillora/chisel
         - --exit
         - build
         - -t
