@@ -8,7 +8,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: makisu-worker
-        image: makisu-worker:01c5dc6
+        image: makisu-worker:6246b77
         imagePullPolicy: IfNotPresent
         args:
         - listen
@@ -22,7 +22,7 @@ spec:
         - name: registry-config
           mountPath: /makisu-secrets/registry-config
       - name: makisu-manager
-        image: makisu-client:01c5dc6
+        image: makisu-client:6246b77
         imagePullPolicy: IfNotPresent
         workingDir: /tmp/examples/builds/simple
         command:
@@ -30,7 +30,7 @@ spec:
         - --exit
         - build
         - --push=gcr.io
-        - -t=makisu-project/example-simple:01c5dc6
+        - -t=makisu-project/example-simple:0
         - --registry-config=/makisu-secrets/registry-config/registry.yaml
         - .
         volumeMounts:
