@@ -75,7 +75,7 @@ env: integration/python/requirements.txt
 # Target to build the makisu docker image. The docker image contains the builder and worker
 # binaries.
 .PHONY: images publish
-image-%: bins
+image-%:
 	docker build -t $(REGISTRY)/makisu-$*:$(PACKAGE_VERSION) -f dockerfiles/$*.df .
 	docker tag $(REGISTRY)/makisu-$*:$(PACKAGE_VERSION) makisu-$*:$(PACKAGE_VERSION)
 
@@ -86,6 +86,14 @@ publish-%:
 images: image-builder image-worker image-client
 
 publish: publish-builder publish-worker publish-client
+
+release-%: images
+	docker tag $(REGISTRY)/makisu-builder:$(PACKAGE_VERSION) $(REGISTRY)/makisu-builder:$*
+	docker tag $(REGISTRY)/makisu-worker:$(PACKAGE_VERSION) $(REGISTRY)/makisu-worker:$*
+	docker tag $(REGISTRY)/makisu-client:$(PACKAGE_VERSION) $(REGISTRY)/makisu-client:$*
+	docker push $(REGISTRY)/makisu-builder:$*
+	docker push $(REGISTRY)/makisu-worker:$*
+	docker push $(REGISTRY)/makisu-client:$*
 
 # Targets to test the codebase.
 .PHONY: test unit-test integration cunit-test
