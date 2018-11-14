@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/uber/makisu/lib/fileio"
@@ -112,7 +113,12 @@ func (cli *MakisuClient) Build(flags []string, context string) error {
 		return err
 	}
 	log.Infof("Status code from Makisu worker: %v", resp.StatusCode)
-	return cli.readLines(resp.Body)
+	if err := cli.readLines(resp.Body); err != nil {
+		return err
+	} else if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("bad http status code from Makisu worker: %v", resp.StatusCode)
+	}
+	return nil
 }
 
 // Takes in the local path of the context, copies the files to a new directory inside the worker's
@@ -129,14 +135,14 @@ func (cli *MakisuClient) prepareContext(context string) (string, error) {
 	targetContext := fmt.Sprintf("context-%d", rand.Intn(10000))
 	targetPath := filepath.Join(cli.LocalSharedPath, targetContext)
 
-	currUID, currGID, err := utils.GetUIDGID()
+	uid, gid, err := utils.GetUIDGID()
 	if err != nil {
 		return "", err
 	}
 
 	log.Infof("Copying context to worker filesystem: %s => %s", context, targetPath)
 	start := time.Now()
-	if err := fileio.NewCopier(nil).CopyDir(context, targetPath, currUID, currGID); err != nil {
+	if err := fileio.NewCopier(nil).CopyDir(context, targetPath, uid, gid); err != nil {
 		return "", err
 	}
 	log.Infof("Finished copying over context in %v", time.Since(start))
@@ -144,15 +150,34 @@ func (cli *MakisuClient) prepareContext(context string) (string, error) {
 }
 
 func (cli *MakisuClient) readLines(body io.ReadCloser) error {
+	var buildCode int
 	defer body.Close()
 	reader := bufio.NewReader(body)
 	for {
 		line, _, err := reader.ReadLine()
 		if err == io.EOF {
-			return nil
+			break
 		} else if err != nil {
 			return fmt.Errorf("failed to read build body: %v", err)
 		}
 		cli.WorkerLog(string(line))
+		cli.maybeGetBuildCode(line, &buildCode)
+	}
+	if buildCode != 0 {
+		return fmt.Errorf("build code returned was non-zero: %d", buildCode)
+	}
+	return nil
+}
+
+func (cli *MakisuClient) maybeGetBuildCode(line []byte, code *int) {
+	into := map[string]interface{}{}
+	if err := json.Unmarshal(line, &into); err == nil {
+		if val, found := into["build_code"]; found {
+			if str, ok := val.(string); ok {
+				if i, err := strconv.Atoi(str); err == nil {
+					*code = i
+				}
+			}
+		}
 	}
 }
