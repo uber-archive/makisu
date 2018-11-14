@@ -46,7 +46,10 @@ func (cmd BuildFlags) getDockerfile(
 	}
 
 	dockerfile, err := dockerfile.ParseFile(string(contents), cmd.Arguments)
-	return dockerfile, err
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse dockerfile: %v", err)
+	}
+	return dockerfile, nil
 }
 
 // pushImage pushes the specified image to docker registry.

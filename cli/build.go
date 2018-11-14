@@ -47,12 +47,16 @@ type BuildFlags struct {
 }
 
 func newBuildFlags() BuildFlags {
+	storageDir := pathutils.DefaultStorageDir
+	if runtime.GOOS == "Darwin" {
+		storageDir = "/tmp/makisu-storage"
+	}
 	return BuildFlags{
 		DockerfilePath: "Dockerfile",
 		Arguments:      map[string]string{},
 
 		AllowModifyFS: false,
-		StorageDir:    pathutils.DefaultStorageDir,
+		StorageDir:    storageDir,
 
 		DockerHost:    utils.DefaultEnv("DOCKER_HOST", "unix:///var/run/docker.sock"),
 		DockerVersion: utils.DefaultEnv("DOCKER_VERSION", "1.21"),
@@ -162,7 +166,7 @@ func (cmd BuildFlags) Build(contextDir string) error {
 
 	// Remove image manifest if it already exists.
 	if err := cmd.cleanManifest(targetImageName, imageStore); err != nil {
-		return err
+		return fmt.Errorf("failed to clean manifest: %v", err)
 	}
 
 	// Read in and parse dockerfile.
@@ -172,7 +176,7 @@ func (cmd BuildFlags) Build(contextDir string) error {
 	}
 	dockerfile, err := cmd.getDockerfile(contextDir, imageStore)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get dockerfile: %v", err)
 	}
 
 	// Create BuildContext.
@@ -203,20 +207,20 @@ func (cmd BuildFlags) Build(contextDir string) error {
 		target := image.NewImageName(
 			registry, targetImageName.GetRepository(), targetImageName.GetTag())
 		if err := cmd.pushImage(target, imageStore); err != nil {
-			return err
+			return fmt.Errorf("failed to push image: %v", err)
 		}
 	}
 
 	if cmd.Destination != "" {
 		if err := cmd.saveImage(targetImageName, imageStore); err != nil {
-			return err
+			return fmt.Errorf("failed to save image: %v", err)
 		}
 	}
 
 	// Load image to local docker daemon.
 	if cmd.DoLoad {
 		if err := cmd.loadImage(targetImageName, imageStore); err != nil {
-			return err
+			return fmt.Errorf("failed to load image: %v", err)
 		}
 	}
 
