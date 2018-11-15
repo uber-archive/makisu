@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package archive
 
 import (
@@ -98,7 +97,7 @@ func (c *CopyOperation) Execute() error {
 			if err := copier.CopyDir(src, c.dst, c.uid, c.gid); err != nil {
 				return fmt.Errorf("copy dir %s to dir %s: %s", src, c.dst, err)
 			}
-		} else if strings.HasSuffix(c.dst, "/") || c.dst == "." || c.dst == ".." {
+		} else if isDirFormat(c.dst) {
 			// File to dir
 			targetFilePath := filepath.Join(c.dst, filepath.Base(src))
 			if err := copier.CopyFile(src, targetFilePath, c.uid, c.gid); err != nil {
@@ -164,7 +163,7 @@ func resolveDestination(workDir, dst string) string {
 	}
 	absDst := filepath.Join(workDir, dst)
 	// Preserve trailing "/".
-	if strings.HasSuffix(dst, "/") {
+	if isDirFormat(dst) {
 		absDst += "/"
 	}
 	return absDst
@@ -173,10 +172,14 @@ func resolveDestination(workDir, dst string) string {
 func checkCopyParams(srcs []string, workDir, dst string) error {
 	if len(srcs) == 0 {
 		return fmt.Errorf("srcs cannot be empty")
-	} else if len(srcs) > 1 && !strings.HasSuffix(dst, "/") {
+	} else if len(srcs) > 1 && !isDirFormat(dst) {
 		return fmt.Errorf("tarring multiple sources, destination must end with \"/\"")
 	} else if !filepath.IsAbs(dst) && !filepath.IsAbs(workDir) {
 		return fmt.Errorf("dst is not absolute path, must specify absolute working directory")
 	}
 	return nil
+}
+
+func isDirFormat(dst string) bool {
+	return strings.HasSuffix(dst, "/") || dst == "." || dst == ".."
 }
