@@ -9,13 +9,13 @@ RUN make ext-tools/Linux/dep
 ADD Gopkg.toml Gopkg.lock ./
 ADD .git ./.git
 ADD cli ./cli
-ADD bin/makisu-builder ./makisu-builder
-ADD bin/makisu-worker ./makisu-worker
-ADD bin/makisu-client ./makisu-client
+ADD bin/makisu-builder ./bin/makisu-builder
+ADD bin/makisu-worker ./bin/makisu-worker
+ADD bin/makisu-client ./bin/makisu-client
 ADD lib ./lib
 RUN make bins
 
 FROM scratch
-COPY --from=builder /go/src/github.com/uber/makisu/bin/makisu-worker/makisu-client /makisu-internal/makisu-worker
+COPY --from=builder /go/src/github.com/uber/makisu/bin/makisu-worker/makisu-worker /makisu-internal/makisu-worker
 ADD ./assets/cacerts.pem /makisu-internal/certs/cacerts.pem
 ENTRYPOINT ["/makisu-internal/makisu-worker"]
