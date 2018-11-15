@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package dockerfile
 
 // FromDirectiveFixture returns a FromDirective for testing purposes.

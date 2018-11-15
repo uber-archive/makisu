@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package base
 
 // DefaultShardIDLength is the number of bytes of file digest to be used for shard ID.

@@ -12,17 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package cache_test
 
 import (
 	"testing"
 
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/require"
 	"github.com/uber/makisu/lib/cache"
 	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/registry"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNoopCache(t *testing.T) {
