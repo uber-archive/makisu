@@ -125,24 +125,6 @@ type fileMapTestBundle struct {
 	fm    FileMap
 }
 
-func fileMapSimpleFixture() (bundle *fileMapTestBundle, run func()) {
-	cleanup := &Cleanup{}
-	defer cleanup.Recover()
-
-	b, clean := fileEntryLocalFixture()
-	cleanup.Add(clean)
-
-	fm := NewSimpleFileMap()
-
-	return &fileMapTestBundle{
-		state1: b.state1,
-		state2: b.state2,
-		state3: b.state3,
-		entry:  b.entry,
-		fm:     fm,
-	}, cleanup.Run
-}
-
 func fileMapLRUFixture() (bundle *fileMapTestBundle, run func()) {
 	cleanup := &Cleanup{}
 	defer cleanup.Recover()
@@ -201,7 +183,9 @@ func fileStoreLRUFixture(size int) (*fileStoreTestBundle, func()) {
 	})
 }
 
-func fileStoreFixture(createStore func(clk clock.Clock) *localFileStore) (*fileStoreTestBundle, func()) {
+func fileStoreFixture(
+	createStore func(clk clock.Clock) *localFileStore) (*fileStoreTestBundle, func()) {
+
 	clk := clock.NewMock()
 	store := createStore(clk)
 	cleanup := &Cleanup{}
