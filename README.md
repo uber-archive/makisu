@@ -145,6 +145,26 @@ spec:
 Now all you need to do is pass in the `--redis-cache-addr=redis:6379` flag, and you should see significant improvements in your build speeds just like
 you would if you repeated the same builds locally.
 
+### Explicit caching
+
+Makisu lets you decide which layers you want to cache during your build process. This helps shave some precious minutes off your build process because we
+no longer need to capture the filesystem state, or push layers as often. You will need to make sure to pass in `--commit=explicit` to the build command. 
+In this example we will tell Makisu to only produce a cache layer after an expensive build step:
+```Dockerfile
+FROM node:8.1.3
+
+ADD package.json package.json
+ADD pre-build.sh
+
+# A bunch of pre install steps here
+...
+...
+...
+
+# This is the expensive step that we want to cache 
+RUN npm install #!COMMIT
+```
+
 ## Building Makisu
 
 To build a docker image that can perform the builds (makisu-builder/makisu-worker) binary:
