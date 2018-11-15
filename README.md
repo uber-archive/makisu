@@ -177,7 +177,7 @@ make image-builder image-worker
 
 To get the makisu-builder binary locally and build _some_ images with no need for a containerizer:
 ```
-go get github.com/uber/makisu/cmd/makisu-builder
+go get github.com/uber/makisu/makisu-builder
 ```
 
 ## Local non-docker builds

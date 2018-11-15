@@ -42,10 +42,10 @@ bins: bins/makisu-builder bins/makisu-worker bins/makisu-client
 
 bins/%: $(ALL_SRC) vendor
 	@mkdir -p bins
-	CGO_ENABLED=0 GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ cmd/$(notdir $@)/*.go
+	CGO_ENABLED=0 GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ $(notdir $@)/*.go
 
 bins/makisu-client: $(ALL_SRC) vendor
-	GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ cmd/$(notdir $@)/*.go
+	GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ $(notdir $@)/*.go
 
 cbins:
 	docker run -i --rm -v $(PWD):/go/src/$(PACKAGE_NAME) \
