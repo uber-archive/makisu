@@ -12,8 +12,8 @@ REGISTRY1_PORT = 5002
 REGISTRY2_PORT = 5003
 REGISTRY1_CONTAINER = "test-registry1"
 REGISTRY2_CONTAINER = "test-registry2"
-REGISTRY1_CONFIG_PATH = os.path.join(os.getcwd(), "integration/python/config/registry1.yaml")
-REGISTRY2_CONFIG_PATH = os.path.join(os.getcwd(), "integration/python/config/registry2.yaml")
+REGISTRY1_CONFIG_PATH = os.path.join(os.getcwd(), "test/python/config/registry1.yaml")
+REGISTRY2_CONFIG_PATH = os.path.join(os.getcwd(), "test/python/config/registry2.yaml")
 
 
 class Registry(object):

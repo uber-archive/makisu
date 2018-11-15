@@ -85,9 +85,9 @@ mocks: ext-tools
 	mkdir -p mocks/net/http
 	$(EXT_TOOLS_DIR)/mockgen -destination=mocks/net/http/mockhttp.go -package=mockhttp net/http RoundTripper
 
-env: integration/python/requirements.txt
+env: test/python/requirements.txt
 	[ -d env ] || virtualenv --setuptools env
-	./env/bin/pip install -q -r integration/python/requirements.txt
+	./env/bin/pip install -q -r test/python/requirements.txt
 
 
 
@@ -123,7 +123,7 @@ cunit-test: $(ALL_SRC) vendor
 		-c "make ext-tools unit-test"
 
 integration: bins env builder-image
-	PACKAGE_VERSION=$(PACKAGE_VERSION) ./env/bin/py.test --maxfail=1 --durations=6 --timeout=300 -vv integration/python
+	PACKAGE_VERSION=$(PACKAGE_VERSION) ./env/bin/py.test --maxfail=1 --durations=6 --timeout=300 -vv test/python
 
 
 

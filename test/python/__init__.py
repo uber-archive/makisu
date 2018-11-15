@@ -1,7 +1,7 @@
 import os
 import shutil
 
-TEST_DIR = os.path.join(os.getcwd(), "integration/python/.tmp")
+TEST_DIR = os.path.join(os.getcwd(), "test/python/.tmp")
 TEST_ROOT = "/tmp/makisu-test-integration"
 
 if not os.path.exists(TEST_DIR):
