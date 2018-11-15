@@ -24,18 +24,14 @@ To get the makisu-builder binary locally:
 ```
 go get github.com/uber/makisu/makisu-builder
 ```
-If your dockerfile doesn't have RUN, you can use makisu-builder to build it without chroot or docker daemon.
-To build a simple docker image and save it as a tar file:
+If your dockerfile doesn't have RUN, you can use makisu-builder to build it without chroot or docker daemon:
 ```
 makisu-builder build -t ${TAG} -dest ${TAR_PATH} ${CONTEXT}
-```
-To build a simple docker image, and load into local docker daemon:
-```
-makisu-builder build -t ${TAG} -load ${CONTEXT}
 ```
 
 ## Makisu anywhere
 
+To build dockerfiles that contain RUN, makisu still need to run in a container.
 The following snippet can be placed inside your `~/.bashrc` or `~/.zshrc`:
 ```shell
 function makisu_build() {
@@ -57,7 +53,7 @@ $ makisu_build -t myimage .
 
 ## Makisu on Kubernetes
 
-Makisu makes it super easy to build images from a github repository inside Kubernetes. The overall design is that a single Pod (or Job) gets
+Makisu makes it easy to build images from a github repository inside Kubernetes. The overall design is that a single Pod (or Job) gets
 created with a builder/worker container that will perform the build, and a sidecar container that will clone the repo and use the 
 `makisu-client` to trigger the build in the sidecar container.
 
