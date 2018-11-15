@@ -43,7 +43,7 @@ func TestNewMaintainerDirective(t *testing.T) {
 				require.NoError(err)
 				expose, ok := directive.(*MaintainerDirective)
 				require.True(ok)
-				require.Equal(test.author, expose.author)
+				require.Equal(test.author, expose.Author)
 			} else {
 				require.Error(err)
 			}
