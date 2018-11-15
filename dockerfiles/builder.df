@@ -13,15 +13,9 @@ ADD makisu-builder ./makisu-builder
 ADD makisu-worker ./makisu-worker
 ADD makisu-client ./makisu-client
 ADD lib ./lib
-ADD assets ./assets
 RUN make bins
 
-RUN mkdir /makisu-internal
-RUN mkdir /makisu-internal/certs
-
-RUN cp bins/makisu-builder /makisu-internal/makisu-builder
-RUN cp assets/cacerts.pem /makisu-internal/certs/cacerts.pem
-
-FROM scratch AS runner
-COPY --from=builder /makisu-internal /makisu-internal
+FROM scratch
+COPY --from=builder /go/src/github.com/uber/makisu/bins/makisu-builder /makisu-internal/makisu-builder
+ADD ./assets/cacerts.pem /makisu-internal/certs/cacerts.pem
 ENTRYPOINT ["/makisu-internal/makisu-builder"]
