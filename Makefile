@@ -38,14 +38,14 @@ REGISTRY ?= gcr.io/makisu-project
 
 ### Targets to compile the makisu binaries.
 .PHONY: cbins
-bins: bins/makisu-builder bins/makisu-worker bins/makisu-client
+bins: bin/makisu-builder bin/makisu-worker bin/makisu-client
 
-bins/%: $(ALL_SRC) vendor
-	@mkdir -p bins
-	CGO_ENABLED=0 GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ $(notdir $@)/*.go
+bin/%: $(ALL_SRC) vendor
+	@echo $(dir $@)
+	CGO_ENABLED=0 GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ $(dir $@)/*.go
 
-bins/makisu-client: $(ALL_SRC) vendor
-	GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ $(notdir $@)/*.go
+bin/makisu-client: $(ALL_SRC) vendor
+	GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ $(dir $@)/*.go
 
 cbins:
 	docker run -i --rm -v $(PWD):/go/src/$(PACKAGE_NAME) \

@@ -22,7 +22,7 @@ make builder-image worker-image
 
 To get the makisu-builder binary locally:
 ```
-go get github.com/uber/makisu/makisu-builder
+go get github.com/uber/makisu/bin/makisu-builder
 ```
 If your dockerfile doesn't have RUN, you can use makisu-builder to build it without chroot or docker daemon:
 ```
