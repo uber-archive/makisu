@@ -11,8 +11,27 @@ lots of docker images directly from a containerized environment such as Kubernet
 Makisu has been in use at Uber for about a year, building over 1.5 thousand images every day, ranging 4 
 different languages.
 
+## Building Makisu
+
+To build a docker image that can perform builds (makisu-builder/makisu-worker):
+```
+make image-builder image-worker
+```
+
+## Building Makisu binary and build simple images
+
+To get the makisu-builder binary locally:
+```
+go get github.com/uber/makisu/makisu-builder
+```
+If your dockerfile doesn't have RUN, you can use makisu-builder to build it without chroot or docker daemon:
+```
+makisu-builder build -t ${TAG} -dest ${TAR_PATH} ${CONTEXT}
+```
+
 ## Makisu anywhere
 
+To build dockerfiles that contain RUN, makisu still need to run in a container.
 The following snippet can be placed inside your `~/.bashrc` or `~/.zshrc`:
 ```shell
 function makisu_build() {
@@ -34,7 +53,7 @@ $ makisu_build -t myimage .
 
 ## Makisu on Kubernetes
 
-Makisu makes it super easy to build images from a github repository inside Kubernetes. The overall design is that a single Pod (or Job) gets
+Makisu makes it easy to build images from a github repository inside Kubernetes. The overall design is that a single Pod (or Job) gets
 created with a builder/worker container that will perform the build, and a sidecar container that will clone the repo and use the 
 `makisu-client` to trigger the build in the sidecar container.
 
@@ -166,34 +185,6 @@ ADD pre-build.sh
 
 # This is the expensive step that we want to cache 
 RUN npm install #!COMMIT
-```
-
-## Building Makisu
-
-To build a docker image that can perform the builds (makisu-builder/makisu-worker) binary:
-```
-make image-builder image-worker
-```
-
-To get the makisu-builder binary locally and build _some_ images with no need for a containerizer:
-```
-go get github.com/uber/makisu/makisu-builder
-```
-
-## Local non-docker builds
-
-If your dockerfile doesn't have RUN, you can use makisu-builder to build it without chroot, docker daemon or other containerizer.
-To build a simple docker image and save it as a tar file:
-```
-makisu-builder build -t ${TAG} -dest ${TAR_PATH} ${CONTEXT}
-```
-To build a simple docker image and load into local docker daemon:
-```
-makisu-builder build -t ${TAG} -load ${CONTEXT}
-```
-To build a simple docker image and push to a registry:
-```
-makisu-builder build -t ${TAG} -push ${REGISTRY} ${CONTEXT}
 ```
 
 ## Configuring Docker Registry
