@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package concurrency_test
 
 import (
@@ -21,8 +20,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/uber/makisu/lib/concurrency"
 	"github.com/stretchr/testify/require"
+	"github.com/uber/makisu/lib/concurrency"
 )
 
 func TestWorkerPool(t *testing.T) {

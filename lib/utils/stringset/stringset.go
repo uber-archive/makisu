@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package stringset
 
 // Set is a nifty little wrapper for common set operations on a map. Because it

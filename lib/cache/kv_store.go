@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package cache
 
 // KVStore is the interface that the CacheManager relies on to make the mapping between cacheID
