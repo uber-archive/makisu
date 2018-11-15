@@ -17,7 +17,7 @@ package dockerfile
 // MaintainerDirective represents the "MAINTAINER" dockerfile command.
 type MaintainerDirective struct {
 	*baseDirective
-	author string
+	Author string
 }
 
 // Formats:
