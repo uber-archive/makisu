@@ -108,7 +108,8 @@ def makisu_build_image(new_image, registry, context_dir, storage_dir,
         '-storage', storage_dir,
         '-push', registry,
         '-build-args', docker_args_str,
-        '-modifyfs=true'
+        '-modifyfs=true',
+        '-commit=explicit'
     ]
 
     if load:
