@@ -243,5 +243,8 @@ Example:
           enabled: true
       basic:
         username: _json_key
-        password: //password//
+        password: |-
+            {
+                // json here
+            }
 ```
