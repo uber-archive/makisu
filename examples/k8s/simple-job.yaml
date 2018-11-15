@@ -8,7 +8,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: makisu-worker
-        image: makisu-worker:01c5dc6
+        image: gcr.io/makisu-project/makisu-worker:0.0.2
         imagePullPolicy: IfNotPresent
         args:
         - listen
@@ -20,14 +20,14 @@ spec:
         - name: context
           mountPath: /makisu-context
       - name: makisu-manager
-        image: makisu-client:01c5dc6
+        image: gcr.io/makisu-project/makisu-client:0.0.2
         imagePullPolicy: IfNotPresent
         workingDir: /tmp/examples/builds/simple
         command:
         - makisu-client
         - --exit
         - build
-        - -t=makisu-project/example-simple:0
+        - -t=makisu-project/example-simple:0.0.2
         - .
         volumeMounts:
         - name: socket
