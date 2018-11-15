@@ -15,7 +15,7 @@ different languages.
 
 To build a docker image that can perform builds (makisu-builder/makisu-worker):
 ```
-make image-builder image-worker
+make builder-image worker-image
 ```
 
 ## Building Makisu binary and build simple images

@@ -93,7 +93,7 @@ env: integration/python/requirements.txt
 
 ### Target to build the makisu docker image. The docker image contains the builder and worker binaries.
 .PHONY: images publish
-image-%:
+%-image:
 	docker build -t $(REGISTRY)/makisu-$*:$(PACKAGE_VERSION) -f dockerfiles/$*.df .
 	docker tag $(REGISTRY)/makisu-$*:$(PACKAGE_VERSION) makisu-$*:$(PACKAGE_VERSION)
 
@@ -101,7 +101,7 @@ publish-%:
 	$(MAKE) image-$*
 	docker push $(REGISTRY)/makisu-$*:$(PACKAGE_VERSION) 
 
-images: image-builder image-worker image-client
+images: builder-image worker-image client-image
 
 publish: publish-builder publish-worker publish-client
 
