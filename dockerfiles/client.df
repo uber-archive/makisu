@@ -13,15 +13,12 @@ ADD makisu-builder ./makisu-builder
 ADD makisu-worker ./makisu-worker
 ADD makisu-client ./makisu-client
 ADD lib ./lib
-ADD assets ./assets
 RUN make bins
-
-RUN cp bins/makisu-client /makisu-client
 
 FROM debian:9
 
 RUN apt-get update && apt-get install -y git
-COPY --from=builder /makisu-client /usr/local/bin/makisu-client
+COPY --from=builder /go/src/github.com/uber/makisu/bins/makisu-client /usr/local/bin/makisu-client
 ADD ./scripts/build-git.sh /entrypoint.sh
 ADD ./examples/builds /tmp/examples/builds
 

@@ -149,8 +149,9 @@ func (n *buildNode) applyLayer(digestPair *image.DigestPair, modifyfs bool) erro
 // pushCacheLayers pushs cached layers for this node's digest pair(s).
 func (n *buildNode) pushCacheLayers(cacheMgr cache.Manager) error {
 	digestPair := n.digestPairs[0]
-	log.Infof("* Committed gzipped layer %s (%d bytes), pushing with cache ID %s *",
-		digestPair.GzipDescriptor.Digest, digestPair.GzipDescriptor.Size, n.CacheID())
+	log.Infof("* Committed gzipped layer %s (%d bytes)",
+		digestPair.GzipDescriptor.Digest, digestPair.GzipDescriptor.Size)
+	log.Infof("* Pushing with cache ID %s", n.CacheID())
 	return cacheMgr.PushCache(n.CacheID(), digestPair)
 }
 
