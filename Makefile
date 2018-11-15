@@ -37,15 +37,13 @@ REGISTRY ?= gcr.io/makisu-project
 
 
 ### Targets to compile the makisu binaries.
-.PHONY: cbins
-bins: bin/makisu-builder bin/makisu-worker bin/makisu-client
+.PHONY: cbins bins
+bins: bin/makisu-builder/makisu-builder bin/makisu-worker/makisu-worker bin/makisu-client/makisu-client
 
 bin/%: $(ALL_SRC) vendor
 	@echo $(dir $@)
-	CGO_ENABLED=0 GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ $(dir $@)/*.go
-
-bin/makisu-client: $(ALL_SRC) vendor
-	GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ $(dir $@)/*.go
+	@echo $(notdir $@)
+	CGO_ENABLED=0 GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ $(dir $@)*.go
 
 cbins:
 	docker run -i --rm -v $(PWD):/go/src/$(PACKAGE_NAME) \
@@ -55,6 +53,7 @@ cbins:
 		golang:$(GO_VERSION) \
 		-c "make bins"
 
+$(ALL_SRC): ;
 
 
 ### Targets to install the dependencies.
@@ -131,4 +130,7 @@ integration: bins env builder-image
 .PHONY: clean
 clean:
 	git clean -fd
-	-rm -rf bins vendor ext-tools mocks env
+	-rm -rf vendor ext-tools mocks env
+	-rm bin/makisu-builder/makisu-builder
+	-rm bin/makisu-worker/makisu-worker
+	-rm bin/makisu-client/makisu-client
