@@ -24,16 +24,12 @@ type FileStore interface {
 }
 
 // localFileStore manages all agent files on local disk.
-// Read/Write operation should access data in this order:
-//   map load -> file lock -> verify not deleted -> map load/store -> file/metadata change -> file unlock
-// Delete opereration should access data in this order:
-//   map load -> file lock -> verify not deleted -> file/metadata change -> delete from map -> file unlock
 type localFileStore struct {
-	fileEntryFactory FileEntryFactory // Used for dependency injection.
-	fileMap          FileMap          // Used for dependency injection.
+	fileEntryFactory FileEntryFactory
+	fileMap          FileMap
 }
 
-// NewLocalFileStore initializes and returns a new FileStore. It allows dependency injection.
+// NewLocalFileStore initializes and returns a new FileStore.
 func NewLocalFileStore(clk clock.Clock) FileStore {
 	m := NewLATFileMap(clk)
 	return &localFileStore{
@@ -43,7 +39,8 @@ func NewLocalFileStore(clk clock.Clock) FileStore {
 }
 
 // NewCASFileStore initializes and returns a new Content-Addressable FileStore.
-// It uses the first few bytes of file digest (which is also used as file name) as shard ID.
+// It uses the first few bytes of file digest (which is also used as file name)
+// as shard ID.
 // For every byte, one more level of directories will be created.
 func NewCASFileStore(clk clock.Clock) FileStore {
 	m := NewLATFileMap(clk)
