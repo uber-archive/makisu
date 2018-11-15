@@ -8,6 +8,9 @@ lots of docker images directly from a containerized environment such as Kubernet
 * Requires no elevated privileges, making the build process portable.
 * Is Docker compatible. Our dockerfile parser is opinionated in some scenarios, more details can be found [here](lib/parser/dockerfile/README.md).
 
+Makisu has been in use at Uber for about a year, building over 1.5 thousand images every day, ranging 4 
+different languages.
+
 ## Makisu anywhere
 
 The following snippet can be placed inside your `~/.bashrc` or `~/.zshrc`:
@@ -248,3 +251,21 @@ Example:
                 // json here
             }
 ```
+
+## Comparison with similar tools
+Bazel:
+We were inspired by the Bazel project in early 2017. It is one of the first few tools that could build Docker compatible images without using Docker or 
+any form of containerizer. It works very well with a subset of Docker build commands provided a Bazel build file. It does not have the support for `RUN` 
+which makes it hard to support the complexity and variety of Dockerfiles from our internal use cases.
+
+Kaniko:
+Kaniko provides good compatibility with Docker and executes build commands in userspace without the need for Docker daemon. It requires a containerized 
+environment to perform the build. It has a tight integration with Kubernetes and uses Google Cloud Credential to manage secrets. Kaniko is a competent 
+tool for individual developers who are using Kubernetes already. Makisu has minimum dependency: it requires a container at build time only when the provided 
+Dockerfile contains `RUN`. To support Uber’s build volume and speed requirement, Makisu has more flexible caching features and is optimized in performance.
+
+BuildKit:
+BuildKit is one of the build tools that depends on runc/containerd. While Makisu and most other tools execute Dockefile in order, BuildKit supports 
+parallel stage executions. However, it still needs privileges.
+
+We are happy that more similar tools are created and open sourced to solve the issues our team has been seeing and we welcome collaborations from the community!
