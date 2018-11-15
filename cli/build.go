@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package cli
 
 import (
@@ -81,7 +80,7 @@ func newBuildFlags() BuildFlags {
 		RedisCacheTTL:       7 * 24 * 3600,
 		CompressionLevelStr: "default",
 
-		Commit: "explicit",
+		Commit: "implicit",
 	}
 }
 
