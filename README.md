@@ -136,7 +136,7 @@ Once you have your job spec a simple `kubectl create -f job.yaml` will start you
 ### Distributed cache
 
 If you want to use the distributed caching feature of Makisu, the builder needs to be able to connect to a "cache id store". In essence this lets us
-map each line of a dockerfile to a tentative layer SHA that we will look for in your docker registry. In Kubernetes, spinning up a redis is dead simple:
+map each line of a dockerfile to a tentative layer SHA that we will look for in your docker registry. In Kubernetes, spinning up a redis is simple:
 ```yaml
 # redis.yaml
 ---
