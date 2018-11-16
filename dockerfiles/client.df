@@ -9,16 +9,16 @@ RUN make ext-tools/Linux/dep
 ADD Gopkg.toml Gopkg.lock ./
 ADD .git ./.git
 ADD cli ./cli
-ADD makisu-builder ./makisu-builder
-ADD makisu-worker ./makisu-worker
-ADD makisu-client ./makisu-client
+ADD bin/makisu-builder ./bin/makisu-builder
+ADD bin/makisu-worker ./bin/makisu-worker
+ADD bin/makisu-client ./bin/makisu-client
 ADD lib ./lib
 RUN make bins
 
 FROM debian:9
 
 RUN apt-get update && apt-get install -y git
-COPY --from=builder /go/src/github.com/uber/makisu/bins/makisu-client /usr/local/bin/makisu-client
+COPY --from=builder /go/src/github.com/uber/makisu/bin/makisu-client/makisu-client /usr/local/bin/makisu-client
 ADD ./scripts/build-git.sh /entrypoint.sh
 ADD ./examples/builds /tmp/examples/builds
 

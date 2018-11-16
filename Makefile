@@ -37,15 +37,17 @@ REGISTRY ?= gcr.io/makisu-project
 
 
 ### Targets to compile the makisu binaries.
-.PHONY: cbins
-bins: bins/makisu-builder bins/makisu-worker bins/makisu-client
+.PHONY: cbins bins
+bins: bin/makisu-builder/makisu-builder bin/makisu-worker/makisu-worker bin/makisu-client/makisu-client
 
-bins/%: $(ALL_SRC) vendor
-	@mkdir -p bins
-	CGO_ENABLED=0 GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ $(notdir $@)/*.go
+bin/%: $(ALL_SRC) vendor
+	CGO_ENABLED=0 GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ $(dir $@)*.go
 
-bins/makisu-client: $(ALL_SRC) vendor
-	GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ $(notdir $@)/*.go
+# We need to have a separate make target for this because it depends on the os/user
+# package, which cannot be compiled with CGO_ENABLED=0
+# Error message: user: Current not implemented on linux/amd64
+bin/makisu-client/makisu-client: $(ALL_SRC) vendor
+	GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ $(dir $@)*.go
 
 cbins:
 	docker run -i --rm -v $(PWD):/go/src/$(PACKAGE_NAME) \
@@ -55,6 +57,7 @@ cbins:
 		golang:$(GO_VERSION) \
 		-c "make bins"
 
+$(ALL_SRC): ;
 
 
 ### Targets to install the dependencies.
@@ -131,4 +134,7 @@ integration: bins env builder-image
 .PHONY: clean
 clean:
 	git clean -fd
-	-rm -rf bins vendor ext-tools mocks env
+	-rm -rf vendor ext-tools mocks env
+	-rm bin/makisu-builder/makisu-builder
+	-rm bin/makisu-worker/makisu-worker
+	-rm bin/makisu-client/makisu-client

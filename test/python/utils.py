@@ -72,7 +72,7 @@ def makisu_run_cmd(volumes, args):
 
     # Add volumes to docker command.
     volumes['/var/run/docker.sock'] = '/docker.sock'  # Mount docker socket
-    volumes[os.path.join(os.getcwd(), 'bins', 'makisu-builder')] = '/makisu-internal/makisu-builder'  # Mount makisu-builder binary
+    volumes[os.path.join(os.getcwd(), 'bin', 'makisu-builder', 'makisu-builder')] = '/makisu-internal/makisu-builder'  # Mount makisu-builder binary
     for k, v in volumes.iteritems():
         cmd.extend(['-v', '{path_outside}:{path_inside}'.format(path_outside=k, path_inside=v)])
 
