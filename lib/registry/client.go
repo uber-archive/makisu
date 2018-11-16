@@ -191,7 +191,7 @@ func (c DockerRegistryClient) PullManifest(tag string) (*image.DistributionManif
 		httputil.SendClient(c.client),
 		opt,
 		httputil.SendTimeout(c.config.Timeout),
-		httputil.SendRetry(httputil.RetryMax(c.config.Retries)),
+		c.config.sendRetry(),
 		httputil.SendAcceptedCodes(http.StatusOK, http.StatusNotFound, http.StatusBadRequest),
 		httputil.SendHeaders(map[string]string{"Accept": image.MediaTypeManifest}))
 	if err != nil {
@@ -239,7 +239,7 @@ func (c DockerRegistryClient) PushManifest(tag string, manifest *image.Distribut
 		httputil.SendClient(c.client),
 		opt,
 		httputil.SendTimeout(c.config.Timeout),
-		httputil.SendRetry(httputil.RetryMax(c.config.Retries)),
+		c.config.sendRetry(),
 		httputil.SendAcceptedCodes(http.StatusOK, http.StatusCreated),
 		httputil.SendHeaders(headers),
 		httputil.SendBody(bytes.NewReader(payload)))
@@ -272,7 +272,7 @@ func (c DockerRegistryClient) PullLayer(layerDigest image.Digest) (os.FileInfo, 
 		httputil.SendClient(c.client),
 		opt,
 		httputil.SendTimeout(c.config.Timeout),
-		httputil.SendRetry(httputil.RetryMax(c.config.Retries)))
+		c.config.sendRetry())
 	if err != nil {
 		return nil, fmt.Errorf("send pull layer request %s: %s", URL, err)
 	}
@@ -323,7 +323,7 @@ func (c DockerRegistryClient) PushLayer(layerDigest image.Digest) error {
 		httputil.SendClient(c.client),
 		opt,
 		httputil.SendTimeout(c.config.Timeout),
-		httputil.SendRetry(httputil.RetryMax(c.config.Retries)),
+		c.config.sendRetry(),
 		httputil.SendAcceptedCodes(http.StatusAccepted),
 		httputil.SendHeaders(map[string]string{"Host": c.registry}))
 	if err != nil {
@@ -369,7 +369,7 @@ func (c DockerRegistryClient) manifestExists(tag string) (bool, error) {
 		httputil.SendClient(c.client),
 		opt,
 		httputil.SendTimeout(c.config.Timeout),
-		httputil.SendRetry(httputil.RetryMax(c.config.Retries)),
+		c.config.sendRetry(),
 		httputil.SendAcceptedCodes(http.StatusOK, http.StatusNotFound, http.StatusBadRequest))
 	if err != nil {
 		return false, fmt.Errorf("check manifest exists: %s", err)
@@ -396,7 +396,7 @@ func (c DockerRegistryClient) layerExists(digest image.Digest) (bool, error) {
 		httputil.SendClient(c.client),
 		opt,
 		httputil.SendTimeout(c.config.Timeout),
-		httputil.SendRetry(httputil.RetryMax(c.config.Retries)),
+		c.config.sendRetry(),
 		httputil.SendAcceptedCodes(http.StatusOK, http.StatusNotFound))
 	if err != nil {
 		return false, fmt.Errorf("check manifest exists: %s", err)
@@ -456,7 +456,7 @@ func (c DockerRegistryClient) pushOneLayerChunk(location string, start, endInclu
 		httputil.SendClient(c.client),
 		opt,
 		httputil.SendTimeout(c.config.Timeout),
-		httputil.SendRetry(httputil.RetryMax(c.config.Retries)),
+		c.config.sendRetry(),
 		// Docker registry returns 202 but gcr returns 204 on success.
 		httputil.SendAcceptedCodes(http.StatusAccepted, http.StatusNoContent),
 		httputil.SendHeaders(headers),
@@ -490,7 +490,7 @@ func (c DockerRegistryClient) commitLayer(location string) error {
 		httputil.SendClient(c.client),
 		opt,
 		httputil.SendTimeout(c.config.Timeout),
-		httputil.SendRetry(httputil.RetryMax(c.config.Retries)),
+		c.config.sendRetry(),
 		// Docker registry returns 201 but gcr returns 204 on success.
 		httputil.SendAcceptedCodes(http.StatusCreated, http.StatusNoContent),
 		httputil.SendHeaders(headers))
