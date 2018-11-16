@@ -62,7 +62,7 @@ type BuildFlags struct {
 
 func newBuildFlags() BuildFlags {
 	storageDir := pathutils.DefaultStorageDir
-	if runtime.GOOS == "Darwin" {
+	if runtime.GOOS == "darwin" {
 		storageDir = "/tmp/makisu-storage"
 	}
 	return BuildFlags{

@@ -46,7 +46,7 @@ var (
 // data like cached image layers.
 // This directory should be mounted for better performance, if makisu
 // runs in a container.
-const DefaultStorageDir = "/makisu-storage/storage"
+const DefaultStorageDir = "/makisu-storage"
 
 // DefaultInternalDir is used for Makisu binary and certs.
 const DefaultInternalDir = "/makisu-internal"
