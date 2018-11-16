@@ -13,7 +13,7 @@ different languages.
 
 
 - [Building Makisu](#building-makisu)
-- [Running Makisu](#using-makisu)
+- [Running Makisu](#running-makisu)
   - [Makisu anywhere](#makisu-anywhere)
   - [Makisu on Kubernetes](#makisu-on-kubernetes)
 - [Using Cache](#using-cache)
@@ -43,7 +43,7 @@ For a Dockerfile that doesn't have RUN, makisu can build it without Docker daemo
 makisu build -t ${TAG} -dest ${TAR_PATH} ${CONTEXT}
 ```
 
-# Using Makisu
+# Running Makisu
 
 ## Makisu anywhere
 
@@ -134,7 +134,7 @@ With this job spec, a simple `kubectl create -f job.yaml` will start the build. 
 
 A distributed layer cache maps each line of a Dockerfile to a tentative layer SHA stored in Docker registry. Using a layer cache can significantly improve build performance.
 
-To use the distributed caching feature of Makisu, the builder needs to be able to connect to a *cache id store*. For example, redis can be used as a cache id store with the following Kubernetes job spec:
+To use the distributed caching feature of Makisu, the builder needs to be able to connect to a *cache id store*. For example, Redis can be used as a cache id store with the following Kubernetes job spec:
 
 ```yaml
 # redis.yaml
