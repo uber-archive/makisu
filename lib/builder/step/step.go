@@ -108,6 +108,9 @@ func NewDockerfileStep(
 	case *dockerfile.LabelDirective:
 		s, _ := d.(*dockerfile.LabelDirective)
 		step = NewLabelStep(s.Args, s.Labels, s.Commit)
+	case *dockerfile.MaintainerDirective:
+		s, _ := d.(*dockerfile.MaintainerDirective)
+		step = NewMaintainerStep(s.Args, s.Author, s.Commit)
 	case *dockerfile.RunDirective:
 		s, _ := d.(*dockerfile.RunDirective)
 		step = NewRunStep(s.Args, s.Cmd, s.Commit)

@@ -25,14 +25,14 @@ import (
 type MaintainerStep struct {
 	*baseStep
 
-	author string
+	Author string
 }
 
 // NewMaintainerStep returns a BuildStep from give build step.
 func NewMaintainerStep(args string, author string, commit bool) BuildStep {
 	return &MaintainerStep{
 		baseStep: newBaseStep(Maintainer, args, commit),
-		author:   author,
+		Author:   author,
 	}
 }
 
@@ -42,6 +42,6 @@ func (s *MaintainerStep) GenerateConfig(ctx *context.BuildContext, imageConfig *
 	if err != nil {
 		return nil, fmt.Errorf("copy image config: %s", err)
 	}
-	config.Author = s.author
+	config.Author = s.Author
 	return config, nil
 }
