@@ -1,6 +1,6 @@
 # Makisu :sushi:
 
-Makisu is a fast and flexible Docker image build tool designed for containerized environments such as Mesos and Kubernetes.
+Makisu is a fast and flexible Docker image build tool designed for containerized environments such as Mesos or Kubernetes.
 
 Some highlights of Makisu:
 * Requires no elevated privileges, making the build process portable.
