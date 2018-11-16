@@ -11,7 +11,22 @@ Some highlights of Makisu:
 Makisu has been in use at Uber since early 2018, building over one thousand images every day across 4
 different languages.
 
-## Building Makisu
+
+- [Building Makisu](#building-makisu)
+  - [Build Makisu]
+- [Running Makisu](#using-makisu)
+  - [Makisu anywhere](#makisu-anywhere)
+  - [Makisu on Kubernetes](#makisu-on-kubernetes)
+- [Using Cache](#using-cache)
+  - [Configuring distributed cache](#configuring-distributed-cache)
+  - [Explicit Caching](#explicit-caching)
+- [Configuring Docker Registry](#configuring-docker-registry)
+- [Comparison With Similar Tools](#comparison-with-similar-tools)
+
+
+# Building Makisu
+
+## Building Makisu Image
 
 To build a Docker image that can perform builds:
 ```
@@ -28,6 +43,8 @@ For a Dockerfile that doesn't have RUN, makisu can build it without Docker daemo
 ```
 makisu build -t ${TAG} -dest ${TAR_PATH} ${CONTEXT}
 ```
+
+# Using Makisu
 
 ## Makisu anywhere
 
@@ -69,7 +86,7 @@ $ kubectl create secret generic docker-registry-config --from-file=./registry.ya
 secret/docker-registry-config created
 ```
 
-With registry configuration and secrets ready, below is a template to build a GitHub repository and push to a secure registry:
+Below is a template to build a GitHub repository and push to a secure registry:
 ```yaml
 apiVersion: batch/v1
 kind: Job
@@ -114,11 +131,12 @@ spec:
 ```
 With this job spec, a simple `kubectl create -f job.yaml` will start the build. The job status will reflect whether the build succeeded or failed.
 
-### Distributed cache
+# Using cache
+## Configuring distributed cache
 
 A distributed layer cache maps each line of a Dockerfile to a tentative layer SHA stored in Docker registry. Using a layer cache can significantly improve build performance.
 
-To use the distributed caching feature of Makisu, the builder needs to be able to connect to a *cache id store*. Redis can be used as a cache id store with the following Kubernetes job spec:
+To use the distributed caching feature of Makisu, the builder needs to be able to connect to a *cache id store*. For example, redis can be used as a cache id store with the following Kubernetes job spec:
 
 ```yaml
 # redis.yaml
@@ -155,7 +173,7 @@ spec:
 
 Finally, connect Redis as the Makisu layer cache by passing `--redis-cache-addr=redis:6379` argument.
 
-### Explicit caching
+## Explicit caching
 
 By default, Makisu will cache each directive in a Dockerfile. To avoid caching everything, the layer cache can be further optimized via explicit caching with the `--commit=explicit` flag. Dockerfile directives may then be manually cached using the `#!COMMIT` annotation:
 
@@ -182,7 +200,7 @@ ENTRYPOINT ["/bin/bash"]
 
 ```
 
-## Configuring Docker Registry
+# Configuring Docker Registry
 
 Makisu supports TLS and Basic Auth with Docker registry (Docker Hub, GCR, and private registries). It also contains a list of common root CA certs by default.
 Pass a custom configuration file to Makisu with `--registry-config=${PATH_TO_CONFIG}`.
@@ -238,7 +256,7 @@ Example:
             }
 ```
 
-## Comparison With Similar Tools
+# Comparison With Similar Tools
 
 ### Bazel
 
