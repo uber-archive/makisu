@@ -67,7 +67,7 @@ func (c Config) applyDefaults() Config {
 		c.Timeout = 600 * time.Second
 	}
 	if c.Retries == 0 {
-		c.Retries = 3
+		c.Retries = 4
 	}
 	if c.RetryInterval == 0 {
 		c.RetryInterval = 500 * time.Millisecond
