@@ -27,7 +27,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// BuildApplication contains the bindings for the `makisu-builder build` command.
+// BuildApplication contains the bindings for the `makisu build` command.
 type BuildApplication struct {
 	ApplicationFlags `commander:"flagstruct"`
 	BuildFlags       `commander:"flagstruct=build"`
