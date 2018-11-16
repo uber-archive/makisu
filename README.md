@@ -59,7 +59,7 @@ $ makisu_build -t myimage .
 
 Makisu makes it easy to build images from a GitHub repository inside Kubernetes. A single pod (or job) is
 created with an init container, which will fetch the build context through git or other means, and place 
-that context in a designated volume. Once this is complete, the Makisu container will be created and execute
+that context in a designated volume. Once it completes, the Makisu container will be created and execute
 the build, using that volume as its build context.
 
 ### Creating registry configuration
