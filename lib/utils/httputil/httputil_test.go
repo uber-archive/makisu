@@ -121,6 +121,50 @@ func TestSendRetryOn5XX(t *testing.T) {
 	require.InDelta(400*time.Millisecond, time.Since(start), float64(50*time.Millisecond))
 }
 
+func TestSendRetryBackoff(t *testing.T) {
+	require := require.New(t)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	transport := mockhttp.NewMockRoundTripper(ctrl)
+
+	transport.EXPECT().RoundTrip(gomock.Any()).Return(nil, errors.New("some error")).Times(4)
+
+	start := time.Now()
+	_, err := Get(
+		_testURL,
+		// Intervals should be 200, 300, 450.
+		SendRetry(RetryMax(4), RetryInterval(200*time.Millisecond), RetryBackoff(1.5)),
+		SendTransport(transport))
+	require.Error(err)
+	require.InDelta(950*time.Millisecond, time.Since(start), float64(50*time.Millisecond))
+}
+
+func TestSendRetryBackoffMax(t *testing.T) {
+	require := require.New(t)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	transport := mockhttp.NewMockRoundTripper(ctrl)
+
+	transport.EXPECT().RoundTrip(gomock.Any()).Return(nil, errors.New("some error")).Times(4)
+
+	start := time.Now()
+	_, err := Get(
+		_testURL,
+		// Interval should be 200, 300, 300 (max).
+		SendRetry(
+			RetryMax(4),
+			RetryInterval(200*time.Millisecond),
+			RetryBackoff(1.5),
+			RetryBackoffMax(300*time.Millisecond)),
+		SendTransport(transport))
+	require.Error(err)
+	require.InDelta(800*time.Millisecond, time.Since(start), float64(50*time.Millisecond))
+}
+
 func TestStatusChecking(t *testing.T) {
 	err := StatusError{Status: http.StatusCreated}
 	require.True(t, IsCreated(err))

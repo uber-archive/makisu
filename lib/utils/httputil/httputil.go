@@ -168,8 +168,10 @@ func SendClient(client *http.Client) SendOption {
 }
 
 type retryOptions struct {
-	max      int
-	interval time.Duration
+	max               int
+	interval          time.Duration
+	backoffMultiplier float64
+	backoffMax        time.Duration
 }
 
 // RetryOption allows overriding defaults for the SendRetry option.
@@ -185,11 +187,23 @@ func RetryInterval(interval time.Duration) RetryOption {
 	return func(o *retryOptions) { o.interval = interval }
 }
 
+// RetryBackoff adds exponential backoff between retries.
+func RetryBackoff(backoffMultiplier float64) RetryOption {
+	return func(o *retryOptions) { o.backoffMultiplier = backoffMultiplier }
+}
+
+// RetryBackoffMax sets the max duration backoff can reach.
+func RetryBackoffMax(backoffMax time.Duration) RetryOption {
+	return func(o *retryOptions) { o.backoffMax = backoffMax }
+}
+
 // SendRetry will we retry the request on network / 5XX errors.
 func SendRetry(options ...RetryOption) SendOption {
 	retry := retryOptions{
-		max:      3,
-		interval: 250 * time.Millisecond,
+		max:               3,
+		interval:          250 * time.Millisecond,
+		backoffMultiplier: 1, // Defaults with no backoff.
+		backoffMax:        30 * time.Second,
 	}
 	for _, o := range options {
 		o(&retry)
@@ -260,9 +274,13 @@ func Send(method, rawurl string, options ...SendOption) (resp *http.Response, er
 		}
 	}
 
+	interval := opts.retry.interval
 	for i := 0; i < opts.retry.max; i++ {
 		if i > 0 {
-			time.Sleep(opts.retry.interval)
+			time.Sleep(interval)
+			interval = min(
+				time.Duration(float64(interval)*opts.retry.backoffMultiplier),
+				opts.retry.backoffMax)
 		}
 		resp, err = client.Do(req)
 		// Retry without tls. During migration there would be a time when the
@@ -337,4 +355,11 @@ func newRequest(method string, opts sendOptions) (*http.Request, error) {
 		req.Header.Set(key, val)
 	}
 	return req, nil
+}
+
+func min(a, b time.Duration) time.Duration {
+	if a < b {
+		return a
+	}
+	return b
 }
