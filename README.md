@@ -71,7 +71,7 @@ $ kubectl create secret generic docker-registry-config --from-file=./registry.ya
 secret/docker-registry-config created
 ```
 
-You will also need to mount the registry configuration after having created the secret for it. Below is a template to build a
+Registry configuration needs to be mounted in after having created the secret for it. Below is a template to build a
 GitHub repository and push it to a registry.
 ```yaml
 apiVersion: batch/v1
@@ -99,6 +99,7 @@ spec:
         args:
         - build
         - --push=gcr.io
+        - --modifyfs=true
         - -t=<your image tag>
         - --registry-config=/registry-config/registry.yaml
         - /makisu-context
