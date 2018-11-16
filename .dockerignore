@@ -1,6 +1,6 @@
 dockerfiles
 ext-tools/Darwin
 
-bin/makisu-builder/makisu-builder
+bin/makisu/makisu
 bin/makisu-worker/makisu-worker
 bin/makisu-client/makisu-client

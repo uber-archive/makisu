@@ -38,7 +38,7 @@ REGISTRY ?= gcr.io/makisu-project
 
 ### Targets to compile the makisu binaries.
 .PHONY: cbins bins
-bins: bin/makisu-builder/makisu-builder bin/makisu-worker/makisu-worker bin/makisu-client/makisu-client
+bins: bin/makisu/makisu bin/makisu-worker/makisu-worker bin/makisu-client/makisu-client
 
 bin/%: $(ALL_SRC) vendor
 	CGO_ENABLED=0 GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ $(dir $@)*.go
@@ -94,7 +94,7 @@ env: test/python/requirements.txt
 
 
 
-### Target to build the makisu docker image. The docker image contains the builder and worker binaries.
+### Target to build the makisu docker images.
 .PHONY: images publish
 %-image:
 	docker build -t $(REGISTRY)/makisu-$*:$(PACKAGE_VERSION) -f dockerfiles/$*.df .
@@ -104,9 +104,12 @@ publish-%:
 	$(MAKE) $*-image
 	docker push $(REGISTRY)/makisu-$*:$(PACKAGE_VERSION) 
 
-images: builder-image worker-image client-image
+images: worker-image client-image
+	docker build -t $(REGISTRY)/makisu:$(PACKAGE_VERSION) -f dockerfiles/builder.df .
+	docker tag $(REGISTRY)/makisu:$(PACKAGE_VERSION) makisu:$(PACKAGE_VERSION)
 
-publish: publish-builder publish-worker publish-client
+publish: images publish-worker publish-client
+	docker push $(REGISTRY)/makisu:$(PACKAGE_VERSION) 
 
 
 
@@ -125,7 +128,9 @@ cunit-test: $(ALL_SRC) vendor
 		golang:$(GO_VERSION) \
 		-c "make ext-tools unit-test"
 
-integration: bins env builder-image
+integration: bins env
+	docker build -t $(REGISTRY)/makisu:$(PACKAGE_VERSION) -f dockerfiles/builder.df .
+	docker tag $(REGISTRY)/makisu:$(PACKAGE_VERSION) makisu:$(PACKAGE_VERSION)
 	PACKAGE_VERSION=$(PACKAGE_VERSION) ./env/bin/py.test --maxfail=1 --durations=6 --timeout=300 -vv test/python
 
 
@@ -135,6 +140,6 @@ integration: bins env builder-image
 clean:
 	git clean -fd
 	-rm -rf vendor ext-tools mocks env
-	-rm bin/makisu-builder/makisu-builder
+	-rm bin/makisu/makisu
 	-rm bin/makisu-worker/makisu-worker
 	-rm bin/makisu-client/makisu-client

@@ -13,20 +13,20 @@ different languages.
 
 ## Building Makisu
 
-To build a docker image that can perform builds (makisu-builder/makisu-worker):
+To build a docker image that can perform builds:
 ```
-make builder-image worker-image
+make images
 ```
 
 ## Building Makisu binary and build simple images
 
 To get the makisu-builder binary locally:
 ```
-go get github.com/uber/makisu/bin/makisu-builder
+go get github.com/uber/makisu/bin/makisu
 ```
-If your dockerfile doesn't have RUN, you can use makisu-builder to build it without chroot or docker daemon:
+If your dockerfile doesn't have RUN, you can use makisu to build it without chroot or docker daemon:
 ```
-makisu-builder build -t ${TAG} -dest ${TAR_PATH} ${CONTEXT}
+makisu build -t ${TAG} -dest ${TAR_PATH} ${CONTEXT}
 ```
 
 ## Makisu anywhere
@@ -49,7 +49,7 @@ function makisu_build() {
         -e DOCKER_HOST=unix:///docker.sock \
         -v $(pwd):/makisu-context \
         -v $storage:/makisu-storage \
-        gcr.io/makisu-project/makisu-builder:$makisu_version build \
+        gcr.io/makisu-project/makisu:$makisu_version build \
             --modifyfs=true --load \
             --storage=/makisu-storage \
             ${@:1:-1} /makisu-context
