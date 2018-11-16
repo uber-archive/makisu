@@ -13,7 +13,6 @@ different languages.
 
 
 - [Building Makisu](#building-makisu)
-  - [Build Makisu]
 - [Running Makisu](#using-makisu)
   - [Makisu anywhere](#makisu-anywhere)
   - [Makisu on Kubernetes](#makisu-on-kubernetes)
@@ -26,9 +25,9 @@ different languages.
 
 # Building Makisu
 
-## Building Makisu Image
+## Building Makisu image
 
-To build a Docker image that can perform builds:
+To build a Docker image that can perform builds inside a container:
 ```
 make image
 ```
@@ -78,8 +77,7 @@ the build, using that volume as its build context.
 
 ### Creating registry configuration
 
-Makisu needs registry configuration mounted to push to a secure registry. The config format is described 
-at the bottom of this document. After creating configuration file on local filesystem, run the following 
+Makisu needs registry configuration mounted to push to a secure registry. The config format is described [here](#configuring-docker-registry). After creating configuration file on local filesystem, run the following 
 command to create the k8s secret:
 ```shell
 $ kubectl create secret generic docker-registry-config --from-file=./registry.yaml
