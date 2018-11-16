@@ -6,34 +6,34 @@ spec:
   template:
     spec:
       restartPolicy: Never
+      initContainers:
+      - name: provisioner
+        image: alpine/git
+        args:
+        - clone 
+        - https://github.com/jpillora/chisel
+        - /makisu-context
+        volumeMounts:
+        - name: context
+          mountPath: /makisu-context
       containers:
-      - name: makisu-worker
-        image: gcr.io/makisu-project/makisu-worker:0.0.4
+      - name: makisu
+        image: gcr.io/makisu-project/makisu:0.0.5
         imagePullPolicy: IfNotPresent
         args:
-        - listen
-        - -s
-        - /makisu-socket/makisu.sock
-        volumeMounts:
-        - name: socket
-          mountPath: /makisu-socket
-        - name: context
-          mountPath: /makisu-context
-      - name: makisu-manager
-        image: gcr.io/makisu-project/makisu-client:0.0.4
-        imagePullPolicy: IfNotPresent
-        args:
-        - github.com/jpillora/chisel
-        - --exit
         - build
-        - -t=makisu-project/example-github:0.0.4
+        - --push=gcr.io
+        - -t=makisu-project/example-github:0.0.5
+        - --registry-config=/registry-config/registry.yaml
+        - /makisu-context
         volumeMounts:
-        - name: socket
-          mountPath: /makisu-socket
         - name: context
           mountPath: /makisu-context
+        - name: registry-config
+          mountPath: /registry-config
       volumes:
-      - name: socket
-        emptyDir: {}
       - name: context
         emptyDir: {}
+      - name: registry-config
+        secret:
+          secretName: docker-registry-config
