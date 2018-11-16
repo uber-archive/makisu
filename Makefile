@@ -41,9 +41,10 @@ REGISTRY ?= gcr.io/makisu-project
 bins: bin/makisu-builder/makisu-builder bin/makisu-worker/makisu-worker bin/makisu-client/makisu-client
 
 bin/%: $(ALL_SRC) vendor
-	@echo $(dir $@)
-	@echo $(notdir $@)
 	CGO_ENABLED=0 GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ $(dir $@)*.go
+
+bin/makisu-client/makisu-client: $(ALL_SRC) vendor
+	GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ $(dir $@)*.go
 
 cbins:
 	docker run -i --rm -v $(PWD):/go/src/$(PACKAGE_NAME) \
