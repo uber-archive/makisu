@@ -73,7 +73,7 @@ $ kubectl create secret generic docker-registry-config --from-file=./registry.ya
 secret/docker-registry-config created
 ```
 
-With registry configuration and secrets ready, below is a template to build a GitHub repository and push to a secure registry::
+With registry configuration and secrets ready, below is a template to build a GitHub repository and push to a secure registry:
 ```yaml
 apiVersion: batch/v1
 kind: Job
@@ -116,7 +116,7 @@ spec:
         secret:
           secretName: docker-registry-config
 ```
-With this job spec, a simple `kubectl create -f job.yaml` will start the build. The job status will reflect whether or not the build succeeded or failed.
+With this job spec, a simple `kubectl create -f job.yaml` will start the build. The job status will reflect whether the build succeeded or failed.
 
 ### Distributed cache
 
