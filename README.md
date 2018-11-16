@@ -1,13 +1,14 @@
 # Makisu :sushi:
 
-A Docker image build tool that is more flexible and faster at scale. This makes it easy to build
-lots of Docker images directly from a containerized environment such as Kubernetes. Specifically, Makisu:
+Makisu is a Docker image build tool that is flexible and fast, and works well in containerized environment such as Mesos and Kubernetes.
+
+Some highlights of Makisu:
+* Requires no elevated privileges, making the build process portable.
 * Uses a distributed layer cache to improve performance across a build cluster.
 * Provides control over generated layers with a new keyword `#!COMMIT`, reducing the number of layers in images.
-* Requires no elevated privileges, making the build process portable.
-* Docker compatible. Note, our Dockerfile parser is opinionated in some scenarios. More details can be found [here](lib/parser/dockerfile/README.md).
+* Is Docker compatible. Note, Dockerfile parser in Makisu is opinionated in some scenarios. More details can be found [here](lib/parser/dockerfile/README.md).
 
-Makisu has been in use at Uber since early 2018, building over 1.5 thousand images every day across 4
+Makisu has been in use at Uber since early 2018, building over one thousand images every day across 4
 different languages.
 
 ## Building Makisu
@@ -21,9 +22,9 @@ make image
 
 To get the makisu binary locally:
 ```
-go get github.com/uber/makisu/makisu
+go get github.com/uber/makisu/bin/makisu
 ```
-If your Dockerfile doesn't have RUN, you can use makisu to build it without chroot or Docker daemon:
+For a Dockerfile that doesn't have RUN, makisu can build it without Docker daemon, containerd or runc:
 ```
 makisu build -t ${TAG} -dest ${TAR_PATH} ${CONTEXT}
 ```
@@ -59,20 +60,20 @@ $ makisu_build -t myimage .
 
 Makisu makes it easy to build images from a GitHub repository inside Kubernetes. A single pod (or job) is
 created with an init container, which will fetch the build context through git or other means, and place 
-that context in a designated volume. Once it completes, the Makisu container will be created and execute
+that context in a designated volume. Once it completes, the Makisu container will be created and executes
 the build, using that volume as its build context.
 
 ### Creating registry configuration
 
-Makisu will need to have registry configuration mounted to push to a registry. The config format is described at the
-bottom of this document. Once you have your configuration on your local filesystem, you will need to create the k8s secret:
+Makisu needs registry configuration mounted to push to a secure registry. The config format is described 
+at the bottom of this document. After creating configuration file on local filesystem, run the following 
+command to create the k8s secret:
 ```shell
 $ kubectl create secret generic docker-registry-config --from-file=./registry.yaml
 secret/docker-registry-config created
 ```
 
-Registry configuration needs to be mounted in after having created the secret for it. Below is a template to build a
-GitHub repository and push it to a registry.
+With registry configuration and secrets ready, below is a template to build a GitHub repository and push to a secure registry:
 ```yaml
 apiVersion: batch/v1
 kind: Job
@@ -115,15 +116,13 @@ spec:
         secret:
           secretName: docker-registry-config
 ```
-Once you have your job spec a simple `kubectl create -f job.yaml` will start your build. The job status will reflect whether or not the build failed.
+With this job spec, a simple `kubectl create -f job.yaml` will start the build. The job status will reflect whether the build succeeded or failed.
 
 ### Distributed cache
 
-A distributed layer cache maps each line of a Dockerfile to a tentative layer SHA stored in Docker registry. Using a layer
-cache can significantly improve build performance.
+A distributed layer cache maps each line of a Dockerfile to a tentative layer SHA stored in Docker registry. Using a layer cache can significantly improve build performance.
 
-To use the distributed caching feature of Makisu, the builder needs to be able to connect to a *cache id store*. Redis can
-be used as a cache id store with the following Kubernetes job spec:
+To use the distributed caching feature of Makisu, the builder needs to be able to connect to a *cache id store*. Redis can be used as a cache id store with the following Kubernetes job spec:
 
 ```yaml
 # redis.yaml
@@ -162,8 +161,7 @@ Finally, connect Redis as the Makisu layer cache by passing `--redis-cache-addr=
 
 ### Explicit caching
 
-By default, Makisu will cache each directive in a Dockerfile. To avoid caching everything, the layer cache can be further optimized via
-explicit caching with the `--commit=explicit` flag. Dockerfile directives may then be manually cached using the `#!COMMIT` annotation:
+By default, Makisu will cache each directive in a Dockerfile. To avoid caching everything, the layer cache can be further optimized via explicit caching with the `--commit=explicit` flag. Dockerfile directives may then be manually cached using the `#!COMMIT` annotation:
 
 ```Dockerfile
 FROM node:8.1.3
@@ -176,13 +174,21 @@ ADD pre-build.sh
 ...
 ...
 
-# An expensive step we want to cache.
+# An step we want to cache. A single layer will be generated here on top of base image.
 RUN npm install #!COMMIT
+
+...
+...
+...
+
+# Last step of last stage always commit by default, generating another layer.
+ENTRYPOINT ["/bin/bash"]
+
 ```
 
 ## Configuring Docker Registry
 
-Makisu supports TLS and Basic Auth with Docker registry (Docker Hub, GCR, and private registries). It also contains a list of common root CA certs as a default.
+Makisu supports TLS and Basic Auth with Docker registry (Docker Hub, GCR, and private registries). It also contains a list of common root CA certs by default.
 Pass a custom configuration file to Makisu with `--registry-config=${PATH_TO_CONFIG}`.
 ```go
 // Config contains Docker registry client configuration.
@@ -240,18 +246,14 @@ Example:
 
 ### Bazel
 
-We were inspired by the Bazel project in early 2017. It is one of the first few tools that could build Docker compatible images without using Docker or 
-any form of containerizer. It works very well with a subset of Docker build commands provided a Bazel build file, however, it does not support `RUN`,
-making it hard to support more complex Dockerfiles.
+We were inspired by the Bazel project in early 2017. It is one of the first few tools that could build Docker compatible images without using Docker or any form of containerizer. It works very well with a subset of Docker build commands given a Bazel build file. However, it does not support `RUN`, making it hard to support more complex workflows.
 
 ### Kaniko
 
-Kaniko provides good compatibility with Docker and executes build commands in userspace without the need for Docker daemon, although it must still run
-inside a container. Kaniko is tightly integrated with Kubernetes, and manages secrets with Google Cloud Credential, making it a competent tool for
-individual developers who are already using Kubernetes. However, Makisu's more flexible caching features make it optimal for higher build volume across
-many developers.
+Kaniko provides good compatibility with Docker and executes build commands in userspace without the need for Docker daemon, although it must still run inside a container. 
+Kaniko is tightly integrated with Kubernetes, and manages secrets with Google Cloud Credential, making it a competent tool for individual developers who are already using Kubernetes. However, Makisu's more flexible caching features make it optimal for higher build volume across many repos and developers.
 
 ### BuildKit
 
 BuildKit depends on runc/containerd and supports parallel stage executions, whereas Makisu and most other tools execute Dockefile in order.
-However, it still needs root privileges, which can be a security risk.
+However, BuildKit still needs access to /proc to launch nested containers, which is not ideal and may not be doable in some production environments.
