@@ -35,12 +35,8 @@ To build Dockerfiles that contain RUN, Makisu still needs to run in a container.
 The following snippet can be placed inside your `~/.bashrc` or `~/.zshrc`:
 ```shell
 function makisu_build() {
-    for last; do true; done
-    cd $last
-
-    makisu_version=0.1.0
-    [ -z "$MAKISU_VERSION" ] || makisu_version=$MAKISU_VERSION
-
+    makisu_version=${MAKISU_VERSION:-0.1.0}
+    cd ${@: -1}
     docker run -i --rm --net host \
         -v /var/run/docker.sock:/docker.sock \
         -e DOCKER_HOST=unix:///docker.sock \
