@@ -9,9 +9,7 @@ RUN make ext-tools/Linux/dep
 ADD Gopkg.toml Gopkg.lock ./
 ADD .git ./.git
 ADD cli ./cli
-ADD bin/makisu ./bin/makisu
-ADD bin/makisu-worker ./bin/makisu-worker
-ADD bin/makisu-client ./bin/makisu-client
+ADD bin ./bin
 ADD lib ./lib
 RUN make bins
 
