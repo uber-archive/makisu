@@ -141,6 +141,7 @@ func (app *BuildApplication) getLogger() (*zap.Logger, error) {
 
 	config.Encoding = app.LogFormat
 	config.DisableStacktrace = true
+	config.DisableCaller = true
 	return config.Build()
 }
 
