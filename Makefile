@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PWD = $(shell pwd)
+PWD := ${CURDIR}
 
 PACKAGE_NAME = github.com/uber/makisu
 PACKAGE_VERSION ?= $(shell git describe --always --tags)
@@ -41,7 +41,7 @@ REGISTRY ?= gcr.io/makisu-project
 bins: bin/makisu/makisu
 
 bin/makisu/makisu: $(ALL_SRC) vendor
-	CGO_ENABLED=0 GOOS=linux go build -tags bins $(GO_FLAGS) -o bin/makisu/makisu bin/makisu/*.go
+	CGO_ENABLED=0 GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ bin/makisu/*.go
 
 cbins:
 	docker run -i --rm -v $(PWD):/go/src/$(PACKAGE_NAME) \
@@ -90,7 +90,6 @@ env: test/python/requirements.txt
 
 ### Target to build the makisu docker images.
 .PHONY: image publish
-
 image:
 	docker build -t $(REGISTRY)/makisu:$(PACKAGE_VERSION) -f Dockerfile .
 	docker tag $(REGISTRY)/makisu:$(PACKAGE_VERSION) makisu:$(PACKAGE_VERSION)
