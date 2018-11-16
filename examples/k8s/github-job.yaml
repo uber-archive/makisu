@@ -23,6 +23,7 @@ spec:
         args:
         - build
         - --push=gcr.io
+        - --modifyfs=true
         - -t=makisu-project/example-github:0.0.5
         - --registry-config=/registry-config/registry.yaml
         - /makisu-context

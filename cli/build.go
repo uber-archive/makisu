@@ -62,16 +62,14 @@ type BuildFlags struct {
 
 func newBuildFlags() BuildFlags {
 	storageDir := pathutils.DefaultStorageDir
-	modifyFS := true
 	if runtime.GOOS == "Darwin" {
 		storageDir = "/tmp/makisu-storage"
-		modifyFS = false
 	}
 	return BuildFlags{
 		DockerfilePath: "Dockerfile",
 		Arguments:      map[string]string{},
 
-		AllowModifyFS: modifyFS,
+		AllowModifyFS: false,
 		StorageDir:    storageDir,
 
 		DockerHost:    utils.DefaultEnv("DOCKER_HOST", "unix:///var/run/docker.sock"),
