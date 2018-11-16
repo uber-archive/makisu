@@ -38,16 +38,10 @@ REGISTRY ?= gcr.io/makisu-project
 
 ### Targets to compile the makisu binaries.
 .PHONY: cbins bins
-bins: bin/makisu/makisu bin/makisu-worker/makisu-worker bin/makisu-client/makisu-client
+bins: bin/makisu/makisu
 
-bin/%: $(ALL_SRC) vendor
-	CGO_ENABLED=0 GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ $(dir $@)*.go
-
-# We need to have a separate make target for this because it depends on the os/user
-# package, which cannot be compiled with CGO_ENABLED=0
-# Error message: user: Current not implemented on linux/amd64
-bin/makisu-client/makisu-client: $(ALL_SRC) vendor
-	GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ $(dir $@)*.go
+bin/makisu/makisu: $(ALL_SRC) vendor
+	CGO_ENABLED=0 GOOS=linux go build -tags bins $(GO_FLAGS) -o bin/makisu/makisu bin/makisu/*.go
 
 cbins:
 	docker run -i --rm -v $(PWD):/go/src/$(PACKAGE_NAME) \
@@ -95,20 +89,13 @@ env: test/python/requirements.txt
 
 
 ### Target to build the makisu docker images.
-.PHONY: images publish
-%-image:
-	docker build -t $(REGISTRY)/makisu-$*:$(PACKAGE_VERSION) -f dockerfiles/$*.df .
-	docker tag $(REGISTRY)/makisu-$*:$(PACKAGE_VERSION) makisu-$*:$(PACKAGE_VERSION)
+.PHONY: image publish
 
-publish-%:
-	$(MAKE) $*-image
-	docker push $(REGISTRY)/makisu-$*:$(PACKAGE_VERSION) 
-
-images: worker-image client-image
-	docker build -t $(REGISTRY)/makisu:$(PACKAGE_VERSION) -f dockerfiles/builder.df .
+image:
+	docker build -t $(REGISTRY)/makisu:$(PACKAGE_VERSION) -f Dockerfile .
 	docker tag $(REGISTRY)/makisu:$(PACKAGE_VERSION) makisu:$(PACKAGE_VERSION)
 
-publish: images publish-worker publish-client
+publish: image
 	docker push $(REGISTRY)/makisu:$(PACKAGE_VERSION) 
 
 
@@ -128,9 +115,7 @@ cunit-test: $(ALL_SRC) vendor
 		golang:$(GO_VERSION) \
 		-c "make ext-tools unit-test"
 
-integration: bins env
-	docker build -t $(REGISTRY)/makisu:$(PACKAGE_VERSION) -f dockerfiles/builder.df .
-	docker tag $(REGISTRY)/makisu:$(PACKAGE_VERSION) makisu:$(PACKAGE_VERSION)
+integration: bins env image
 	PACKAGE_VERSION=$(PACKAGE_VERSION) ./env/bin/py.test --maxfail=1 --durations=6 --timeout=300 -vv test/python
 
 
@@ -141,5 +126,3 @@ clean:
 	git clean -fd
 	-rm -rf vendor ext-tools mocks env
 	-rm bin/makisu/makisu
-	-rm bin/makisu-worker/makisu-worker
-	-rm bin/makisu-client/makisu-client

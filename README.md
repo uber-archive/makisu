@@ -14,7 +14,7 @@ different languages.
 
 To build a Docker image that can perform builds:
 ```
-make builder-image worker-image
+make image
 ```
 
 ## Building Makisu binary and build simple images
@@ -58,8 +58,9 @@ $ makisu_build -t myimage .
 ## Makisu on Kubernetes
 
 Makisu makes it easy to build images from a GitHub repository inside Kubernetes. A single pod (or job) is
-created with a build container, which will perform the build, and a sidecar container, which will clone the repository and use the
-`makisu-client` to trigger the build in the build container.
+created with an init container, which will fetch the build context through git or other means, and place 
+that context in a designated volume. Once it completes, the Makisu container will be created and execute
+the build, using that volume as its build context.
 
 ### Creating registry configuration
 
@@ -70,65 +71,49 @@ $ kubectl create secret generic docker-registry-config --from-file=./registry.ya
 secret/docker-registry-config created
 ```
 
-### Building Git repositories
-
-Building an image from a GitHub repository is easy. We have a `makisu-client` image with a simple entrypoint this exact purpose.
-If the repository is private, make sure your GitHub token is readable at `/makisu-secrets/github-token/github_token` inside
-the client container. 
-```shell
-kubectl create secret generic github-token --from-file=./github_token
-```
-You will also need to mount the registry configuration after having created the secret for it. Below is a template to build a private
+Registry configuration needs to be mounted in after having created the secret for it. Below is a template to build a
 GitHub repository and push it to a registry.
 ```yaml
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: imagebuilder
+  name: imagebuilder-github
 spec:
   template:
     spec:
       restartPolicy: Never
+      initContainers:
+      - name: provisioner
+        image: alpine/git
+        args:
+        - clone
+        - https://github.com/<your repo>
+        - /makisu-context
+        volumeMounts:
+        - name: context
+          mountPath: /makisu-context
       containers:
-      - name: makisu-worker
-        image: makisu-worker:6246b77
+      - name: makisu
+        image: gcr.io/makisu-project/makisu:0.1.0
         imagePullPolicy: IfNotPresent
         args:
-        - listen
-        - -s
-        - /makisu-socket/makisu.sock
+        - build
+        - --push=gcr.io
+        - --modifyfs=true
+        - -t=<your image tag>
+        - --registry-config=/registry-config/registry.yaml
+        - /makisu-context
         volumeMounts:
-        - name: socket
-          mountPath: /makisu-socket
         - name: context
           mountPath: /makisu-context
         - name: registry-config
-          mountPath: /makisu-secrets/registry-config
-      - name: makisu-manager
-        image: makisu-client:6246b77
-        imagePullPolicy: IfNotPresent
-        args:
-        - github.com/<your repository here>
-        - --exit
-        - build
-        - -t=<your tag here>
-        - --push=<your registry hostname here (eg: gcr.io)>
-        - --registry-config=/makisu-secrets/registry-config/registry.yaml
-        volumeMounts:
-        - name: socket
-          mountPath: /makisu-socket
-        - name: context
-          mountPath: /makisu-context
-        - name: github-token
-          mountPath: /makisu-secrets/github-token
+          mountPath: /registry-config
       volumes:
-      - name: socket
-        emptyDir: {}
       - name: context
         emptyDir: {}
-      - name: github-token
+      - name: registry-config
         secret:
-          secretName: github-token
+          secretName: docker-registry-config
 ```
 Once you have your job spec a simple `kubectl create -f job.yaml` will start your build. The job status will reflect whether or not the build failed.
 
