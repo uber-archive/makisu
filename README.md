@@ -1,13 +1,13 @@
 # Makisu :sushi:
 
-A Docker image build tool that is more flexible and faster at scale. This makes it easy to build
+A Docker image build tool that is more flexible and faster at scale. Makisu makes it easy to build
 lots of Docker images directly from a containerized environment such as Kubernetes. Specifically, Makisu:
 * Uses a distributed layer cache to improve performance across a build cluster.
 * Provides control over generated layers with a new keyword `#!COMMIT`, reducing the number of layers in images.
 * Requires no elevated privileges, making the build process portable.
 * Docker compatible. Note, our Dockerfile parser is opinionated in some scenarios. More details can be found [here](lib/parser/dockerfile/README.md).
 
-Makisu has been in use at Uber since early 2018, building over 1.5 thousand images every day across 4
+Makisu has been in use at Uber since early 2018, building over one thousand images every day across 4
 different languages.
 
 ## Building Makisu
@@ -23,7 +23,7 @@ To get the makisu binary locally:
 ```
 go get github.com/uber/makisu/makisu
 ```
-If your Dockerfile doesn't have RUN, you can use makisu to build it without chroot or Docker daemon:
+For a Dockerfile that doesn't have RUN, makisu can build it without Docker daemon, containerd or runc:
 ```
 makisu build -t ${TAG} -dest ${TAR_PATH} ${CONTEXT}
 ```
@@ -64,15 +64,16 @@ the build, using that volume as its build context.
 
 ### Creating registry configuration
 
-Makisu will need to have registry configuration mounted to push to a registry. The config format is described at the
-bottom of this document. Once you have your configuration on your local filesystem, you will need to create the k8s secret:
+Makisu needs registry configuration mounted to push to a registry. The config format is described at the
+bottom of this document. After creating configuration file on local filesystem, run the following command 
+to create the k8s secret:
 ```shell
 $ kubectl create secret generic docker-registry-config --from-file=./registry.yaml
 secret/docker-registry-config created
 ```
 
-Registry configuration needs to be mounted in after having created the secret for it. Below is a template to build a
-GitHub repository and push it to a registry.
+With registry configuration and secrets ready, below is a template to build a GitHub repository and push
+it to a registry:
 ```yaml
 apiVersion: batch/v1
 kind: Job
@@ -115,7 +116,7 @@ spec:
         secret:
           secretName: docker-registry-config
 ```
-Once you have your job spec a simple `kubectl create -f job.yaml` will start your build. The job status will reflect whether or not the build failed.
+With such a job spec, a simple `kubectl create -f job.yaml` will start the build. The job status will reflect whether or not the build failed.
 
 ### Distributed cache
 
@@ -176,13 +177,21 @@ ADD pre-build.sh
 ...
 ...
 
-# An expensive step we want to cache.
+# An step we want to cache. A single layer will be generated here on top of base image.
 RUN npm install #!COMMIT
+
+...
+...
+...
+
+# Last step of last stage always commit by default, generating another layer.
+ENTRYPOINT ["/bin/bash"]
+
 ```
 
 ## Configuring Docker Registry
 
-Makisu supports TLS and Basic Auth with Docker registry (Docker Hub, GCR, and private registries). It also contains a list of common root CA certs as a default.
+Makisu supports TLS and Basic Auth with Docker registry (Docker Hub, GCR, and private registries). It also contains a list of common root CA certs by default.
 Pass a custom configuration file to Makisu with `--registry-config=${PATH_TO_CONFIG}`.
 ```go
 // Config contains Docker registry client configuration.
@@ -254,4 +263,4 @@ many developers.
 ### BuildKit
 
 BuildKit depends on runc/containerd and supports parallel stage executions, whereas Makisu and most other tools execute Dockefile in order.
-However, it still needs root privileges, which can be a security risk.
+However, it still needs privileges to launch containers, which can be a security risk.
