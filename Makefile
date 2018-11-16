@@ -43,6 +43,9 @@ bins: bin/makisu-builder/makisu-builder bin/makisu-worker/makisu-worker bin/maki
 bin/%: $(ALL_SRC) vendor
 	CGO_ENABLED=0 GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ $(dir $@)*.go
 
+# We need to have a separate make target for this because it depends on the os/user
+# package, which cannot be compiled with CGO_ENABLED=0
+# Error message: user: Current not implemented on linux/amd64
 bin/makisu-client/makisu-client: $(ALL_SRC) vendor
 	GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ $(dir $@)*.go
 
