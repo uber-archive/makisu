@@ -1,11 +1,10 @@
-bins
 vendor
 ext-tools
 mocks
 
-makisu-builder/makisu-builder
-makisu-worker/makisu-worker
-makisu-client/makisu-client
+bin/makisu-builder/makisu-builder
+bin/makisu-worker/makisu-worker
+bin/makisu-client/makisu-client
 
 env
 .cache
