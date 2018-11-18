@@ -5,7 +5,7 @@ Makisu is a fast and flexible Docker image build tool designed for containerized
 Some highlights of Makisu:
 * Requires no elevated privileges, making the build process portable.
 * Uses a distributed layer cache to improve performance across a build cluster.
-* Provides control over generated layers with a new keyword `#!COMMIT`, reducing the number of layers in images.
+* Provides control over generated layers with a new optional keyword `#!COMMIT`, reducing the number of layers in images.
 * Is Docker compatible. Note, the Dockerfile parser in Makisu is opinionated in some scenarios. More details can be found [here](lib/parser/dockerfile/README.md).
 
 Makisu has been in use at Uber since early 2018, building over one thousand images every day across 4
@@ -258,12 +258,13 @@ Example:
 
 ### Bazel
 
-We were inspired by the Bazel project in early 2017. It is one of the first few tools that could build Docker compatible images without using Docker or any form of containerizer. It works very well with a subset of Docker build commands given a Bazel build file. However, it does not support `RUN`, making it hard to support more complex workflows.
+We were inspired by the Bazel project in early 2017. It is one of the first few tools that could build Docker compatible images without using Docker or any form of containerizer. 
+It works very well with a subset of Docker build scenarios given a Bazel build file. However, it does not support `RUN`, making it hard to replace most docker build workflows.
 
 ### Kaniko
 
-Kaniko provides good compatibility with Docker and executes build commands in userspace without the need for Docker daemon, although it must still run inside a container. 
-Kaniko is tightly integrated with Kubernetes, and manages secrets with Google Cloud Credential, making it a competent tool for individual developers who are already using Kubernetes. However, Makisu's more flexible caching features make it optimal for higher build volume across many repos and developers.
+Kaniko provides good compatibility with Docker and executes build commands in userspace without the need for Docker daemon, although it must still run inside a container. Kaniko offers smooth integration with Kubernetes, making it a competent tool for Kubernetes users.
+On the other hand, Makisu has some performance tweaks for large images (especially those with node_modules), allows cache to expire, and offers more control over cache generation through #!COMMIT, make it optimal for complex workflows.
 
 ### BuildKit
 
