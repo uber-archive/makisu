@@ -44,7 +44,7 @@ type BuildFlags struct {
 	RegistryConfig string            `commander:"flag=registry-config,Registry configuration file for pulling and pushing images. Default configuration for DockerHub is used if not specified."`
 
 	AllowModifyFS bool   `commander:"flag=modifyfs,Allow makisu to touch files outside of its own storage dir."`
-	StorageDir    string `commander:"flag=storage,Directory that makisu uses for temp files and cached layers. Mount this path for better caching performance. If modifyfs is set, fefault to /makisu-storage; Otherwise default to /tmp/makisu-storage."`
+	StorageDir    string `commander:"flag=storage,Directory that makisu uses for temp files and cached layers. Mount this path for better caching performance. If modifyfs is set, default to /makisu-storage; Otherwise default to /tmp/makisu-storage."`
 
 	DockerHost    string `commander:"flag=docker-host,Docker host to load images to."`
 	DockerVersion string `commander:"flag=docker-version,Version string for loading images to docker."`
@@ -128,10 +128,12 @@ func (cmd *BuildFlags) postInit() error {
 	}
 
 	// Configure default storage dir.
-	if cmd.AllowModifyFS && cmd.StorageDir == "" {
-		cmd.StorageDir = pathutils.DefaultStorageDir
-	} else {
-		cmd.StorageDir = "/tmp/makisu-storage"
+	if cmd.StorageDir == "" {
+		if cmd.AllowModifyFS {
+			cmd.StorageDir = pathutils.DefaultStorageDir
+		} else {
+			cmd.StorageDir = "/tmp/makisu-storage"
+		}
 	}
 
 	// Verify storage dir is not child of internal dir.
