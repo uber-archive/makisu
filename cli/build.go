@@ -43,8 +43,8 @@ type BuildFlags struct {
 	PushRegistries string            `commander:"flag=push,Push image after build to the comma-separated list of registries."`
 	RegistryConfig string            `commander:"flag=registry-config,Registry configuration file for pulling and pushing images. Default configuration for DockerHub is used if not specified."`
 
-	AllowModifyFS bool   `commander:"flag=modifyfs,Allow makisu to touch files outside of its own storage and sandbox dir."`
-	StorageDir    string `commander:"flag=storage,Directory that makisu uses for cached layer files. Mount this path for better caching performance. If modifyfs is set, fefault to /makisu-storage; Otherwise default to /tmp/makisu-storage."`
+	AllowModifyFS bool   `commander:"flag=modifyfs,Allow makisu to touch files outside of its own storage dir."`
+	StorageDir    string `commander:"flag=storage,Directory that makisu uses for temp files and cached layers. Mount this path for better caching performance. If modifyfs is set, fefault to /makisu-storage; Otherwise default to /tmp/makisu-storage."`
 
 	DockerHost    string `commander:"flag=docker-host,Docker host to load images to."`
 	DockerVersion string `commander:"flag=docker-version,Version string for loading images to docker."`
