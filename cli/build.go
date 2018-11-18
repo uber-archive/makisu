@@ -43,8 +43,8 @@ type BuildFlags struct {
 	PushRegistries string            `commander:"flag=push,Push image after build to the comma-separated list of registries."`
 	RegistryConfig string            `commander:"flag=registry-config,Registry configuration file for pulling and pushing images. Default configuration for DockerHub is used if not specified."`
 
-	AllowModifyFS bool   `commander:"flag=modifyfs,Allow makisu to touch files outside of its own storage and sandbox dir."`
-	StorageDir    string `commander:"flag=storage,Directory that makisu uses for cached layer files. Mount this path for better caching performance."`
+	AllowModifyFS bool   `commander:"flag=modifyfs,Allow makisu to touch files outside of its own storage dir."`
+	StorageDir    string `commander:"flag=storage,Directory that makisu uses for temp files and cached layers. Mount this path for better caching performance. If modifyfs is set, default to /makisu-storage; Otherwise default to /tmp/makisu-storage."`
 
 	DockerHost    string `commander:"flag=docker-host,Docker host to load images to."`
 	DockerVersion string `commander:"flag=docker-version,Version string for loading images to docker."`
@@ -61,16 +61,12 @@ type BuildFlags struct {
 }
 
 func newBuildFlags() BuildFlags {
-	storageDir := pathutils.DefaultStorageDir
-	if runtime.GOOS == "darwin" {
-		storageDir = "/tmp/makisu-storage"
-	}
 	return BuildFlags{
 		DockerfilePath: "Dockerfile",
 		Arguments:      map[string]string{},
 
 		AllowModifyFS: false,
-		StorageDir:    storageDir,
+		StorageDir:    "",
 
 		DockerHost:    utils.DefaultEnv("DOCKER_HOST", "unix:///var/run/docker.sock"),
 		DockerVersion: utils.DefaultEnv("DOCKER_VERSION", "1.21"),
@@ -126,15 +122,24 @@ func (cmd *BuildFlags) postInit() error {
 		}
 	}
 
+	// Verify it's not runninng on Mac if modifyfs is true.
+	if cmd.AllowModifyFS && runtime.GOOS == "darwin" {
+		return fmt.Errorf("modifyfs option could erase fs and is not allowed on Mac")
+	}
+
+	// Configure default storage dir.
+	if cmd.StorageDir == "" {
+		if cmd.AllowModifyFS {
+			cmd.StorageDir = pathutils.DefaultStorageDir
+		} else {
+			cmd.StorageDir = "/tmp/makisu-storage"
+		}
+	}
+
 	// Verify storage dir is not child of internal dir.
 	if pathutils.IsDescendantOfAny(cmd.StorageDir, []string{pathutils.DefaultInternalDir}) {
 		return fmt.Errorf("storage dir cannot be under internal dir %s",
 			pathutils.DefaultInternalDir)
-	}
-
-	// Verify it's not runninng on Mac if modifyfs is true.
-	if cmd.AllowModifyFS && runtime.GOOS == "darwin" {
-		return fmt.Errorf("modifyfs option could erase fs and is not allowed on Mac")
 	}
 
 	return nil
