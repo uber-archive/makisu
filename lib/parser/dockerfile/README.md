@@ -24,6 +24,14 @@ If a variable fails to resolve, it is passed through to the resulting string exa
 
 The following directives are not supported: ONBUILD, STOPSIGNAL, HEALTHCHECK, and SHELL.
 
+## COMMIT
+
+Syntax:
+- #!COMMIT
+    - 'COMMIT' can be any case and there can be whitespace preceding '#', after '!', or after 'COMMIT.'
+
+This is a special directive that indicates that a layer should be committed (used in the distributed cache).
+
 ## ADD
 
 Syntax:
@@ -33,14 +41,6 @@ Syntax:
     - JSON format.
 
 Variables are substituted using values from ARGs and ENVs within the stage.
-
-## COMMIT
-
-Syntax:
-- #!COMMIT
-    - 'COMMIT' can be any case and there can be whitespace preceding '#', after '!', or after 'COMMIT.'
-
-This is a special directive that indicates that a layer should be committed (used in the distributed cache).
 
 ## CMD
 
