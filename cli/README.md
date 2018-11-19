@@ -17,8 +17,6 @@ Usage of makisu:
 
 Sub-Commands:
   build  |  Builds a docker image from a build context and a dockerfile.
-2018/11/19 15:34:33 Command failure: Need to specify a command for makisu. One of 'build', 'help' or 'version'
-exit status 1
 
 $ makisu build --help
 Usage of makisu build:
@@ -56,8 +54,6 @@ Usage of makisu build:
   -storage
     	Directory that makisu uses for temp files and cached layers. Mount this path for better caching performance. If modifyfs is set, default to /makisu-storage; Otherwise default to /tmp/makisu-storage. (type: string, default: "")
   -t	image tag (required) (type: string, default: "")
-2018/11/19 15:35:13 Command failure: flag: help requested
-exit status 1
 
 $ makisu version
 v0.1.0
