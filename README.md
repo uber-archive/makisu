@@ -133,7 +133,7 @@ With this job spec, a simple `kubectl create -f job.yaml` will start the build. 
 ## Configuring distributed cache
 
 Makisu supports distributed layer cache, which can significantly improve build performance.
-It uses target registry for layer storage, and needs to be able to connect to a separate key-value store to map lines of a Dockerfile to a tentative layer SHA stored in Docker registry. For example, Redis can be used as a cache id store with the following Kubernetes job spec:
+It uses target registry for layer storage, and needs to connect to a separate key-value store to map lines of a Dockerfile to a tentative layer SHA stored in Docker registry. For example, Redis can be used as a cache key-value store with the following Kubernetes job spec:
 
 ```yaml
 # redis.yaml
