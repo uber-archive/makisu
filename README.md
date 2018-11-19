@@ -132,9 +132,8 @@ With this job spec, a simple `kubectl create -f job.yaml` will start the build. 
 # Using cache
 ## Configuring distributed cache
 
-A distributed layer cache maps each line of a Dockerfile to a tentative layer SHA stored in Docker registry. Using a layer cache can significantly improve build performance.
-
-To use the distributed caching feature of Makisu, the builder needs to be able to connect to a *cache id store*. For example, Redis can be used as a cache id store with the following Kubernetes job spec:
+Makisu supports distributed layer cache, which can significantly improve build performance.
+It uses target registry for layer storage, and needs to connect to a separate key-value store to map lines of a Dockerfile to a tentative layer SHA stored in Docker registry. For example, Redis can be used as a cache key-value store with the following Kubernetes job spec:
 
 ```yaml
 # redis.yaml
@@ -170,6 +169,7 @@ spec:
 ```
 
 Finally, connect Redis as the Makisu layer cache by passing `--redis-cache-addr=redis:6379` argument.
+Cache has a 7 day TTL by default, which can be configured with `--redis-cache-ttl=604800` argument.
 
 ## Explicit caching
 
