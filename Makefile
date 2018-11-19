@@ -114,7 +114,7 @@ cunit-test: $(ALL_SRC) vendor
 		golang:$(GO_VERSION) \
 		-c "make ext-tools unit-test"
 
-integration: bins env image
+integration: env image
 	PACKAGE_VERSION=$(PACKAGE_VERSION) ./env/bin/py.test --maxfail=1 --durations=6 --timeout=300 -vv test/python
 
 
