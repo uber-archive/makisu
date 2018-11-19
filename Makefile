@@ -106,7 +106,7 @@ test: unit-test integration
 unit-test: $(ALL_SRC) vendor ext-tools mocks
 	$(EXT_TOOLS_DIR)/gocov test $(ALL_PKGS) --tags "unit" | $(EXT_TOOLS_DIR)/gocov report
 
-cunit-test: $(ALL_SRC) vendor
+cunit-test: $(ALL_SRC)
 	docker run -i --rm -v $(PWD):/go/src/$(PACKAGE_NAME) \
 		--net=host \
 		--entrypoint=bash \

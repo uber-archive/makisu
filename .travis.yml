@@ -6,4 +6,4 @@ services:
     - docker
 
 script:
-    - make integration
+    - make cunit-test integration
