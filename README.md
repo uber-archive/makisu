@@ -173,7 +173,7 @@ Cache has a 7 day TTL by default, which can be configured with `--redis-cache-tt
 
 ## Explicit caching
 
-By default, Makisu will cache each directive in a Dockerfile. To avoid caching everything, the layer cache can be further optimized via explicit caching with the `--commit=explicit` flag. Dockerfile directives may then be manually cached using the `#!COMMIT` annotation:
+By default, Makisu will cache each directive in a Dockerfile. To avoid committing and caching everything, the layer cache can be further optimized via explicit caching with the `--commit=explicit` flag. Dockerfile directives may then be manually cached using the `#!COMMIT` annotation:
 
 ```Dockerfile
 FROM node:8.1.3
@@ -186,14 +186,14 @@ ADD pre-build.sh
 ...
 ...
 
-# An step we want to cache. A single layer will be generated here on top of base image.
+# An step we want to cache. A single layer will be generated and cached here on top of base image.
 RUN npm install #!COMMIT
 
 ...
 ...
 ...
 
-# Last step of last stage always commit by default, generating another layer.
+# The last step of the last stage always commit by default, generating and caching another layer.
 ENTRYPOINT ["/bin/bash"]
 
 ```
