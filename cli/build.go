@@ -30,6 +30,7 @@ import (
 	"github.com/uber/makisu/lib/storage"
 	"github.com/uber/makisu/lib/tario"
 	"github.com/uber/makisu/lib/utils"
+	"github.com/uber/makisu/lib/utils/stringset"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -45,6 +46,7 @@ type BuildFlags struct {
 
 	AllowModifyFS bool   `commander:"flag=modifyfs,Allow makisu to touch files outside of its own storage dir."`
 	StorageDir    string `commander:"flag=storage,Directory that makisu uses for temp files and cached layers. Mount this path for better caching performance. If modifyfs is set, default to /makisu-storage; Otherwise default to /tmp/makisu-storage."`
+	Blacklist     string `commander:"flag=blacklist,Comma separated list of files/directories. Makisu will omit all changes to these locations in the resulting docker images."`
 
 	DockerHost    string `commander:"flag=docker-host,Docker host to load images to."`
 	DockerVersion string `commander:"flag=docker-version,Version string for loading images to docker."`
@@ -85,6 +87,13 @@ func (cmd *BuildFlags) postInit() error {
 		return fmt.Errorf("failed to extend blacklist: %v", err)
 	}
 
+	if cmd.Blacklist != "" {
+		newItems := strings.Split(cmd.Blacklist, ",")
+		newBlacklist := append(pathutils.DefaultBlacklist, newItems...)
+		pathutils.DefaultBlacklist = stringset.FromSlice(newBlacklist).ToSlice()
+		log.Infof("Added %d new items to blacklist: %v", len(newItems), newItems)
+	}
+
 	if err := tario.SetCompressionLevel(cmd.CompressionLevelStr); err != nil {
 		return fmt.Errorf("set compression level: %s", err)
 	}
@@ -94,7 +103,7 @@ func (cmd *BuildFlags) postInit() error {
 	case "explicit":
 		cmd.forceCommit = false
 	case "implicit":
-		// forceCommit will make every step attampt to commit a layer.
+		// forceCommit will make every step attempt to commit a layer.
 		// Commit() is noop for steps other than ADD/COPY/RUN if they are not
 		// after an uncommited RUN, so this won't generate extra empty layers.
 		cmd.forceCommit = true
