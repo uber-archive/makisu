@@ -23,8 +23,8 @@ import (
 )
 
 type cacheEntry struct {
-	layerSHA  string
-	timestamp int64
+	LayerSHA  string
+	Timestamp int64
 }
 
 type fsStore struct {
@@ -34,7 +34,7 @@ type fsStore struct {
 	sandboxDir string
 	ttlsec     int64
 
-	entries map[string]cacheEntry
+	entries map[string]*cacheEntry
 }
 
 // NewFSStore returns a KVStore backed by the local filesystem.
@@ -45,7 +45,7 @@ func NewFSStore(fullpath string, sandboxDir string, ttlsec int64) (KVStore, erro
 		fullpath:   fullpath,
 		sandboxDir: sandboxDir,
 		ttlsec:     ttlsec,
-		entries:    make(map[string]cacheEntry),
+		entries:    make(map[string]*cacheEntry),
 	}
 
 	contents, err := ioutil.ReadFile(fullpath)
@@ -63,7 +63,7 @@ func NewFSStore(fullpath string, sandboxDir string, ttlsec int64) (KVStore, erro
 
 	// Remove entries that's older than TTL.
 	for key, entry := range s.entries {
-		if time.Now().Unix()-entry.timestamp > s.ttlsec {
+		if time.Now().Unix()-entry.Timestamp > s.ttlsec {
 			// Cache expired.
 			delete(s.entries, key)
 		}
@@ -78,15 +78,15 @@ func (s *fsStore) Get(key string) (string, error) {
 		return "", nil
 	}
 	// Update timestamp.
-	entry.timestamp = time.Now().Unix()
+	entry.Timestamp = time.Now().Unix()
 
-	return entry.layerSHA, nil
+	return entry.LayerSHA, nil
 }
 
 func (s *fsStore) Put(key, value string) error {
-	entry := cacheEntry{
-		layerSHA:  value,
-		timestamp: time.Now().Unix(),
+	entry := &cacheEntry{
+		LayerSHA:  value,
+		Timestamp: time.Now().Unix(),
 	}
 
 	s.entries[key] = entry
@@ -113,7 +113,7 @@ func (s *fsStore) Put(key, value string) error {
 }
 
 func (s *fsStore) Cleanup() error {
-	s.entries = make(map[string]cacheEntry)
+	s.entries = make(map[string]*cacheEntry)
 
 	return os.Remove(s.fullpath)
 }

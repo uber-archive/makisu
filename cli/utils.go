@@ -132,9 +132,9 @@ func (cmd BuildFlags) getCacheManager(store storage.ImageStore, target image.Nam
 			return cache.New(cacheIDStore, target, registryClient)
 		} else if cmd.FileCacheTTL != 0 {
 			// If the FileCacheTTL is provided and not 0, use the FSStore as a key-value store.
-			log.Infof("Using file at %s for cacheID storage", cmd.FileCacheTTL)
-
 			fullpath := path.Join(store.RootDir, pathutils.CacheKeyValueFileName)
+			log.Infof("Using file at %s for cacheID storage", fullpath)
+
 			cacheIDStore, err := cache.NewFSStore(
 				fullpath, store.SandboxDir, int64(cmd.FileCacheTTL))
 			if err != nil {
