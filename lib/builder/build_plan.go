@@ -23,16 +23,18 @@ import (
 	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/log"
 	"github.com/uber/makisu/lib/parser/dockerfile"
+	"github.com/uber/makisu/lib/utils/stringset"
 )
 
 // BuildPlan describes a list of named buildStages, that can copy files between
 // one another.
 type BuildPlan struct {
 	baseCtx       *context.BuildContext
-	contextDirs   map[string][]string
+	crossRefDirs  map[string][]string
 	target        image.Name
 	cacheMgr      cache.Manager
 	stages        []*buildStage
+	imageStages   map[string]bool
 	allowModifyFS bool
 	forceCommit   bool
 }
@@ -45,10 +47,11 @@ func NewBuildPlan(
 
 	plan := &BuildPlan{
 		baseCtx:       ctx,
-		contextDirs:   make(map[string][]string),
+		crossRefDirs:  make(map[string][]string),
 		target:        target,
 		cacheMgr:      cacheMgr,
 		stages:        make([]*buildStage, len(parsedStages)),
+		imageStages:   make(map[string]bool),
 		allowModifyFS: allowModifyFS,
 		forceCommit:   forceCommit,
 	}
@@ -75,15 +78,24 @@ func NewBuildPlan(
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert parsed stage: %s", err)
 		}
-		plan.stages[i] = stage
 
 		// Merge context dirs.
-		for alias, dirs := range stage.contextDirs {
+		for alias, dirs := range stage.crossRefDirs {
+			// If we see that the alias of the cross referenced directory is an image name,
+			// we add a fake stage to the build plan that will download that image directly
+			// into the cross referencing root for that alias.
+			if name, err := image.ParseName(alias); err == nil && name.IsValid() {
+				plan.imageStages[name.String()] = true
+				aliases[alias] = true
+			}
 			if _, ok := aliases[alias]; !ok {
 				return nil, fmt.Errorf("copy from nonexistent stage %s", alias)
 			}
-			plan.contextDirs[alias] = append(plan.contextDirs[alias], dirs...)
+			plan.crossRefDirs[alias] = stringset.FromSlice(append(plan.crossRefDirs[alias], dirs...)).
+				ToSlice()
 		}
+
+		plan.stages[i] = stage
 	}
 
 	return plan, nil
@@ -97,13 +109,20 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 		stage.pullCacheLayers(plan.cacheMgr)
 	}
 
+	for imageName := range plan.imageStages {
+		// Building that pseudo stage will unpack the image directly into the stage's
+		// cross stage directory.
+		// TODO(pourchet)
+		log.Infof("Pulling image %v for cross stage reference", imageName)
+	}
+
 	var currStage *buildStage
 	for k := 0; k < len(plan.stages); k++ {
 		currStage = plan.stages[k]
 		log.Infof("* Stage %d/%d : %s", k+1, len(plan.stages), currStage.String())
 
 		lastStage := k == len(plan.stages)-1
-		_, copiedFrom := plan.contextDirs[currStage.alias]
+		_, copiedFrom := plan.crossRefDirs[currStage.alias]
 		if err := currStage.build(
 			plan.cacheMgr, lastStage, copiedFrom); err != nil {
 			return nil, fmt.Errorf("build stage: %s", err)
@@ -112,10 +131,9 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 		if plan.allowModifyFS {
 			if k < len(plan.stages)-1 {
 				// Save context directories needed for cross-stage copy operations.
-				newRoot := currStage.ctx.StageDir(currStage.alias)
-				contextDirs := plan.contextDirs[currStage.alias]
-
-				if err := currStage.ctx.MemFS.Checkpoint(newRoot, contextDirs); err != nil {
+				newRoot := currStage.ctx.CrossRefRoot(currStage.alias)
+				crossRefDirs := plan.crossRefDirs[currStage.alias]
+				if err := currStage.ctx.MemFS.Checkpoint(newRoot, crossRefDirs); err != nil {
 					return nil, fmt.Errorf("checkpoint memfs: %s", err)
 				}
 			}
@@ -147,4 +165,11 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 	log.Infow(fmt.Sprintf("Computed total image size %d", size), "total_image_size", size)
 
 	return manifest, nil
+}
+
+func (plan *BuildPlan) addImageStage(imageName string, digestPairs map[string][]*image.DigestPair) error {
+	if _, found := plan.imageStages[imageName]; found {
+		return nil
+	}
+	return nil
 }

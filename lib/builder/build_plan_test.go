@@ -92,11 +92,11 @@ func TestBuildPlanContextDirs(t *testing.T) {
 
 	plan, err := NewBuildPlan(ctx, target, cacheMgr, stages, false, false)
 	require.NoError(err)
-	require.Contains(plan.contextDirs, "stage1")
-	require.Len(plan.contextDirs, 1)
-	require.Contains(plan.contextDirs["stage1"], "/hello")
-	require.Contains(plan.contextDirs["stage1"], "/hello2")
-	require.Len(plan.contextDirs["stage1"], 2)
+	require.Contains(plan.crossRefDirs, "stage1")
+	require.Len(plan.crossRefDirs, 1)
+	require.Contains(plan.crossRefDirs["stage1"], "/hello")
+	require.Contains(plan.crossRefDirs["stage1"], "/hello2")
+	require.Len(plan.crossRefDirs["stage1"], 2)
 
 	// Copy from nonexistent stage.
 	from := dockerfile.FromDirectiveFixture("", envImage.String(), "")

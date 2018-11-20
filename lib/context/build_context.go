@@ -15,6 +15,7 @@
 package context
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -71,9 +72,12 @@ func NewBuildContext(
 	}, nil
 }
 
-// StageDir returns the directory that context from a stage should be written to and read from.
-func (ctx *BuildContext) StageDir(alias string) string {
-	return filepath.Join(ctx.stagesDir, alias)
+// CrossRefRoot returns the directory that context from a stage should be written to and read from.
+func (ctx *BuildContext) CrossRefRoot(alias string) string {
+	// Here we sha the alias to get a string that can be directly appended to the context's
+	// root crossRefDir.
+	dirname := base64.URLEncoding.EncodeToString([]byte(alias))
+	return filepath.Join(ctx.stagesDir, string(dirname))
 }
 
 // Cleanup cleans up files kept across stages after the build is completed.

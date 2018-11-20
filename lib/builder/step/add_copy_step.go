@@ -178,7 +178,7 @@ func (s *addCopyStep) resolveFromPaths(ctx *context.BuildContext) []string {
 
 func (s *addCopyStep) contextRootDir(ctx *context.BuildContext) string {
 	if s.fromStage != "" {
-		return ctx.StageDir(s.fromStage)
+		return ctx.CrossRefRoot(s.fromStage)
 	}
 	return ctx.ContextDir
 }

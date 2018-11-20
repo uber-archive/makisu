@@ -37,7 +37,7 @@ import (
 // buildStage represents a sequence of steps to build intermediate layers or a final image.
 type buildStage struct {
 	ctx               *context.BuildContext
-	contextDirs       map[string][]string
+	crossRefDirs      map[string][]string
 	alias             string
 	nodes             []*buildNode
 	lastImageConfig   *image.Config
@@ -68,7 +68,7 @@ func newBuildStage(
 
 	stage := &buildStage{
 		ctx:               ctx,
-		contextDirs:       make(map[string][]string),
+		crossRefDirs:      make(map[string][]string),
 		alias:             parsedStage.From.Alias,
 		nodes:             make([]*buildNode, 0),
 		sharedDigestPairs: digestPairs,
@@ -104,10 +104,10 @@ func (stage *buildStage) convertParsedStage(
 		// Add context dirs for cross-stage copy, if any.
 		alias, dirs := s.ContextDirs()
 		if len(dirs) > 0 {
-			if _, ok := stage.contextDirs[alias]; !ok {
-				stage.contextDirs[alias] = make([]string, 0)
+			if _, ok := stage.crossRefDirs[alias]; !ok {
+				stage.crossRefDirs[alias] = make([]string, 0)
 			}
-			stage.contextDirs[alias] = append(stage.contextDirs[alias], dirs...)
+			stage.crossRefDirs[alias] = append(stage.crossRefDirs[alias], dirs...)
 		}
 		if s.RequireOnDisk() {
 			stage.requireOnDisk = true
