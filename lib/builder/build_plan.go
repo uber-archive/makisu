@@ -104,11 +104,11 @@ func (plan *BuildPlan) handleCrossRefs(aliases map[string]bool, digestPairs imag
 				if err != nil || !name.IsValid() {
 					return fmt.Errorf("copy from nonexistent stage %s", alias)
 				}
-				imageStage, err := plan.newImageStage(name, digestPairs)
+				imageStage, err := plan.newImageStage(alias, digestPairs)
 				if err != nil {
 					return fmt.Errorf("new image stage: %v", err)
 				}
-				plan.imageStages[name.String()] = imageStage
+				plan.imageStages[alias] = imageStage
 				aliases[alias] = true
 			}
 			plan.crossRefDirs[alias] = stringset.FromSlice(
@@ -140,13 +140,13 @@ func buildAliases(stages dockerfile.Stages) (map[string]bool, error) {
 	return aliases, nil
 }
 
-func (plan *BuildPlan) newImageStage(name image.Name, digestPairs image.DigestPairMap) (*buildStage, error) {
-	from, err := step.NewFromStep("", name.String(), "")
+func (plan *BuildPlan) newImageStage(alias string, digestPairs image.DigestPairMap) (*buildStage, error) {
+	from, err := step.NewFromStep(alias, alias, alias)
 	if err != nil {
 		return nil, fmt.Errorf("new from step: %v", err)
 	}
 	steps := []step.BuildStep{from}
-	stage, err := newBuildStage(plan.baseCtx, "", steps, digestPairs, plan.allowModifyFS, plan.forceCommit)
+	stage, err := newBuildStage(plan.baseCtx, alias, steps, digestPairs, plan.allowModifyFS, false)
 	if err != nil {
 		return nil, fmt.Errorf("new build stage: %v", err)
 	}
@@ -161,16 +161,20 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 		stage.pullCacheLayers(plan.cacheMgr)
 	}
 
-	for imageName, stage := range plan.imageStages {
+	for alias, stage := range plan.imageStages {
 		// Building that pseudo stage will unpack the image directly into the stage's
 		// cross stage directory.
-		log.Infof("Pulling image %v for cross stage reference", imageName)
+		name, err := image.ParseNameForPull(alias)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse cross stage reference name %v: %v", alias, err)
+		}
+		log.Infof("Pulling image %v for cross stage reference", name)
 		if err := stage.build(plan.cacheMgr, false, true); err != nil {
-			return nil, fmt.Errorf("build stage %v for cross stage reference: %v", imageName, err)
-		} else if err := stage.checkpoint(plan.crossRefDirs[stage.alias]); err != nil {
-			return nil, fmt.Errorf("stage checkpoint %v for cross stage reference: %v", imageName, err)
+			return nil, fmt.Errorf("build stage %v for cross stage reference: %v", name, err)
+		} else if err := stage.checkpoint(plan.crossRefDirs[alias]); err != nil {
+			return nil, fmt.Errorf("stage checkpoint %v for cross stage reference: %v", name, err)
 		} else if err := stage.cleanup(); err != nil {
-			return nil, fmt.Errorf("stage cleanup %v for cross stage reference: %v", imageName, err)
+			return nil, fmt.Errorf("stage cleanup %v for cross stage reference: %v", name, err)
 		}
 	}
 
