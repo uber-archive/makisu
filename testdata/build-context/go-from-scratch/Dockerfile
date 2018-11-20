@@ -1,4 +1,4 @@
-FROM golang:latest AS phase1
+FROM golang:1.11.1 AS phase1
 
 # Perform build
 COPY . /home/udocker/test-scratch

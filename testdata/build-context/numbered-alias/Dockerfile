@@ -1,4 +1,4 @@
-FROM golang:latest
+FROM busybox:latest
 RUN echo "OK" > /test1
 
 FROM debian:8
