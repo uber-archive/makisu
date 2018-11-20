@@ -73,6 +73,9 @@ func NewFSStore(fullpath string, sandboxDir string, ttlsec int64) (KVStore, erro
 }
 
 func (s *fsStore) Get(key string) (string, error) {
+	s.Lock()
+	defer s.Unlock()
+
 	entry, ok := s.entries[key]
 	if !ok {
 		return "", nil
@@ -84,6 +87,9 @@ func (s *fsStore) Get(key string) (string, error) {
 }
 
 func (s *fsStore) Put(key, value string) error {
+	s.Lock()
+	defer s.Unlock()
+
 	entry := &cacheEntry{
 		LayerSHA:  value,
 		Timestamp: time.Now().Unix(),
@@ -113,6 +119,9 @@ func (s *fsStore) Put(key, value string) error {
 }
 
 func (s *fsStore) Cleanup() error {
+	s.Lock()
+	defer s.Unlock()
+
 	s.entries = make(map[string]*cacheEntry)
 
 	return os.Remove(s.fullpath)
