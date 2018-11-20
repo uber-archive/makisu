@@ -24,6 +24,8 @@ Usage of makisu build:
     	Comma separated list of files/directories. Makisu will omit all changes to these locations in the resulting docker images. (type: string, default: "")
   -build-args
     	Arguments to the dockerfile as per the spec of ARG. Format is a json object. (type: map, default: {})
+  -cache-ttl
+    	The TTL of cacheID-sha mapping entries in seconds. (type: int, default: 604800)
   -commit
     	Set to explicit to only commit at steps with '#!COMMIT' annotations; Set to implicit to commit at every ADD/COPY/RUN step. (type: string, default: "implicit")
   -compression
@@ -37,8 +39,6 @@ Usage of makisu build:
   -docker-version
     	Version string for loading images to docker. (type: string, default: "1.21")
   -f	The absolute path to the dockerfile (type: string, default: "Dockerfile")
-  -file-cache-ttl
-    	The TTL of cacheID-sha mapping entries in seconds for local file cache. (type: int, default: 7200)
   -load
     	Load image after build. (type: bool, default: false)
   -modifyfs
@@ -47,8 +47,6 @@ Usage of makisu build:
     	Push image after build to the comma-separated list of registries. (type: string, default: "")
   -redis-cache-addr
     	The address of a redis cache server for cacheID to layer sha mapping. (type: string, default: "")
-  -redis-cache-ttl
-    	The TTL of cacheID-sha mapping entries in seconds for redis cache. (type: int, default: 604800)
   -registry-config
     	Registry configuration file for pulling and pushing images. Default configuration for DockerHub is used if not specified. (type: string, default: "")
   -storage

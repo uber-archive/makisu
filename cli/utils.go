@@ -124,19 +124,20 @@ func (cmd BuildFlags) getCacheManager(store storage.ImageStore, target image.Nam
 			// If RedisCacheAddress is provided, init redis cache.
 			log.Infof("Using redis at %s for cacheID storage", cmd.RedisCacheAddress)
 
-			cacheIDStore, err := cache.NewRedisStore(cmd.RedisCacheAddress, cmd.RedisCacheTTL)
+			cacheIDStore, err := cache.NewRedisStore(cmd.RedisCacheAddress, cmd.CacheTTL)
 			if err != nil {
 				log.Errorf("Failed to connect to redis store: %s", err)
 				cacheIDStore = nil
 			}
 			return cache.New(cacheIDStore, target, registryClient)
-		} else if cmd.FileCacheTTL != 0 {
-			// If the FileCacheTTL is provided and not 0, use the FSStore as a key-value store.
+		} else if cmd.CacheTTL != 0 {
+			// If redis cache address is not provided, and the cache ttl is not 0,
+			// use the FSStore as a key-value store.
 			fullpath := path.Join(store.RootDir, pathutils.CacheKeyValueFileName)
 			log.Infof("Using file at %s for cacheID storage", fullpath)
 
 			cacheIDStore, err := cache.NewFSStore(
-				fullpath, store.SandboxDir, int64(cmd.FileCacheTTL))
+				fullpath, store.SandboxDir, int64(cmd.CacheTTL))
 			if err != nil {
 				log.Errorf("Failed to init local cache ID store: %s", err)
 				cacheIDStore = nil
