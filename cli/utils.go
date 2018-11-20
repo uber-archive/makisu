@@ -136,8 +136,7 @@ func (cmd BuildFlags) getCacheManager(store storage.ImageStore, target image.Nam
 			fullpath := path.Join(store.RootDir, pathutils.CacheKeyValueFileName)
 			log.Infof("Using file at %s for cacheID storage", fullpath)
 
-			cacheIDStore, err := cache.NewFSStore(
-				fullpath, store.SandboxDir, int64(cmd.CacheTTL))
+			cacheIDStore, err := cache.NewFSStore(fullpath, store.SandboxDir, int64(cmd.CacheTTL))
 			if err != nil {
 				log.Errorf("Failed to init local cache ID store: %s", err)
 				cacheIDStore = nil
