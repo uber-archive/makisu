@@ -47,6 +47,8 @@ makisu build -t ${TAG} -dest ${TAR_PATH} ${CONTEXT}
 
 # Running Makisu
 
+For a full list of flags, run `makisu --help`, `makisu build --help` or refer to the README [here](cli/README.md).
+
 ## Makisu anywhere
 
 To build Dockerfiles that contain RUN, Makisu still needs to run in a container.
@@ -76,8 +78,6 @@ Makisu makes it easy to build images from a GitHub repository inside Kubernetes.
 created with an init container, which will fetch the build context through git or other means, and place 
 that context in a designated volume. Once it completes, the Makisu container will be created and executes
 the build, using that volume as its build context.
-
-For a full list of flags, run `makisu --help`, `makisu build --help` or refer to the README [here](cli/README.md).
 
 ### Creating registry configuration
 
