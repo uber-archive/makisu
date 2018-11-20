@@ -168,6 +168,7 @@ func (cmd BuildFlags) GetTargetRegistries() []string {
 // If -push is specified, will also push the image to those registries.
 // If -load is specified, will load the image into the local docker daemon.
 func (cmd BuildFlags) Build(contextDir string) error {
+	log.Infof("Starting Makisu build (version=%s)", utils.BuildHash)
 	if cmd.Tag == "" {
 		return fmt.Errorf("please specify a target image name: makisu build -t=(<registry:port>/)<repo>:<tag> ./")
 	}
