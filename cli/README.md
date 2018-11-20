@@ -37,8 +37,8 @@ Usage of makisu build:
   -docker-version
     	Version string for loading images to docker. (type: string, default: "1.21")
   -f	The absolute path to the dockerfile (type: string, default: "Dockerfile")
-  -file-cache-path
-    	The path of a local file for cacheID to layer sha mapping. Used for testing only. (type: string, default: "")
+  -file-cache-ttl
+    	The TTL of cacheID-sha mapping entries in seconds for local file cache. (type: int, default: 7200)
   -load
     	Load image after build. (type: bool, default: false)
   -modifyfs
@@ -48,7 +48,7 @@ Usage of makisu build:
   -redis-cache-addr
     	The address of a redis cache server for cacheID to layer sha mapping. (type: string, default: "")
   -redis-cache-ttl
-    	The TTL of each cacheID-sha mapping entry in seconds. (type: int, default: 604800)
+    	The TTL of cacheID-sha mapping entries in seconds for redis cache. (type: int, default: 604800)
   -registry-config
     	Registry configuration file for pulling and pushing images. Default configuration for DockerHub is used if not specified. (type: string, default: "")
   -storage

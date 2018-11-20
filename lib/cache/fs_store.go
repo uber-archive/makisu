@@ -15,40 +15,105 @@
 package cache
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"sync"
+	"time"
 )
+
+type cacheEntry struct {
+	layerSHA  string
+	timestamp int64
+}
 
 type fsStore struct {
 	sync.Mutex
 
-	root string
+	fullpath   string
+	sandboxDir string
+	ttlsec     int64
+
+	entries map[string]cacheEntry
 }
 
-// NewFSStore returns a KVStore backed by the local filesystem. Each key stored
-// will correspond to a file on disk and its value is the contents of that key.
-func NewFSStore(root string) KVStore {
-	return &fsStore{
-		root: root,
+// NewFSStore returns a KVStore backed by the local filesystem.
+// Entries are stored in json format.
+// TODO: enforce capacity.
+func NewFSStore(fullpath string, sandboxDir string, ttlsec int64) (KVStore, error) {
+	s := &fsStore{
+		fullpath:   fullpath,
+		sandboxDir: sandboxDir,
+		ttlsec:     ttlsec,
+		entries:    make(map[string]cacheEntry),
 	}
-}
 
-func (store *fsStore) Get(key string) (string, error) {
-	path := filepath.Join(store.root, key)
-	contents, err := ioutil.ReadFile(path)
+	contents, err := ioutil.ReadFile(fullpath)
 	if os.IsNotExist(err) {
-		return "", nil
+		return s, nil
 	} else if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(contents), nil
+	if err := json.Unmarshal(contents, &s.entries); err != nil {
+		if err := os.Remove(fullpath); err != nil {
+			return nil, err
+		}
+		return s, nil
+	}
+
+	// Remove entries that's older than TTL.
+	for key, entry := range s.entries {
+		if time.Now().Unix()-entry.timestamp > s.ttlsec {
+			// Cache expired.
+			delete(s.entries, key)
+		}
+	}
+
+	return s, nil
 }
 
-func (store *fsStore) Put(key, value string) error {
-	path := filepath.Join(store.root, key)
-	return ioutil.WriteFile(path, []byte(value), 0677)
+func (s *fsStore) Get(key string) (string, error) {
+	entry, ok := s.entries[key]
+	if !ok {
+		return "", nil
+	}
+	// Update timestamp.
+	entry.timestamp = time.Now().Unix()
+
+	return entry.layerSHA, nil
 }
 
-func (store *fsStore) Cleanup() error { return nil }
+func (s *fsStore) Put(key, value string) error {
+	entry := cacheEntry{
+		layerSHA:  value,
+		timestamp: time.Now().Unix(),
+	}
+
+	s.entries[key] = entry
+
+	content, err := json.Marshal(s.entries)
+	if err != nil {
+		return err
+	}
+
+	tempFile, err := ioutil.TempFile(s.sandboxDir, "cache")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tempFile.Name())
+
+	if err := ioutil.WriteFile(tempFile.Name(), content, 0755); err != nil {
+		return err
+	}
+	if err := os.Rename(tempFile.Name(), s.fullpath); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *fsStore) Cleanup() error {
+	s.entries = make(map[string]cacheEntry)
+
+	return os.Remove(s.fullpath)
+}

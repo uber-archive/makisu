@@ -123,19 +123,25 @@ func (cmd BuildFlags) getCacheManager(store storage.ImageStore, target image.Nam
 		if cmd.RedisCacheAddress != "" {
 			// If RedisCacheAddress is provided, init redis cache.
 			log.Infof("Using redis at %s for cacheID storage", cmd.RedisCacheAddress)
+
 			cacheIDStore, err := cache.NewRedisStore(cmd.RedisCacheAddress, cmd.RedisCacheTTL)
 			if err != nil {
 				log.Errorf("Failed to connect to redis store: %s", err)
 				cacheIDStore = nil
 			}
 			return cache.New(cacheIDStore, target, registryClient)
-		} else if cmd.FileCachePath != "" {
-			// If the FileCachePath is provided, use the FSStore as a key-value store.
-			log.Infof("Using file at %s for cacheID storage", cmd.FileCachePath)
-			if fi, err := os.Lstat(cmd.FileCachePath); err == nil && fi.Mode().IsDir() {
-				cacheIDStore := cache.NewFSStore(cmd.FileCachePath)
-				return cache.New(cacheIDStore, target, registryClient)
+		} else if cmd.FileCacheTTL != 0 {
+			// If the FileCacheTTL is provided and not 0, use the FSStore as a key-value store.
+			log.Infof("Using file at %s for cacheID storage", cmd.FileCacheTTL)
+
+			fullpath := path.Join(store.RootDir, pathutils.CacheKeyValueFileName)
+			cacheIDStore, err := cache.NewFSStore(
+				fullpath, store.SandboxDir, int64(cmd.FileCacheTTL))
+			if err != nil {
+				log.Errorf("Failed to init local cache ID store: %s", err)
+				cacheIDStore = nil
 			}
+			return cache.New(cacheIDStore, target, registryClient)
 		}
 	}
 

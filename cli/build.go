@@ -54,8 +54,8 @@ type BuildFlags struct {
 	DoLoad        bool   `commander:"flag=load,Load image after build."`
 
 	RedisCacheAddress   string `commander:"flag=redis-cache-addr,The address of a redis cache server for cacheID to layer sha mapping."`
-	RedisCacheTTL       int    `commander:"flag=redis-cache-ttl,The TTL of each cacheID-sha mapping entry in seconds."`
-	FileCachePath       string `commander:"flag=file-cache-path,The path of a local file for cacheID to layer sha mapping. Used for testing only."`
+	RedisCacheTTL       int    `commander:"flag=redis-cache-ttl,The TTL of cacheID-sha mapping entries in seconds for redis cache."`
+	FileCacheTTL        int    `commander:"flag=file-cache-ttl,The TTL of cacheID-sha mapping entries in seconds for local file cache."`
 	CompressionLevelStr string `commander:"flag=compression,Image compression level, could be 'no', 'speed', 'size', 'default'."`
 	Commit              string `commander:"flag=commit,Set to explicit to only commit at steps with '#!COMMIT' annotations; Set to implicit to commit at every ADD/COPY/RUN step."`
 
@@ -76,6 +76,7 @@ func newBuildFlags() BuildFlags {
 
 		RedisCacheAddress:   "",
 		RedisCacheTTL:       7 * 24 * 3600,
+		FileCacheTTL:        24 * 3600,
 		CompressionLevelStr: "default",
 
 		Commit: "implicit",
