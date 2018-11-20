@@ -16,6 +16,7 @@ package builder
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/uber/makisu/lib/cache"
 	"github.com/uber/makisu/lib/context"
@@ -59,9 +60,14 @@ func NewBuildPlan(
 		if parsedStage.From.Alias != "" {
 			if _, ok := aliases[parsedStage.From.Alias]; ok {
 				return nil, fmt.Errorf("duplicate stage alias: %s", parsedStage.From.Alias)
+			} else if _, err := strconv.Atoi(parsedStage.From.Alias); err == nil {
+				// Docker would return `name can't start with a number or contain symbols`
+				return nil, fmt.Errorf("stage alias cannot be a number: %s", parsedStage.From.Alias)
 			}
-			aliases[parsedStage.From.Alias] = true
+		} else {
+			parsedStage.From.Alias = strconv.Itoa(i)
 		}
+		aliases[parsedStage.From.Alias] = true
 
 		// Add this stage to the plan.
 		stage, err := newBuildStage(
@@ -76,11 +82,7 @@ func NewBuildPlan(
 			if _, ok := aliases[alias]; !ok {
 				return nil, fmt.Errorf("copy from nonexistent stage %s", alias)
 			}
-			if _, ok := plan.contextDirs[alias]; ok {
-				plan.contextDirs[alias] = append(plan.contextDirs[alias], dirs...)
-			} else {
-				plan.contextDirs[alias] = dirs
-			}
+			plan.contextDirs[alias] = append(plan.contextDirs[alias], dirs...)
 		}
 	}
 
