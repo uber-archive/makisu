@@ -115,7 +115,7 @@ def makisu_build_image(new_image, registry, context_dir, storage_dir,
         args.append('-load')
 
     if not cache_dir:
-        args.extend(['-file-cache-ttl', 0])
+        args.extend(['-file-cache-ttl', '0'])
 
     args.append('/context')
 
