@@ -37,6 +37,7 @@ type BuildApplication struct {
 
 // ApplicationFlags contains all of the flags for the top level CLI app.
 type ApplicationFlags struct {
+	HelpFlag  bool   `commander:"flag=help,Display usage information for Makisu."`
 	LogOutput string `commander:"flag=log-output,The output file path for the logs."`
 	LogLevel  string `commander:"flag=log-level,The level at which to log."`
 	LogFormat string `commander:"flag=log-fmt,The format of the logs."`
@@ -89,6 +90,11 @@ func (app *BuildApplication) Cleanup() error {
 // values taken from the flags and arguments of the CLI; but before any of the Build/Pull (etc...)
 // functions get called.
 func (app *BuildApplication) PostFlagParse() error {
+	if app.HelpFlag {
+		app.Help()
+		return nil
+	}
+
 	logger, err := app.getLogger()
 	if err != nil {
 		return fmt.Errorf("build logger: %v", err)
@@ -118,15 +124,30 @@ func (app *BuildApplication) GetCommandDescription(cmd string) string {
 	switch cmd {
 	case "build":
 		return `Builds a docker image from a build context and a dockerfile.`
-	case "listen":
-		return `Instruct makisu to listen on a unix socket in the background for build requests like a daemon.`
+	case "help":
+		return `Displays Makisu usage information.`
+	case "version":
+		return `Displays the version of the makisu binary in use.`
 	}
 	return ""
 }
 
 // Help displays the usage of makisu.
 func (app *BuildApplication) Help() {
-	commander.New().PrintUsage(app, "makisu")
+	// Print the usage on a new build application so that the right defaults
+	// show up in the output.
+	commander.New().PrintUsage(NewBuildApplication(), "makisu")
+}
+
+// Version displays the version of the makisu binary in use.
+func (app *BuildApplication) Version() error {
+	fmt.Println(utils.BuildHash)
+	return nil
+}
+
+// CommanderDefault gets called automatically when no subcommand is invoked.
+func (app *BuildApplication) CommanderDefault() error {
+	return fmt.Errorf("Need to specify a command for makisu. One of 'build', 'help' or 'version'")
 }
 
 func (app *BuildApplication) getLogger() (*zap.Logger, error) {

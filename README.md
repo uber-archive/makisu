@@ -77,6 +77,8 @@ created with an init container, which will fetch the build context through git o
 that context in a designated volume. Once it completes, the Makisu container will be created and executes
 the build, using that volume as its build context.
 
+For a full list of flags, run `makisu --help`, `makisu build --help` or refer to the README [here](cli/README.md).
+
 ### Creating registry configuration
 
 Makisu needs registry configuration mounted to push to a secure registry. The config format is described [here](#configuring-docker-registry). After creating configuration file on local filesystem, run the following 
