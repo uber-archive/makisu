@@ -20,6 +20,9 @@ type Stage struct {
 	Directives []Directive
 }
 
+// Stages is an alias for []*Stage.
+type Stages []*Stage
+
 func newStage(from *FromDirective) *Stage {
 	return &Stage{from, make([]Directive, 0)}
 }

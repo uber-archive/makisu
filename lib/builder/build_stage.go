@@ -29,9 +29,7 @@ import (
 	"github.com/uber/makisu/lib/context"
 	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/log"
-	"github.com/uber/makisu/lib/parser/dockerfile"
 	"github.com/uber/makisu/lib/storage"
-	"github.com/uber/makisu/lib/utils"
 )
 
 // buildStage represents a sequence of steps to build intermediate layers or a final image.
@@ -41,7 +39,7 @@ type buildStage struct {
 	alias             string
 	nodes             []*buildNode
 	lastImageConfig   *image.Config
-	sharedDigestPairs map[string][]*image.DigestPair
+	sharedDigestPairs image.DigestPairMap
 
 	requireOnDisk bool
 
@@ -55,8 +53,8 @@ type buildStage struct {
 
 // newBuildStage initializes a buildStage.
 func newBuildStage(
-	baseCtx *context.BuildContext, parsedStage *dockerfile.Stage,
-	digestPairs map[string][]*image.DigestPair,
+	baseCtx *context.BuildContext, alias string,
+	steps []step.BuildStep, digestPairs image.DigestPairMap,
 	allowModifyFS, forceCommit bool) (*buildStage, error) {
 
 	// Create a new build context for the stage.
@@ -69,7 +67,7 @@ func newBuildStage(
 	stage := &buildStage{
 		ctx:               ctx,
 		crossRefDirs:      make(map[string][]string),
-		alias:             parsedStage.From.Alias,
+		alias:             alias,
 		nodes:             make([]*buildNode, 0),
 		sharedDigestPairs: digestPairs,
 		allowModifyFS:     allowModifyFS,
@@ -77,7 +75,7 @@ func newBuildStage(
 	}
 
 	// Convert each directive in the parsed stage to a build node.
-	if err := stage.convertParsedStage(ctx, parsedStage); err != nil {
+	if err := stage.createNodes(ctx, steps); err != nil {
 		return nil, fmt.Errorf("convert parsed stage to build stage: %s", err)
 	}
 	return stage, nil
@@ -85,31 +83,20 @@ func newBuildStage(
 
 // convertParsedStage converts the directives in a parsed stage to build steps and keeps
 // track of directories needed for cross-stage copy operations.
-func (stage *buildStage) convertParsedStage(
-	ctx *context.BuildContext, parsedStage *dockerfile.Stage) error {
-
-	seed := utils.BuildHash
-	parsedStage.Directives = append([]dockerfile.Directive{parsedStage.From},
-		parsedStage.Directives...)
-	for _, directive := range parsedStage.Directives {
-		s, err := step.NewDockerfileStep(ctx, directive, seed)
-		if err != nil {
-			return fmt.Errorf("convert directive to build step: %s", err)
-		}
-
-		newNode := newBuildNode(ctx, s)
+func (stage *buildStage) createNodes(ctx *context.BuildContext, steps []step.BuildStep) error {
+	for _, step := range steps {
+		newNode := newBuildNode(ctx, step)
 		stage.nodes = append(stage.nodes, newNode)
-		seed = s.CacheID()
 
 		// Add context dirs for cross-stage copy, if any.
-		alias, dirs := s.ContextDirs()
+		alias, dirs := step.ContextDirs()
 		if len(dirs) > 0 {
 			if _, ok := stage.crossRefDirs[alias]; !ok {
 				stage.crossRefDirs[alias] = make([]string, 0)
 			}
 			stage.crossRefDirs[alias] = append(stage.crossRefDirs[alias], dirs...)
 		}
-		if s.RequireOnDisk() {
+		if step.RequireOnDisk() {
 			stage.requireOnDisk = true
 		}
 	}
@@ -285,3 +272,13 @@ func (stage *buildStage) latestFetched() int {
 func (stage *buildStage) String() string {
 	return fmt.Sprintf("(alias=%v,latestfetched=%v)", stage.alias, stage.latestFetched())
 }
+
+// checkpoint copies over the cross stage referenced files and directories to the cross ref root
+// location inside a blacklisted directory. Those files will be copied back onto the real root
+// of the fs once the step that references them gets executed.
+func (stage *buildStage) checkpoint(crossRefDirs []string) error {
+	newRoot := stage.ctx.CrossRefRoot(stage.alias)
+	return stage.ctx.MemFS.Checkpoint(newRoot, crossRefDirs)
+}
+
+func (stage *buildStage) cleanup() error { return stage.ctx.MemFS.Remove() }
