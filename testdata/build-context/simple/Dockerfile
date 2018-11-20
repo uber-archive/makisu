@@ -1,4 +1,4 @@
-FROM golang:latest
+FROM debian:8
 
 MAINTAINER foo@bar
 ENV TEST=testenv

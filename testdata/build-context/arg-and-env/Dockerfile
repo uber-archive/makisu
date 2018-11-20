@@ -1,4 +1,4 @@
-ARG BASE_IMAGE="golang:1.10"
+ARG BASE_IMAGE="busybox:latest"
 ARG RUNTIME_BASE_IMAGE="alpine"
 
 # construct build image
