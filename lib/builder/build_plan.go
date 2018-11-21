@@ -31,7 +31,7 @@ import (
 // one another.
 type BuildPlan struct {
 	baseCtx       *context.BuildContext
-	crossRefDirs  map[string][]string
+	copyFromDirs  map[string][]string
 	target        image.Name
 	cacheMgr      cache.Manager
 	stages        []*buildStage
@@ -49,7 +49,7 @@ func NewBuildPlan(
 
 	plan := &BuildPlan{
 		baseCtx:       ctx,
-		crossRefDirs:  make(map[string][]string),
+		copyFromDirs:  make(map[string][]string),
 		target:        target,
 		cacheMgr:      cacheMgr,
 		stages:        make([]*buildStage, len(parsedStages)),
@@ -77,25 +77,25 @@ func NewBuildPlan(
 			return nil, fmt.Errorf("failed to convert parsed stage: %s", err)
 		}
 
-		if len(stage.crossRefDirs) > 0 && !plan.allowModifyFS {
+		if len(stage.copyFromDirs) > 0 && !plan.allowModifyFS {
 			// TODO(pourchet): Support this at some point.
 			return nil, fmt.Errorf("must allow modifyfs for multi-stage dockerfiles with COPY --from")
 		}
 		plan.stages[i] = stage
 	}
 
-	if err := plan.handleCrossRefs(aliases, digestPairs); err != nil {
+	if err := plan.handleCopyFromDirs(aliases, digestPairs); err != nil {
 		return nil, fmt.Errorf("handle cross refs: %v", err)
 	}
 	return plan, nil
 }
 
-// handleCrossRefs goes through all of the stages in the build plan and looks at the `COPY --from` steps
+// handleCopyFromDirs goes through all of the stages in the build plan and looks at the `COPY --from` steps
 // to make sure they will be valid. If the --from source is another image, we create a new image stage in
 // the build plan.
-func (plan *BuildPlan) handleCrossRefs(aliases map[string]bool, digestPairs image.DigestPairMap) error {
+func (plan *BuildPlan) handleCopyFromDirs(aliases map[string]bool, digestPairs image.DigestPairMap) error {
 	for _, stage := range plan.stages {
-		for alias, dirs := range stage.crossRefDirs {
+		for alias, dirs := range stage.copyFromDirs {
 			if _, ok := aliases[alias]; !ok {
 				// If we see that the alias of the cross referenced directory is an image name,
 				// we add a fake stage to the build plan that will download that image directly
@@ -104,15 +104,15 @@ func (plan *BuildPlan) handleCrossRefs(aliases map[string]bool, digestPairs imag
 				if err != nil || !name.IsValid() {
 					return fmt.Errorf("copy from nonexistent stage %s", alias)
 				}
-				imageStage, err := plan.newImageStage(alias, digestPairs)
+				imageStage, err := plan.newRemoteImageStage(alias, digestPairs)
 				if err != nil {
 					return fmt.Errorf("new image stage: %v", err)
 				}
 				plan.imageStages[alias] = imageStage
 				aliases[alias] = true
 			}
-			plan.crossRefDirs[alias] = stringset.FromSlice(
-				append(plan.crossRefDirs[alias], dirs...),
+			plan.copyFromDirs[alias] = stringset.FromSlice(
+				append(plan.copyFromDirs[alias], dirs...),
 			).ToSlice()
 		}
 	}
@@ -140,7 +140,7 @@ func buildAliases(stages dockerfile.Stages) (map[string]bool, error) {
 	return aliases, nil
 }
 
-func (plan *BuildPlan) newImageStage(alias string, digestPairs image.DigestPairMap) (*buildStage, error) {
+func (plan *BuildPlan) newRemoteImageStage(alias string, digestPairs image.DigestPairMap) (*buildStage, error) {
 	from, err := step.NewFromStep(alias, alias, alias)
 	if err != nil {
 		return nil, fmt.Errorf("new from step: %v", err)
@@ -171,7 +171,7 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 		log.Infof("Pulling image %v for cross stage reference", name)
 		if err := stage.build(plan.cacheMgr, false, true); err != nil {
 			return nil, fmt.Errorf("build stage %v for cross stage reference: %v", name, err)
-		} else if err := stage.checkpoint(plan.crossRefDirs[alias]); err != nil {
+		} else if err := stage.checkpoint(plan.copyFromDirs[alias]); err != nil {
 			return nil, fmt.Errorf("stage checkpoint %v for cross stage reference: %v", name, err)
 		} else if err := stage.cleanup(); err != nil {
 			return nil, fmt.Errorf("stage cleanup %v for cross stage reference: %v", name, err)
@@ -184,7 +184,7 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 		log.Infof("* Stage %d/%d : %s", k+1, len(plan.stages), currStage.String())
 
 		lastStage := k == len(plan.stages)-1
-		_, copiedFrom := plan.crossRefDirs[currStage.alias]
+		_, copiedFrom := plan.copyFromDirs[currStage.alias]
 		if err := currStage.build(plan.cacheMgr, lastStage, copiedFrom); err != nil {
 			return nil, fmt.Errorf("build stage: %s", err)
 		}
@@ -192,8 +192,8 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 		if plan.allowModifyFS {
 			if k < len(plan.stages)-1 {
 				// Save context directories needed for cross-stage copy operations.
-				crossRefDirs := plan.crossRefDirs[currStage.alias]
-				if err := currStage.checkpoint(crossRefDirs); err != nil {
+				copyFromDirs := plan.copyFromDirs[currStage.alias]
+				if err := currStage.checkpoint(copyFromDirs); err != nil {
 					return nil, fmt.Errorf("checkpoint memfs: %s", err)
 				}
 			}

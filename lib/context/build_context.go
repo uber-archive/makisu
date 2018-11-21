@@ -72,10 +72,10 @@ func NewBuildContext(
 	}, nil
 }
 
-// CrossRefRoot returns the directory that context from a stage should be written to and read from.
-func (ctx *BuildContext) CrossRefRoot(alias string) string {
+// CopyFromRoot returns the directory that context from a stage should be written to and read from.
+func (ctx *BuildContext) CopyFromRoot(alias string) string {
 	// Here we sha the alias to get a string that can be directly appended to the context's
-	// root crossRefDir.
+	// root sandbox stage directory.
 	dirname := base64.URLEncoding.EncodeToString([]byte(alias))
 	return filepath.Join(ctx.stagesDir, string(dirname))
 }

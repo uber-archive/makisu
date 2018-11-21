@@ -35,7 +35,7 @@ import (
 // buildStage represents a sequence of steps to build intermediate layers or a final image.
 type buildStage struct {
 	ctx               *context.BuildContext
-	crossRefDirs      map[string][]string
+	copyFromDirs      map[string][]string
 	alias             string
 	nodes             []*buildNode
 	lastImageConfig   *image.Config
@@ -66,7 +66,7 @@ func newBuildStage(
 
 	stage := &buildStage{
 		ctx:               ctx,
-		crossRefDirs:      make(map[string][]string),
+		copyFromDirs:      make(map[string][]string),
 		alias:             alias,
 		nodes:             make([]*buildNode, 0),
 		sharedDigestPairs: digestPairs,
@@ -91,10 +91,10 @@ func (stage *buildStage) createNodes(ctx *context.BuildContext, steps []step.Bui
 		// Add context dirs for cross-stage copy, if any.
 		alias, dirs := step.ContextDirs()
 		if len(dirs) > 0 {
-			if _, ok := stage.crossRefDirs[alias]; !ok {
-				stage.crossRefDirs[alias] = make([]string, 0)
+			if _, ok := stage.copyFromDirs[alias]; !ok {
+				stage.copyFromDirs[alias] = make([]string, 0)
 			}
-			stage.crossRefDirs[alias] = append(stage.crossRefDirs[alias], dirs...)
+			stage.copyFromDirs[alias] = append(stage.copyFromDirs[alias], dirs...)
 		}
 		if step.RequireOnDisk() {
 			stage.requireOnDisk = true
@@ -276,9 +276,9 @@ func (stage *buildStage) String() string {
 // checkpoint copies over the cross stage referenced files and directories to the cross ref root
 // location inside a blacklisted directory. Those files will be copied back onto the real root
 // of the fs once the step that references them gets executed.
-func (stage *buildStage) checkpoint(crossRefDirs []string) error {
-	newRoot := stage.ctx.CrossRefRoot(stage.alias)
-	return stage.ctx.MemFS.Checkpoint(newRoot, crossRefDirs)
+func (stage *buildStage) checkpoint(copyFromDirs []string) error {
+	newRoot := stage.ctx.CopyFromRoot(stage.alias)
+	return stage.ctx.MemFS.Checkpoint(newRoot, copyFromDirs)
 }
 
 func (stage *buildStage) cleanup() error { return stage.ctx.MemFS.Remove() }

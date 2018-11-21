@@ -95,11 +95,11 @@ func TestBuildPlanContextDirs(t *testing.T) {
 	// TODO(pourchet): support copy --from without relying on FS.
 	plan, err := NewBuildPlan(ctx, target, cacheMgr, stages, true, false)
 	require.NoError(err)
-	require.Contains(plan.crossRefDirs, "stage1")
-	require.Len(plan.crossRefDirs, 1)
-	require.Contains(plan.crossRefDirs["stage1"], "/hello")
-	require.Contains(plan.crossRefDirs["stage1"], "/hello2")
-	require.Len(plan.crossRefDirs["stage1"], 2)
+	require.Contains(plan.copyFromDirs, "stage1")
+	require.Len(plan.copyFromDirs, 1)
+	require.Contains(plan.copyFromDirs["stage1"], "/hello")
+	require.Contains(plan.copyFromDirs["stage1"], "/hello2")
+	require.Len(plan.copyFromDirs["stage1"], 2)
 
 	// Copy from nonexistent stage.
 	from := dockerfile.FromDirectiveFixture("", envImage.String(), "")
