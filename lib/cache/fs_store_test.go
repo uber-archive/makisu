@@ -24,25 +24,38 @@ import (
 
 func TestFSStore(t *testing.T) {
 	t.Run("get_no_exist", func(t *testing.T) {
-		tmpdir, err := ioutil.TempDir("/tmp", "")
-		require.NoError(t, err)
-		defer os.RemoveAll(tmpdir)
-		store := NewFSStore(tmpdir)
+		require := require.New(t)
+
+		tempDir, err := ioutil.TempDir("/tmp", "")
+		require.NoError(err)
+		defer os.RemoveAll(tempDir)
+		tempFile, err := ioutil.TempFile(tempDir, "cache")
+
+		store, err := NewFSStore(tempFile.Name(), tempDir, 60)
+		require.NoError(err)
 		defer store.Cleanup()
+
 		loc, err := store.Get("a")
-		require.NoError(t, err)
-		require.Equal(t, "", loc)
+		require.NoError(err)
+		require.Equal("", loc)
 	})
+
 	t.Run("set_then_get", func(t *testing.T) {
-		tmpdir, err := ioutil.TempDir("/tmp", "")
-		require.NoError(t, err)
-		defer os.RemoveAll(tmpdir)
-		store := NewFSStore(tmpdir)
+		require := require.New(t)
+
+		tempDir, err := ioutil.TempDir("/tmp", "")
+		require.NoError(err)
+		defer os.RemoveAll(tempDir)
+		tempFile, err := ioutil.TempFile(tempDir, "cache")
+
+		store, err := NewFSStore(tempFile.Name(), tempDir, 60)
+		require.NoError(err)
 		defer store.Cleanup()
+
 		err = store.Put("a", "b")
-		require.NoError(t, err)
-		loc, err := store.Get("a")
-		require.NoError(t, err)
-		require.Equal(t, "b", loc)
+		require.NoError(err)
+		value, err := store.Get("a")
+		require.NoError(err)
+		require.Equal("b", value)
 	})
 }
