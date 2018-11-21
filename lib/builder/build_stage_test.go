@@ -17,6 +17,7 @@ package builder
 import (
 	"testing"
 
+	"github.com/uber/makisu/lib/builder/step"
 	"github.com/uber/makisu/lib/cache"
 	"github.com/uber/makisu/lib/context"
 	"github.com/uber/makisu/lib/docker/image"
@@ -116,8 +117,11 @@ func TestPullCacheLayers(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			require := require.New(t)
 
-			stage, err := newBuildStage(
-				ctx, tc.stage, map[string][]*image.DigestPair{}, false, false)
+			alias := tc.stage.From.Alias
+			steps, err := step.NewDockerfileSteps(ctx, tc.stage)
+			require.NoError(err)
+
+			stage, err := newBuildStage(ctx, alias, steps, image.DigestPairMap{}, false, false)
 			require.NoError(err)
 
 			imageName, err := image.ParseName("registry.net/repo:tag")

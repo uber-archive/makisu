@@ -90,13 +90,16 @@ func TestBuildPlanContextDirs(t *testing.T) {
 	}
 	stages := []*dockerfile.Stage{{from1, nil}, {from2, directives2}, {from3, directives3}}
 
-	plan, err := NewBuildPlan(ctx, target, cacheMgr, stages, false, false)
+	// Here we need to set the allowModifyFS to true because we copy
+	// files accross stages.
+	// TODO(pourchet): support copy --from without relying on FS.
+	plan, err := NewBuildPlan(ctx, target, cacheMgr, stages, true, false)
 	require.NoError(err)
-	require.Contains(plan.contextDirs, "stage1")
-	require.Len(plan.contextDirs, 1)
-	require.Contains(plan.contextDirs["stage1"], "/hello")
-	require.Contains(plan.contextDirs["stage1"], "/hello2")
-	require.Len(plan.contextDirs["stage1"], 2)
+	require.Contains(plan.copyFromDirs, "stage1")
+	require.Len(plan.copyFromDirs, 1)
+	require.Contains(plan.copyFromDirs["stage1"], "/hello")
+	require.Contains(plan.copyFromDirs["stage1"], "/hello2")
+	require.Len(plan.copyFromDirs["stage1"], 2)
 
 	// Copy from nonexistent stage.
 	from := dockerfile.FromDirectiveFixture("", envImage.String(), "")

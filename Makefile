@@ -120,7 +120,10 @@ integration: env image
 
 
 ### Misc targets
-.PHONY: clean
+.PHONY: clean integration-single
+integration-single: env image
+	PACKAGE_VERSION=$(PACKAGE_VERSION) ./env/bin/py.test test/python/test_build.py::$(TEST_NAME)
+
 clean:
 	git clean -fd
 	-rm -rf vendor ext-tools mocks env
