@@ -30,14 +30,14 @@ import (
 // BuildPlan describes a list of named buildStages, that can copy files between
 // one another.
 type BuildPlan struct {
-	baseCtx       *context.BuildContext
-	copyFromDirs  map[string][]string
-	target        image.Name
-	cacheMgr      cache.Manager
-	stages        []*buildStage
-	imageStages   map[string]*buildStage
-	allowModifyFS bool
-	forceCommit   bool
+	baseCtx           *context.BuildContext
+	copyFromDirs      map[string][]string
+	target            image.Name
+	cacheMgr          cache.Manager
+	stages            []*buildStage
+	remoteImageStages map[string]*buildStage
+	allowModifyFS     bool
+	forceCommit       bool
 }
 
 // NewBuildPlan takes in contextDir, a target image and an ImageStore, and
@@ -48,14 +48,14 @@ func NewBuildPlan(
 	allowModifyFS, forceCommit bool) (*BuildPlan, error) {
 
 	plan := &BuildPlan{
-		baseCtx:       ctx,
-		copyFromDirs:  make(map[string][]string),
-		target:        target,
-		cacheMgr:      cacheMgr,
-		stages:        make([]*buildStage, len(parsedStages)),
-		imageStages:   make(map[string]*buildStage),
-		allowModifyFS: allowModifyFS,
-		forceCommit:   forceCommit,
+		baseCtx:           ctx,
+		copyFromDirs:      make(map[string][]string),
+		target:            target,
+		cacheMgr:          cacheMgr,
+		stages:            make([]*buildStage, len(parsedStages)),
+		remoteImageStages: make(map[string]*buildStage),
+		allowModifyFS:     allowModifyFS,
+		forceCommit:       forceCommit,
 	}
 
 	aliases, err := buildAliases(parsedStages)
@@ -91,7 +91,7 @@ func NewBuildPlan(
 }
 
 // handleCopyFromDirs goes through all of the stages in the build plan and looks at the `COPY --from` steps
-// to make sure they will be valid. If the --from source is another image, we create a new image stage in
+// to make sure they are valid. If the --from source is another image, we create a new image stage in
 // the build plan.
 func (plan *BuildPlan) handleCopyFromDirs(aliases map[string]bool, digestPairs image.DigestPairMap) error {
 	for _, stage := range plan.stages {
@@ -104,11 +104,11 @@ func (plan *BuildPlan) handleCopyFromDirs(aliases map[string]bool, digestPairs i
 				if err != nil || !name.IsValid() {
 					return fmt.Errorf("copy from nonexistent stage %s", alias)
 				}
-				imageStage, err := plan.newRemoteImageStage(alias, digestPairs)
+				remoteImageStage, err := plan.newRemoteImageStage(alias, digestPairs)
 				if err != nil {
 					return fmt.Errorf("new image stage: %v", err)
 				}
-				plan.imageStages[alias] = imageStage
+				plan.remoteImageStages[alias] = remoteImageStage
 				aliases[alias] = true
 			}
 			plan.copyFromDirs[alias] = stringset.FromSlice(
@@ -161,7 +161,7 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 		stage.pullCacheLayers(plan.cacheMgr)
 	}
 
-	for alias, stage := range plan.imageStages {
+	for alias, stage := range plan.remoteImageStages {
 		// Building that pseudo stage will unpack the image directly into the stage's
 		// cross stage directory.
 		name, err := image.ParseNameForPull(alias)
