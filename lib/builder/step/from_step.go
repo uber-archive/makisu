@@ -93,11 +93,12 @@ func (s *FromStep) setRegistryClient(client registry.Client) {
 func (s *FromStep) Execute(ctx *context.BuildContext, modifyFS bool) error {
 	if isScratch(s.image) {
 		// Build from scratch, nothing to untar.
+		log.Infof("Scratch base image detected")
 		return nil
 	}
 
 	// Otherwise, pull image.
-	manifest, err := s.getManifest(ctx)
+	manifest, err := s.getManifest(ctx.ImageStore)
 	if err != nil {
 		return fmt.Errorf("get manifest: %v", err)
 	}
@@ -140,7 +141,7 @@ func (s *FromStep) Commit(ctx *context.BuildContext) ([]*image.DigestPair, error
 		return nil, nil
 	}
 
-	manifest, err := s.getManifest(ctx)
+	manifest, err := s.getManifest(ctx.ImageStore)
 	if err != nil {
 		return nil, fmt.Errorf("get manifest: %v", err)
 	}
@@ -174,7 +175,7 @@ func (s *FromStep) GenerateConfig(ctx *context.BuildContext, imageConfig *image.
 		return &config, nil
 	}
 
-	manifest, err := s.getManifest(ctx)
+	manifest, err := s.getManifest(ctx.ImageStore)
 	if err != nil {
 		return nil, fmt.Errorf("get manifest: %v", err)
 	}
@@ -186,7 +187,7 @@ func (s *FromStep) GenerateConfig(ctx *context.BuildContext, imageConfig *image.
 	return config, nil
 }
 
-func (s *FromStep) getManifest(ctx *context.BuildContext) (*image.DistributionManifest, error) {
+func (s *FromStep) getManifest(store storage.ImageStore) (*image.DistributionManifest, error) {
 	if s.manifest != nil {
 		return s.manifest, nil
 	}
@@ -196,7 +197,7 @@ func (s *FromStep) getManifest(ctx *context.BuildContext) (*image.DistributionMa
 	if err != nil {
 		return nil, fmt.Errorf("parse pull image %s: %s", pullImage, err)
 	}
-	s.setRegistryClient(registry.New(ctx.ImageStore, pullImage.GetRegistry(), pullImage.GetRepository()))
+	s.setRegistryClient(registry.New(store, pullImage.GetRegistry(), pullImage.GetRepository()))
 	manifest, err := s.client.Pull(pullImage.GetTag())
 	if err != nil {
 		return nil, fmt.Errorf("pull image %s: %s", s.image, err)
