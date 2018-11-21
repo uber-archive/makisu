@@ -21,8 +21,8 @@ type argDirective struct {
 }
 
 // Variables:
-//   If we have not yet entered the first stage (encountered a FROM directive), variables are
-//   replaced using other globally-defined ARGs.
+//   If we have not yet entered the first stage (encountered a FROM directive),
+//   variables are replaced using other globally-defined ARGs.
 //   Else, variables are replaced from ARGs and ENVs from within our stage.
 // Formats:
 //   ARG <name>[=<default value>]
