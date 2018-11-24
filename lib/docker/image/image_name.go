@@ -138,9 +138,13 @@ func ParseNameForPull(input string) (Name, error) {
 		return result, nil
 	}
 
-	// For docker hub registry.
+	// Default to docker hub registry.
 	if result.registry == "" {
 		result.registry = DockerHubRegistry
+	}
+
+	// For docker hub images without namespace, prepend "library/".
+	if result.registry == DockerHubRegistry {
 		if !strings.Contains(result.repository, "/") {
 			result.repository = DockerHubNamespace + "/" + result.repository
 		}

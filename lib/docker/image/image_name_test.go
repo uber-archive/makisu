@@ -38,14 +38,6 @@ func TestParseImageName(t *testing.T) {
 	require.True(name.IsValid())
 	require.Equal("docker-registry.pit-irn.uberatc.net/uber-usi/dockermover:latest", name.String())
 
-	name, err = ParseNameForPull("uber-usi/dockermover")
-	require.NoError(err)
-	require.Equal(DockerHubRegistry, name.registry)
-	require.Equal(name.GetRepository(), "uber-usi/dockermover")
-	require.Equal(name.GetTag(), "latest")
-	require.True(name.IsValid())
-	require.Equal("index.docker.io/uber-usi/dockermover:latest", name.String())
-
 	name, err = ParseNameForPull("127.0.0.1:5002/evanescence-golang-1:latest")
 	require.NoError(err)
 	require.Equal(name.GetRegistry(), "127.0.0.1:5002")
@@ -69,4 +61,41 @@ func TestParseImageName(t *testing.T) {
 	require.Equal(name.GetTag(), "latest")
 	require.True(name.IsValid())
 	require.Equal("scratch:latest", name.String())
+
+}
+
+func TestParseImageNameForDockerHub(t *testing.T) {
+	require := require.New(t)
+
+	name, err := ParseNameForPull("wodby/php")
+	require.NoError(err)
+	require.Equal(DockerHubRegistry, name.registry)
+	require.Equal(name.GetRepository(), "wodby/php")
+	require.Equal(name.GetTag(), "latest")
+	require.True(name.IsValid())
+	require.Equal("index.docker.io/wodby/php:latest", name.String())
+
+	name, err = ParseNameForPull("index.docker.io/php")
+	require.NoError(err)
+	require.Equal(DockerHubRegistry, name.registry)
+	require.Equal(name.GetRepository(), "library/php")
+	require.Equal(name.GetTag(), "latest")
+	require.True(name.IsValid())
+	require.Equal("index.docker.io/library/php:latest", name.String())
+
+	name, err = ParseNameForPull("index.docker.io/wodby/php")
+	require.NoError(err)
+	require.Equal(DockerHubRegistry, name.registry)
+	require.Equal(name.GetRepository(), "wodby/php")
+	require.Equal(name.GetTag(), "latest")
+	require.True(name.IsValid())
+	require.Equal("index.docker.io/wodby/php:latest", name.String())
+
+	name, err = ParseNameForPull("debian:9")
+	require.NoError(err)
+	require.Equal(DockerHubRegistry, name.registry)
+	require.Equal(name.GetRepository(), "library/debian")
+	require.Equal(name.GetTag(), "9")
+	require.True(name.IsValid())
+	require.Equal("index.docker.io/library/debian:9", name.String())
 }
