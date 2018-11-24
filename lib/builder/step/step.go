@@ -38,6 +38,7 @@ const (
 	Label      = Directive("LABEL")
 	Maintainer = Directive("MAINTAINER")
 	Run        = Directive("RUN")
+	Stopsignal = Directive("STOPSIGNAL")
 	User       = Directive("USER")
 	Volume     = Directive("VOLUME")
 	Workdir    = Directive("WORKDIR")
@@ -83,7 +84,7 @@ type BuildStep interface {
 func NewDockerfileSteps(ctx *context.BuildContext, stage *dockerfile.Stage) ([]BuildStep, error) {
 	seed := utils.BuildHash
 	directives := append([]dockerfile.Directive{stage.From}, stage.Directives...)
-	steps := make([]BuildStep, 0)
+	var steps []BuildStep
 	for _, directive := range directives {
 		step, err := NewDockerfileStep(ctx, directive, seed)
 		if err != nil {
@@ -132,6 +133,9 @@ func NewDockerfileStep(
 	case *dockerfile.RunDirective:
 		s, _ := d.(*dockerfile.RunDirective)
 		step = NewRunStep(s.Args, s.Cmd, s.Commit)
+	case *dockerfile.StopsignalDirective:
+		s, _ := d.(*dockerfile.StopsignalDirective)
+		step = NewStopsignalStep(s.Args, s.Signal, s.Commit)
 	case *dockerfile.UserDirective:
 		s, _ := d.(*dockerfile.UserDirective)
 		step = NewUserStep(s.Args, s.User, s.Commit)

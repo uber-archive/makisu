@@ -119,6 +119,13 @@ Syntax:
 
 Variables are not substituted.
 
+## STOPSIGNAL
+
+Syntax:
+- STOPSIGNAL \<signal\>
+
+Variables are not substituted.
+
 ## RUN
 
 Syntax:
