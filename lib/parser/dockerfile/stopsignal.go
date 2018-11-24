@@ -19,14 +19,14 @@ import (
 	"strconv"
 )
 
-// StopsignalDirective represents the "MAINTAINER" dockerfile command.
+// StopsignalDirective represents the "STOPSIGNAL" dockerfile command.
 type StopsignalDirective struct {
 	*baseDirective
 	Signal int
 }
 
 // Formats:
-//   MAINTAINER <value> ...
+//   STOPSIGNAL <value> ...
 func newStopsignalDirective(base *baseDirective, state *parsingState) (*StopsignalDirective, error) {
 	signal, err := strconv.Atoi(base.Args)
 	if err != nil {

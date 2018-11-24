@@ -22,7 +22,7 @@ import (
 	"github.com/uber/makisu/lib/docker/image"
 )
 
-// StopsignalStep implements BuildStep and execute MAINTAINER directive
+// StopsignalStep implements BuildStep and execute STOPSIGNAL directive.
 type StopsignalStep struct {
 	*baseStep
 
