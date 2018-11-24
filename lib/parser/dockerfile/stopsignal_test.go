@@ -16,8 +16,8 @@ func TestNewStopsignalDirective(t *testing.T) {
 		signal  int
 	}{
 		{"simple", true, "stopsignal 9", 9},
-		{"special char", false, "stopsignal 123asd", 0},
-		{"no substitution", false, "stopsignal -1", 0},
+		{"not int", false, "stopsignal 123asd", 0},
+		{"bad signal", false, "stopsignal -1", 0},
 	}
 
 	for _, test := range tests {
