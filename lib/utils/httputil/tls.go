@@ -42,7 +42,7 @@ type TLSConfig struct {
 // X509Pair contains x509 cert configuration.
 // Both Cert and Key should be already in pem format.
 type X509Pair struct {
-	Enabled    bool   `yaml:"enabled"`
+	Disabled   bool   `yaml:"disabled"`
 	Cert       Secret `yaml:"cert"`
 	Key        Secret `yaml:"key"`
 	Passphrase Secret `yaml:"passphrase"`
@@ -55,8 +55,8 @@ type Secret struct {
 
 // BuildClient builts tls.Config for http client.
 func (c *TLSConfig) BuildClient() (*tls.Config, error) {
-	if !c.Client.Enabled {
-		log.Debugf("Client TLS is disabled")
+	if c.Client.Disabled {
+		log.Infof("Client TLS is disabled")
 		return nil, nil
 	}
 	if c.tls != nil {
