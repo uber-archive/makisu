@@ -55,6 +55,8 @@ func newDirective(line string, state *parsingState) (Directive, error) {
 		return newMaintainerDirective(base, state)
 	case "run":
 		return newRunDirective(base, state)
+	case "stopsignal":
+		return newStopsignalDirective(base, state)
 	case "user":
 		return newUserDirective(base, state)
 	case "volume":

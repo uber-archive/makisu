@@ -129,6 +129,13 @@ Syntax:
 
 Variables are substituted using values from ARGs and ENVs within the stage.
 
+## STOPSIGNAL
+
+Syntax:
+- STOPSIGNAL \<signal\>
+
+Variables are not substituted.
+
 ## USER
 
 Syntax:
