@@ -76,7 +76,9 @@ func PullClientFixture(ctx *context.BuildContext, testdataDir string) (*DockerRe
 			testdataDir: testdataDir,
 		},
 	}
-	return NewWithClient(ctx.ImageStore, image.GetRegistry(), image.GetRepository(), cli), nil
+	c := NewWithClient(ctx.ImageStore, image.GetRegistry(), image.GetRepository(), cli)
+	c.config.Security.TLS.Client.Disabled = true
+	return c, nil
 }
 
 type pullTransportFixture struct {
@@ -156,7 +158,9 @@ func PushClientFixture(ctx *context.BuildContext) (*DockerRegistryClient, error)
 	cli := &http.Client{
 		Transport: pushTransportFixture{image},
 	}
-	return NewWithClient(ctx.ImageStore, image.GetRegistry(), image.GetRepository(), cli), nil
+	c := NewWithClient(ctx.ImageStore, image.GetRegistry(), image.GetRepository(), cli)
+	c.config.Security.TLS.Client.Disabled = true
+	return c, nil
 }
 
 type pushTransportFixture struct {

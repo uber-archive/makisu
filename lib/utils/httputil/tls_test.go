@@ -129,11 +129,9 @@ func genCerts(t *testing.T) (config *TLSConfig, cleanupfunc func()) {
 
 	config = &TLSConfig{}
 	config.Name = "kraken"
-	config.CA.Enabled = true
 	config.CA.Cert.Path = sCert
 	config.CA.Key.Path = sKey
 	config.CA.Passphrase.Path = sSecret
-	config.Client.Enabled = true
 	config.Client.Cert.Path = cCert
 	config.Client.Key.Path = cKey
 	config.Client.Passphrase.Path = cSecret

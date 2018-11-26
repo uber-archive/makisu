@@ -128,6 +128,9 @@ func (cmd *BuildFlags) postInit() error {
 				registry.ConfigurationMap[reg][repo] = config
 			}
 		}
+	} else {
+		registry.ConfigurationMap[image.DockerHubRegistry] = make(registry.RepositoryMap)
+		registry.ConfigurationMap[image.DockerHubRegistry][".*"] = registry.DefaultDockerHubConfiguration
 	}
 
 	// Verify it's not runninng on Mac if modifyfs is true.
