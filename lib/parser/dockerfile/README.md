@@ -22,7 +22,7 @@ If a variable fails to resolve, it is passed through to the resulting string exa
 
 # Directives
 
-The following directives are not supported: ONBUILD, STOPSIGNAL, HEALTHCHECK, and SHELL.
+The following directives are not supported: ONBUILD, HEALTHCHECK, and SHELL.
 
 ## COMMIT
 
