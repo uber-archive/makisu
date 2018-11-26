@@ -30,7 +30,7 @@ Syntax:
 - #!COMMIT
     - 'COMMIT' can be any case and there can be whitespace preceding '#', after '!', or after 'COMMIT.'
 
-This is a special directive that indicates that a layer should be committed (used in the distributed cache).
+This is a special directive that indicates that a layer should be committed (used in the distributed cache). To enable this directive, `--commit=explicit` argument is required.
 
 ## ADD
 
