@@ -119,13 +119,6 @@ Syntax:
 
 Variables are not substituted.
 
-## STOPSIGNAL
-
-Syntax:
-- STOPSIGNAL \<signal\>
-
-Variables are not substituted.
-
 ## RUN
 
 Syntax:
@@ -135,6 +128,13 @@ Syntax:
     - \<full\_cmd\> will be passed to shell via 'sh -c' as-is (after variable substitution).
 
 Variables are substituted using values from ARGs and ENVs within the stage.
+
+## STOPSIGNAL
+
+Syntax:
+- STOPSIGNAL \<signal\>
+
+Variables are not substituted.
 
 ## USER
 
