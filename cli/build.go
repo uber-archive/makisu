@@ -124,6 +124,9 @@ func (cmd *BuildFlags) postInit() error {
 				registry.ConfigurationMap[reg][repo] = config
 			}
 		}
+	} else {
+		registry.ConfigurationMap[image.DockerHubRegistry] = make(registry.RepositoryMap)
+		registry.ConfigurationMap[image.DockerHubRegistry][".*"] = registry.DefaultDockerHubConfiguration
 	}
 
 	// Verify storage dir is not child of internal dir.

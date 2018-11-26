@@ -184,8 +184,7 @@ ENTRYPOINT ["/bin/bash"]
 
 ## Configuring Docker Registry
 
-Makisu supports TLS and Basic Auth with Docker registry (Docker Hub, GCR, and private registries). It also contains a list of common root CA certs by default.
-Pass a custom configuration file to Makisu with `--registry-config=${PATH_TO_CONFIG}`.
+Makisu supports TLS and Basic Auth with Docker registry (Docker Hub, GCR, and private registries). By default, TLS is enabled and makisu uses a list of common root CA certs to authenticate registry. 
 ```go
 // Config contains Docker registry client configuration.
 type Config struct {
@@ -197,17 +196,33 @@ type Config struct {
   // Set it to -1 to turn off chunk upload.
   // NOTE: gcr does not support chunked upload.
   PushChunk int64           `yaml:"push_chunk"`
-  Security  security.Config `yaml:"security"`
+  Security  security.Config{
+    TLS       *httputil.TLSConfig `yaml:"tls"`
+    BasicAuth *types.AuthConfig   `yaml:"basic"`
+  }`yaml:"security"`
 }
 ```
-To configure your own registry endpoint:
+For the convenience to work with any public Docker Hub repositories including library/.*, a default config is provided:
+```
+index.docker.io:
+  .*:
+    security:
+      tls:
+        client:
+          disabled: false
+      // Docker Hub requires basic auth with empty username and password for all public repositories.
+      basic:
+        username: ""
+        password: ""
+```
+To configure your own registry endpoint, pass a custom configuration file to Makisu with `--registry-config=${PATH_TO_CONFIG}`.:
 ```yaml
 [registry]:
   [repo]:
     security:
       tls:
         client:
-          enabled: true
+          disabled: false
           cert:
             path: <path to cert>
           key:
@@ -227,9 +242,6 @@ Example:
   "makisu-project/*":
     push_chunk: -1
     security:
-      tls:
-        client:
-          enabled: true
       basic:
         username: _json_key
         password: |-

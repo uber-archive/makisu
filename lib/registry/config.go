@@ -32,9 +32,8 @@ var ConfigurationMap = Map{
 // DefaultDockerHubConfiguration contains docker hub registry configuration.
 var DefaultDockerHubConfiguration = Config{
 	Security: security.Config{
-		TLS: &httputil.TLSConfig{
-			Client: httputil.X509Pair{Enabled: true}},
-		BasicAuth: &types.AuthConfig{},
+		TLS:       &httputil.TLSConfig{},
+		BasicAuth: &types.AuthConfig{}, // DockerHub requires empty username and password for public repositories.
 	}}
 
 // Map contains a map of registry config.
