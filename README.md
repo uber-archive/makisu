@@ -7,7 +7,7 @@ Makisu is a fast and flexible Docker image build tool designed for containerized
 Some highlights of Makisu:
 * Requires no elevated privileges, making the build process portable.
 * Uses a distributed layer cache to improve performance across a build cluster.
-* Provides control over generated layers with a new optional keyword `#!COMMIT`, reducing the number of layers in images.
+* Provides control over generated layers with a new optional keyword [`#!COMMIT`](#explicit-commit-and-cache), reducing the number of layers in images.
 * Is Docker compatible. Note, the Dockerfile parser in Makisu is opinionated in some scenarios. More details can be found [here](lib/parser/dockerfile/README.md).
 
 Makisu has been in use at Uber since early 2018, building over one thousand images every day across 4
@@ -20,7 +20,7 @@ different languages.
   - [Makisu on Kubernetes](#makisu-on-kubernetes)
 - [Using Cache](#using-cache)
   - [Configuring distributed cache](#configuring-distributed-cache)
-  - [Explicit Caching](#explicit-caching)
+  - [Explicit Commit and Cache](#explicit-commit-and-cache)
 - [Configuring Docker Registry](#configuring-docker-registry)
 - [Comparison With Similar Tools](#comparison-with-similar-tools)
 
@@ -175,7 +175,7 @@ spec:
 Finally, connect Redis as the Makisu layer cache by passing `--redis-cache-addr=redis:6379` argument.
 Cache has a 7 day TTL by default, which can be configured with `--cache-ttl=604800` argument.
 
-## Explicit caching
+## Explicit commit and cache
 
 By default, Makisu will cache each directive in a Dockerfile. To avoid committing and caching everything, the layer cache can be further optimized via explicit caching with the `--commit=explicit` flag. Dockerfile directives may then be manually cached using the `#!COMMIT` annotation:
 
@@ -190,7 +190,7 @@ ADD pre-build.sh
 ...
 ...
 
-# An step we want to cache. A single layer will be generated and cached here on top of base image.
+# A step to be cached. A single layer will be committed and cached here on top of base image.
 RUN npm install #!COMMIT
 
 ...
