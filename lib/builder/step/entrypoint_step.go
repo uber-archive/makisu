@@ -31,7 +31,7 @@ type EntrypointStep struct {
 	entrypoint []string
 }
 
-// NewEntrypointStep returns a BuildStep from give build step.
+// NewEntrypointStep returns a BuildStep from given arguments.
 func NewEntrypointStep(args string, entrypoint []string, commit bool) BuildStep {
 	return &EntrypointStep{
 		baseStep:   newBaseStep(Entrypoint, args, commit),

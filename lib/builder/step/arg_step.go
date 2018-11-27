@@ -15,46 +15,32 @@
 package step
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/uber/makisu/lib/context"
 	"github.com/uber/makisu/lib/docker/image"
-	"github.com/uber/makisu/lib/utils"
 )
 
-// EnvStep implements BuildStep and execute ENV directive
-type EnvStep struct {
+// ArgStep implements BuildStep and execute ARG directive
+type ArgStep struct {
 	*baseStep
 
-	envs map[string]string
+	name      string
+	actualVal *string
 }
 
-// NewEnvStep returns a BuildStep from given arguments.
-func NewEnvStep(args string, envs map[string]string, commit bool) BuildStep {
-	return &EnvStep{
+// NewArgStep returns a BuildStep from given arguments.
+func NewArgStep(args string, name string, actualVal *string, commit bool) BuildStep {
+	return &ArgStep{
 		baseStep: newBaseStep(Env, args, commit),
-		envs:     envs,
+		name:     name,
 	}
 }
 
 // GenerateConfig generates a new image config base on config from previous step.
-func (s *EnvStep) GenerateConfig(ctx *context.BuildContext, imageConfig *image.Config) (*image.Config, error) {
+func (s *ArgStep) GenerateConfig(ctx *context.BuildContext, imageConfig *image.Config) (*image.Config, error) {
 	// Update in-memory map of merged stage vars from ARG and ENV.
-	for k, v := range s.envs {
-		ctx.StageVars[k] = v
+	if s.actualVal != nil {
+		ctx.StageVars[s.name] = s.actualVal
 	}
 
-	// Update image config.
-	config, err := image.NewImageConfigFromCopy(imageConfig)
-	if err != nil {
-		return nil, fmt.Errorf("copy image config: %s", err)
-	}
-
-	expandedEnvs := make(map[string]string, len(s.envs))
-	for k, v := range s.envs {
-		expandedEnvs[k] = os.ExpandEnv(v)
-	}
-	config.Config.Env = utils.MergeEnv(config.Config.Env, expandedEnvs)
-	return config, nil
+	return image.NewImageConfigFromCopy(imageConfig)
 }
