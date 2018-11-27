@@ -61,7 +61,7 @@ type addCopyStep struct {
 	chown     string
 }
 
-// newAddCopyStep returns a BuildStep from give build step.
+// newAddCopyStep returns a BuildStep from given arguments.
 func newAddCopyStep(
 	directive Directive, args, chown, fromStage string,
 	fromPaths []string, toPath string, commit bool) (*addCopyStep, error) {

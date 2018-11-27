@@ -40,10 +40,9 @@ type BuildContext struct {
 	MemFS      *archive.MemFS     // Merged view of base layers. Layers should be merged in order.
 	ImageStore storage.ImageStore // Stores image layers and manifests.
 
-	CopyOps  []*archive.CopyOperation
-	MustScan bool
-
-	stagesDir string // Containers dirs with files needed for 'copy --from' operations.
+	CopyOps   []*archive.CopyOperation
+	MustScan  bool
+	stagesDir string // Contains dirs with files needed for 'copy --from' operations.
 }
 
 // NewBuildContext inits a new BuildContext object.
