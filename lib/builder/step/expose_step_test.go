@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestExposeStepGenerateConfig(t *testing.T) {
+func TestExposeStepUpdateCtxAndConfig(t *testing.T) {
 	require := require.New(t)
 
 	ctx, cleanup := context.BuildContextFixture()
@@ -33,7 +33,7 @@ func TestExposeStepGenerateConfig(t *testing.T) {
 	step := NewExposeStep("", ports, false)
 
 	c := image.NewDefaultImageConfig()
-	result, err := step.GenerateConfig(ctx, &c)
+	result, err := step.UpdateCtxAndConfig(ctx, &c)
 	require.NoError(err)
 
 	for _, port := range ports {
@@ -50,6 +50,6 @@ func TestExposeStepNilConfig(t *testing.T) {
 
 	step := NewExposeStep("", nil, false)
 
-	_, err := step.GenerateConfig(ctx, nil)
+	_, err := step.UpdateCtxAndConfig(ctx, nil)
 	require.Error(err)
 }

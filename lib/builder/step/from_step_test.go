@@ -118,7 +118,7 @@ func TestFromStepScratch(t *testing.T) {
 	require.Nil(digestPairs)
 
 	// Generate config.
-	conf, err := step.GenerateConfig(ctx, nil)
+	conf, err := step.UpdateCtxAndConfig(ctx, nil)
 	require.Equal(image.NewDefaultImageConfig(), *conf)
 }
 
@@ -146,7 +146,7 @@ func TestFromStepRegularFlow(t *testing.T) {
 		digestPairs[0].TarDigest)
 
 	// Generate config.
-	conf, err := step.GenerateConfig(ctx, nil)
+	conf, err := step.UpdateCtxAndConfig(ctx, nil)
 	require.NoError(err)
 	expectedConfBytes, err := ioutil.ReadFile("../../../testdata/files/test_image_config")
 	require.NoError(err)

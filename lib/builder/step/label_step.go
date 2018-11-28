@@ -37,8 +37,11 @@ func NewLabelStep(args string, labels map[string]string, commit bool) BuildStep 
 	}
 }
 
-// GenerateConfig generates a new image config base on config from previous step.
-func (s *LabelStep) GenerateConfig(ctx *context.BuildContext, imageConfig *image.Config) (*image.Config, error) {
+// UpdateCtxAndConfig updates mutable states in build context, and generates a
+// new image config base on config from previous step.
+func (s *LabelStep) UpdateCtxAndConfig(
+	ctx *context.BuildContext, imageConfig *image.Config) (*image.Config, error) {
+
 	config, err := image.NewImageConfigFromCopy(imageConfig)
 	if err != nil {
 		return nil, fmt.Errorf("copy image config: %s", err)

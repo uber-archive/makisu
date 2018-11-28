@@ -24,7 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestWorkdirStepGenerateConfig(t *testing.T) {
+func TestWorkdirStepUpdateCtxAndConfig(t *testing.T) {
 	require := require.New(t)
 
 	ctx, cleanup := context.BuildContextFixture()
@@ -34,7 +34,7 @@ func TestWorkdirStepGenerateConfig(t *testing.T) {
 	step := NewWorkdirStep("", workdir, false)
 
 	c := image.NewDefaultImageConfig()
-	result, err := step.GenerateConfig(ctx, &c)
+	result, err := step.UpdateCtxAndConfig(ctx, &c)
 	require.NoError(err)
 	require.Equal(result.Config.WorkingDir, filepath.Join(ctx.RootDir, workdir))
 }
@@ -47,6 +47,6 @@ func TestWorkdirStepNilConfig(t *testing.T) {
 
 	step := NewWorkdirStep("", "", false)
 
-	_, err := step.GenerateConfig(ctx, nil)
+	_, err := step.UpdateCtxAndConfig(ctx, nil)
 	require.Error(err)
 }

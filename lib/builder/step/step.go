@@ -60,9 +60,9 @@ type BuildStep interface {
 	// SetCacheID sets the cache ID of the step given a seed value.
 	SetCacheID(ctx *context.BuildContext, seed string) error
 
-	// ApplyConfig sets up the execution environment using image config from previous step.
+	// ApplyCtxAndConfig sets up the execution environment using image config from previous step.
 	// This function will not be skipped.
-	ApplyConfig(ctx *context.BuildContext, imageConfig *image.Config) error
+	ApplyCtxAndConfig(ctx *context.BuildContext, imageConfig *image.Config) error
 
 	// Execute executes the step. If modifyFS is true, the command might change the local
 	// file system.
@@ -71,9 +71,9 @@ type BuildStep interface {
 	// Commit generates an image layer.
 	Commit(ctx *context.BuildContext) ([]*image.DigestPair, error)
 
-	// GenerateConfig generates a new image config base on config from previous step.
+	// UpdateCtxAndConfig generates a new image config base on config from previous step.
 	// This function will not be skipped.
-	GenerateConfig(ctx *context.BuildContext, imageConfig *image.Config) (*image.Config, error)
+	UpdateCtxAndConfig(ctx *context.BuildContext, imageConfig *image.Config) (*image.Config, error)
 
 	// HasCommit returns whether or not a particular commit step has a commit annotation.
 	HasCommit() bool

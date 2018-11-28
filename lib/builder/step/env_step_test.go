@@ -24,7 +24,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestEnvStepGenerateConfig(t *testing.T) {
+func TestEnvStepUpdateCtxAndConfig(t *testing.T) {
 	require := require.New(t)
 
 	ctx, cleanup := context.BuildContextFixture()
@@ -34,7 +34,7 @@ func TestEnvStepGenerateConfig(t *testing.T) {
 	step := NewEnvStep("", envs, false)
 
 	c := image.NewDefaultImageConfig()
-	result, err := step.GenerateConfig(ctx, &c)
+	result, err := step.UpdateCtxAndConfig(ctx, &c)
 	require.NoError(err)
 
 	for k, v := range envs {
@@ -59,6 +59,6 @@ func TestEnvStepNilConfig(t *testing.T) {
 
 	step := NewEnvStep("", nil, false)
 
-	_, err := step.GenerateConfig(ctx, nil)
+	_, err := step.UpdateCtxAndConfig(ctx, nil)
 	require.Error(err)
 }

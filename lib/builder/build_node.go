@@ -63,7 +63,7 @@ func (n *buildNode) Build(
 	cacheMgr cache.Manager, prevConfig *image.Config, opts *buildOptions) (*image.Config, error) {
 
 	// Always apply config.
-	if err := n.ApplyConfig(n.ctx, prevConfig); err != nil {
+	if err := n.ApplyCtxAndConfig(n.ctx, prevConfig); err != nil {
 		return nil, fmt.Errorf("apply config: %s", err)
 	}
 
@@ -91,7 +91,7 @@ func (n *buildNode) Build(
 	}
 
 	// Always generate a new config.
-	config, err := n.GenerateConfig(n.ctx, prevConfig)
+	config, err := n.UpdateCtxAndConfig(n.ctx, prevConfig)
 	if err != nil {
 		return nil, fmt.Errorf("generate config: %s", err)
 	}

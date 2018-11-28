@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestVolumeStepGenerateConfig(t *testing.T) {
+func TestVolumeStepUpdateCtxAndConfig(t *testing.T) {
 	require := require.New(t)
 
 	ctx, cleanup := context.BuildContextFixture()
@@ -33,7 +33,7 @@ func TestVolumeStepGenerateConfig(t *testing.T) {
 	step := NewVolumeStep("", volumes, false)
 
 	c := image.NewDefaultImageConfig()
-	result, err := step.GenerateConfig(ctx, &c)
+	result, err := step.UpdateCtxAndConfig(ctx, &c)
 	require.NoError(err)
 
 	for _, volume := range volumes {
@@ -50,6 +50,6 @@ func TestVolumeStepNilConfig(t *testing.T) {
 
 	step := NewVolumeStep("", nil, false)
 
-	_, err := step.GenerateConfig(ctx, nil)
+	_, err := step.UpdateCtxAndConfig(ctx, nil)
 	require.Error(err)
 }

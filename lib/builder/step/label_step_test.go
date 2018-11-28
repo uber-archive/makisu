@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestLabelStepGenerateConfig(t *testing.T) {
+func TestLabelStepUpdateCtxAndConfig(t *testing.T) {
 	require := require.New(t)
 
 	ctx, cleanup := context.BuildContextFixture()
@@ -33,7 +33,7 @@ func TestLabelStepGenerateConfig(t *testing.T) {
 	step := NewLabelStep("", labels, false)
 
 	c := image.NewDefaultImageConfig()
-	result, err := step.GenerateConfig(ctx, &c)
+	result, err := step.UpdateCtxAndConfig(ctx, &c)
 	require.NoError(err)
 
 	for k, v := range labels {
@@ -51,6 +51,6 @@ func TestLabelStepNilConfig(t *testing.T) {
 
 	step := NewLabelStep("", nil, false)
 
-	_, err := step.GenerateConfig(ctx, nil)
+	_, err := step.UpdateCtxAndConfig(ctx, nil)
 	require.Error(err)
 }
