@@ -39,7 +39,7 @@ func NewArgStep(args string, name string, actualVal *string, commit bool) BuildS
 func (s *ArgStep) GenerateConfig(ctx *context.BuildContext, imageConfig *image.Config) (*image.Config, error) {
 	// Update in-memory map of merged stage vars from ARG and ENV.
 	if s.actualVal != nil {
-		ctx.StageVars[s.name] = s.actualVal
+		ctx.StageVars[s.name] = *s.actualVal
 	}
 
 	return image.NewImageConfigFromCopy(imageConfig)

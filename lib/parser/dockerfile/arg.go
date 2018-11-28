@@ -42,7 +42,7 @@ func newArgDirective(base *baseDirective, state *parsingState) (*ArgDirective, e
 			name = k
 			defaultVal = v
 		}
-		return &ArgDirective{base, name, defaultVal, ""}, nil
+		return &ArgDirective{base, name, defaultVal, nil}, nil
 	}
 
 	args, err := splitArgs(base.Args)
@@ -53,7 +53,7 @@ func newArgDirective(base *baseDirective, state *parsingState) (*ArgDirective, e
 		return nil, base.err(errNotExactlyOneArg)
 	}
 
-	return &ArgDirective{base, base.Args, "", ""}, nil
+	return &ArgDirective{base, base.Args, "", nil}, nil
 }
 
 // ARGs only update global/stage variables.

@@ -47,10 +47,10 @@ func TestNewArgDirective(t *testing.T) {
 			directive, err := newDirective(test.input, buildState)
 			if test.succeed {
 				require.NoError(err)
-				arg, ok := directive.(*argDirective)
+				arg, ok := directive.(*ArgDirective)
 				require.True(ok)
-				require.Equal(test.name, arg.name)
-				require.Equal(test.defaultVal, arg.defaultVal)
+				require.Equal(test.name, arg.Name)
+				require.Equal(test.defaultVal, arg.DefaultVal)
 			} else {
 				require.Error(err)
 			}

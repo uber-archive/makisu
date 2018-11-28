@@ -70,11 +70,12 @@ func NewBuildContext(
 	return &BuildContext{
 		RootDir:    rootDir,
 		ContextDir: contextDir,
-		stagesDir:  stagesDir,
+		StageVars:  make(map[string]string, 0),
 		MemFS:      memFS,
 		ImageStore: imageStore,
 		CopyOps:    make([]*archive.CopyOperation, 0),
 		MustScan:   false,
+		stagesDir:  stagesDir,
 	}, nil
 }
 
