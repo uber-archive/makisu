@@ -298,6 +298,12 @@ func stageArgs() []*test {
 		"alpine:latest",
 		"alias1",
 	})
+	stage.addDirective(&ArgDirective{
+		&baseDirective{"arg", "cmd", false},
+		"cmd",
+		"",
+		nil,
+	})
 	stage.addDirective(&CmdDirective{
 		&baseDirective{"cmd", "${cmd}", false},
 		[]string{"${cmd}"},
@@ -322,6 +328,13 @@ func stageArgs() []*test {
 		&baseDirective{"from", "alpine:latest AS alias1", false},
 		"alpine:latest",
 		"alias1",
+	})
+	paramVal := "ls"
+	stage1.addDirective(&ArgDirective{
+		&baseDirective{"arg", "cmd", false},
+		"cmd",
+		"",
+		&paramVal,
 	})
 	stage1.addDirective(&CmdDirective{
 		&baseDirective{"cmd", "ls", false},
@@ -354,6 +367,13 @@ func stageArgs() []*test {
 		&baseDirective{"from", "alpine:latest AS alias1", false},
 		"alpine:latest",
 		"alias1",
+	})
+	paramVal = "ls"
+	stage.addDirective(&ArgDirective{
+		&baseDirective{"arg", "cmd", false},
+		"cmd",
+		"",
+		&paramVal,
 	})
 	stage.addDirective(&CmdDirective{
 		&baseDirective{"cmd", "ls", false},
@@ -518,6 +538,13 @@ func integration() []*test {
 		"alpine:latest",
 		"test_alias1",
 	})
+	paramVal1 := "echo"
+	stage1.addDirective(&ArgDirective{
+		&baseDirective{"arg", "cmd=ls", false},
+		"cmd",
+		"ls",
+		&paramVal1,
+	})
 	stage1.addDirective(&EnvDirective{
 		&baseDirective{"env", "image=ubuntu cmd=\"echo echo\"", false},
 		map[string]string{"image": "ubuntu", "cmd": "echo echo"},
@@ -540,9 +567,23 @@ func integration() []*test {
 		"alpine:latest",
 		"test_alias2",
 	})
+	paramVal2 := "v2"
+	stage2.addDirective(&ArgDirective{
+		&baseDirective{"arg", "key", false},
+		"key",
+		"",
+		&paramVal2,
+	})
 	stage2.addDirective(&EnvDirective{
 		&baseDirective{"env", "dir1 home", false},
 		map[string]string{"dir1": "home"},
+	})
+	defaultVal1 := "dir"
+	stage2.addDirective(&ArgDirective{
+		&baseDirective{"arg", "dir2=dir", false},
+		"dir2",
+		"dir",
+		&defaultVal1,
 	})
 	stage2.addDirective(&LabelDirective{
 		&baseDirective{"label", "k1=v1 k2=v2", false},
@@ -578,6 +619,12 @@ func integration() []*test {
 			[]string{"src1", "src2", "src3"},
 			"dst/",
 		},
+	})
+	stage3.addDirective(&ArgDirective{
+		&baseDirective{"arg", "cmd", false},
+		"cmd",
+		"",
+		&paramVal1,
 	})
 	stage3.addDirective(&EntrypointDirective{
 		&baseDirective{"entrypoint", `["bash", "echo"]`, false},
