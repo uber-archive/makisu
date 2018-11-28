@@ -29,7 +29,7 @@ type StopsignalStep struct {
 	Signal int
 }
 
-// NewStopsignalStep returns a BuildStep from give build step.
+// NewStopsignalStep returns a BuildStep from given arguments.
 func NewStopsignalStep(args string, signal int, commit bool) BuildStep {
 	return &StopsignalStep{
 		baseStep: newBaseStep(Stopsignal, args, commit),

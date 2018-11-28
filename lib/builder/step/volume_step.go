@@ -29,7 +29,7 @@ type VolumeStep struct {
 	volumes map[string]struct{}
 }
 
-// NewVolumeStep returns a BuildStep from give build step.
+// NewVolumeStep returns a BuildStep from given arguments.
 func NewVolumeStep(args string, volumes []string, commit bool) BuildStep {
 	v := make(map[string]struct{}, len(volumes))
 	for _, volume := range volumes {

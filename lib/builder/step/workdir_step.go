@@ -29,7 +29,7 @@ type WorkdirStep struct {
 	workingDir string
 }
 
-// NewWorkdirStep returns a BuildStep from give build step.
+// NewWorkdirStep returns a BuildStep from given arguments.
 func NewWorkdirStep(args string, workingDir string, commit bool) BuildStep {
 	return &WorkdirStep{
 		baseStep:   newBaseStep(Workdir, args, commit),

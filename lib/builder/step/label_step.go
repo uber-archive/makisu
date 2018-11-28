@@ -29,7 +29,7 @@ type LabelStep struct {
 	labels map[string]string
 }
 
-// NewLabelStep returns a BuildStep from give build step.
+// NewLabelStep returns a BuildStep from given arguments.
 func NewLabelStep(args string, labels map[string]string, commit bool) BuildStep {
 	return &LabelStep{
 		baseStep: newBaseStep(Label, args, commit),
