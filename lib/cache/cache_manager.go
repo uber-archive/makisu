@@ -154,15 +154,14 @@ func (manager *registryCacheManager) PushCache(cacheID string, digestPair *image
 		manager.Lock()
 		defer manager.Unlock()
 
-		entry := _cacheEmptyEntry
 		if digestPair != nil {
-			entry = createEntry(digestPair.TarDigest, digestPair.GzipDescriptor.Digest)
 			if err := manager.registryClient.PushLayer(digestPair.GzipDescriptor.Digest); err != nil {
 				manager.pushErrors.Add(fmt.Errorf("push layer %s: %s", digestPair.GzipDescriptor.Digest, err))
 				return
 			}
 		}
 
+		entry := createEntry(digestPair)
 		if err := manager.cacheIDStore.Put(_cachePrefix+cacheID, entry); err != nil {
 			manager.pushErrors.Add(fmt.Errorf("store tag mapping (%s,%s): %s", cacheID, entry, err))
 			return
@@ -197,6 +196,9 @@ func parseEntry(entry string) (image.Digest, image.Digest, error) {
 	return image.Digest("sha256:" + split[0]), image.Digest("sha256:" + split[1]), nil
 }
 
-func createEntry(tarDigest, gzipDigest image.Digest) string {
-	return fmt.Sprintf("%s,%s", tarDigest.Hex(), gzipDigest.Hex())
+func createEntry(pair *image.DigestPair) string {
+	if pair == nil {
+		return _cacheEmptyEntry
+	}
+	return fmt.Sprintf("%s,%s", pair.TarDigest.Hex(), pair.GzipDescriptor.Digest.Hex())
 }
