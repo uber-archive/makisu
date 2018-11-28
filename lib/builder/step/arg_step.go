@@ -30,8 +30,9 @@ type ArgStep struct {
 // NewArgStep returns a BuildStep from given arguments.
 func NewArgStep(args string, name string, actualVal *string, commit bool) BuildStep {
 	return &ArgStep{
-		baseStep: newBaseStep(Env, args, commit),
-		name:     name,
+		baseStep:  newBaseStep(Env, args, commit),
+		name:      name,
+		actualVal: actualVal,
 	}
 }
 
