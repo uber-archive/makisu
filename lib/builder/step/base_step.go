@@ -76,7 +76,6 @@ func (s *baseStep) ApplyConfig(
 		return nil
 	}
 
-	// Set environment variables.
 	for key, value := range ctx.StageVars {
 		unquoted, err := strconv.Unquote(value)
 		if err == nil {
