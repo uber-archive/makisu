@@ -106,6 +106,9 @@ func NewDockerfileStep(
 	case *dockerfile.AddDirective:
 		s, _ := d.(*dockerfile.AddDirective)
 		step, err = NewAddStep(s.Args, s.Chown, s.Srcs, s.Dst, s.Commit)
+	case *dockerfile.ArgDirective:
+		s, _ := d.(*dockerfile.ArgDirective)
+		step = NewArgStep(s.Args, s.Name, s.ActualVal, s.Commit)
 	case *dockerfile.CmdDirective:
 		s, _ := d.(*dockerfile.CmdDirective)
 		step = NewCmdStep(s.Args, s.Cmd, s.Commit)
