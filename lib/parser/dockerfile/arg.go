@@ -17,9 +17,9 @@ package dockerfile
 // ArgDirective represents the "ARG" dockerfile command.
 type ArgDirective struct {
 	*baseDirective
-	Name       string
-	DefaultVal string
-	ActualVal  *string
+	Name        string
+	DefaultVal  string
+	ResolvedVal *string
 }
 
 // Variables:
@@ -70,10 +70,10 @@ func (d *ArgDirective) update(state *parsingState) error {
 	}
 	if val, ok := state.passedArgs[d.Name]; ok {
 		vars[d.Name] = val
-		d.ActualVal = &val
+		d.ResolvedVal = &val
 	} else if d.DefaultVal != "" {
 		vars[d.Name] = d.DefaultVal
-		d.ActualVal = &d.DefaultVal
+		d.ResolvedVal = &d.DefaultVal
 	}
 	if !global {
 		return state.addToCurrStage(d)

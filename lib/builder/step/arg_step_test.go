@@ -38,7 +38,7 @@ func TestArgStepUpdateCtx(t *testing.T) {
 	require.Equal(val, ctx.StageVars["key"])
 }
 
-func TestArgStepNilActualVal(t *testing.T) {
+func TestArgStepNilResolvedVal(t *testing.T) {
 	require := require.New(t)
 
 	ctx, cleanup := context.BuildContextFixture()

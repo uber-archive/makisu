@@ -23,24 +23,24 @@ import (
 type ArgStep struct {
 	*baseStep
 
-	name      string
-	actualVal *string
+	name        string
+	resolvedVal *string
 }
 
 // NewArgStep returns a BuildStep from given arguments.
-func NewArgStep(args string, name string, actualVal *string, commit bool) BuildStep {
+func NewArgStep(args string, name string, resolvedVal *string, commit bool) BuildStep {
 	return &ArgStep{
-		baseStep:  newBaseStep(Env, args, commit),
-		name:      name,
-		actualVal: actualVal,
+		baseStep:    newBaseStep(Env, args, commit),
+		name:        name,
+		resolvedVal: resolvedVal,
 	}
 }
 
 // GenerateConfig generates a new image config base on config from previous step.
 func (s *ArgStep) GenerateConfig(ctx *context.BuildContext, imageConfig *image.Config) (*image.Config, error) {
 	// Update in-memory map of merged stage vars from ARG and ENV.
-	if s.actualVal != nil {
-		ctx.StageVars[s.name] = *s.actualVal
+	if s.resolvedVal != nil {
+		ctx.StageVars[s.name] = *s.resolvedVal
 	}
 
 	return image.NewImageConfigFromCopy(imageConfig)
