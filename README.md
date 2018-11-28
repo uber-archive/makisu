@@ -12,7 +12,7 @@ Some highlights of Makisu:
 * Provides control over generated layers with a new optional keyword [`#!COMMIT`](#explicit-commit-and-cache), reducing the number of layers in images.
 * Is Docker compatible. Note, the Dockerfile parser in Makisu is opinionated in some scenarios. More details can be found [here](lib/parser/dockerfile/README.md).
 
-Makisu has been in use at Uber since early 2018, building over one thousand images every day across 4
+Makisu has been in use at Uber since early 2018, building over thousands of images every day across 4
 different languages.
 
 
