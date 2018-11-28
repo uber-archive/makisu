@@ -36,7 +36,14 @@ type BuildContext struct {
 	RootDir    string // Root of the build file system. Always "/" in production.
 	ContextDir string // Source of copy/add operations.
 
-	// MemFS and ImageStore can be shared across all copies of the BuildContext.
+	// StageVars contains the resolved values corresponding to ARG and ENV
+	// directives that occurred during the current stage.
+	// It's only used for setting environment variables for RUN, not for
+	// updating image config, since env vars from ARG are not supposed to be
+	// persisted.
+	StageVars map[string]string
+
+	// MemFS and ImageStore can be shared accross all copies of the BuildContext.
 	MemFS      *archive.MemFS     // Merged view of base layers. Layers should be merged in order.
 	ImageStore storage.ImageStore // Stores image layers and manifests.
 
@@ -63,11 +70,12 @@ func NewBuildContext(
 	return &BuildContext{
 		RootDir:    rootDir,
 		ContextDir: contextDir,
-		stagesDir:  stagesDir,
+		StageVars:  make(map[string]string, 0),
 		MemFS:      memFS,
 		ImageStore: imageStore,
 		CopyOps:    make([]*archive.CopyOperation, 0),
 		MustScan:   false,
+		stagesDir:  stagesDir,
 	}, nil
 }
 

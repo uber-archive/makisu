@@ -9,8 +9,6 @@ RUN mkdir -p ${BUILD_HOME}
 WORKDIR ${BUILD_HOME}
 
 ARG TEST_ARG_1="true"
-# TODO: This ENV line shouldn't be needed
-ENV TEST_ARG_1=${TEST_ARG_1} 
 ENV TEST_ENV_1="true"
 
 ARG SCRIPT_FOLDER="scripts"

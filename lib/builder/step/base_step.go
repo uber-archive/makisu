@@ -22,7 +22,6 @@ import (
 
 	"github.com/uber/makisu/lib/context"
 	"github.com/uber/makisu/lib/docker/image"
-	"github.com/uber/makisu/lib/utils"
 )
 
 // baseStep is the struct that will be embedded in all kinds of steps.
@@ -67,7 +66,8 @@ func (s *baseStep) SetCacheID(ctx *context.BuildContext, seed string) error {
 	return nil
 }
 
-// ApplyConfig sets up the execution environment using image config from previous step.
+// ApplyConfig sets up the execution environment using image config from
+// previous step.
 // This function will not be skipped.
 func (s *baseStep) ApplyConfig(
 	ctx *context.BuildContext, imageConfig *image.Config) error {
@@ -76,10 +76,7 @@ func (s *baseStep) ApplyConfig(
 		return nil
 	}
 
-	// Set environment variables.
-	// TODO: should we reset these between stages?
-	envMap := utils.ConvertStringSliceToMap(imageConfig.Config.Env)
-	for key, value := range envMap {
+	for key, value := range ctx.StageVars {
 		unquoted, err := strconv.Unquote(value)
 		if err == nil {
 			value = unquoted
@@ -94,6 +91,7 @@ func (s *baseStep) ApplyConfig(
 	if imageConfig.Config.WorkingDir != "" {
 		s.workingDir = imageConfig.Config.WorkingDir
 	}
+
 	// Create working dir if it does not exist.
 	if _, err := os.Lstat(s.workingDir); err != nil {
 		if os.IsNotExist(err) {

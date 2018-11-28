@@ -28,6 +28,7 @@ import (
 	"github.com/uber/makisu/lib/registry"
 	"github.com/uber/makisu/lib/storage"
 	"github.com/uber/makisu/lib/tario"
+	"github.com/uber/makisu/lib/utils"
 )
 
 const (
@@ -184,6 +185,13 @@ func (s *FromStep) GenerateConfig(ctx *context.BuildContext, imageConfig *image.
 	if err != nil {
 		return nil, fmt.Errorf("get config: %v", err)
 	}
+
+	// Update in-memory map of merged stage vars from ARG and ENV.
+	envMap := utils.ConvertStringSliceToMap(config.Config.Env)
+	for k, v := range envMap {
+		ctx.StageVars[k] = v
+	}
+
 	return config, nil
 }
 

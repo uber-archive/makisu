@@ -198,8 +198,6 @@ def test_build_go_with_debian_package(registry1, storage_dir):
     img.cleanup()
 
 
-# TODO: There is one remaining issue about ARG. It's supposed to function as ENV but not persisted
-# in the image, but right now it's not functioning as ENV.
 def test_build_arg_and_env(registry1, storage_dir):
     utils.registry_ensure_image('golang:latest', registry1.addr)
     utils.registry_ensure_image('alpine:latest', registry1.addr)
