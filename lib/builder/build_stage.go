@@ -225,7 +225,7 @@ func (stage *buildStage) saveImage(store storage.ImageStore, repo, tag string) (
 	}
 
 	manifestPath := manifestFile.Name()
-	// Remove temp file after hardline to manifest store
+	// Remove temp file after hardlinked to manifest store
 	defer os.Remove(manifestPath)
 
 	if err := ioutil.WriteFile(manifestPath, manifestJSON, 0755); err != nil {
