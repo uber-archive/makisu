@@ -54,5 +54,5 @@ Usage of makisu build:
   -t	image tag (required) (type: string, default: "")
 
 $ makisu version
-v0.1.0
+v0.1.1
 ```
