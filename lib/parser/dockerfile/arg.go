@@ -14,10 +14,12 @@
 
 package dockerfile
 
-type argDirective struct {
+// ArgDirective represents the "ARG" dockerfile command.
+type ArgDirective struct {
 	*baseDirective
-	name       string
-	defaultVal string
+	Name        string
+	DefaultVal  string
+	ResolvedVal *string
 }
 
 // Variables:
@@ -26,7 +28,7 @@ type argDirective struct {
 //   Else, variables are replaced from ARGs and ENVs from within our stage.
 // Formats:
 //   ARG <name>[=<default value>]
-func newArgDirective(base *baseDirective, state *parsingState) (*argDirective, error) {
+func newArgDirective(base *baseDirective, state *parsingState) (*ArgDirective, error) {
 	if err := base.replaceVarsCurrStageOrGlobal(state); err != nil {
 		return nil, err
 	}
@@ -40,7 +42,7 @@ func newArgDirective(base *baseDirective, state *parsingState) (*argDirective, e
 			name = k
 			defaultVal = v
 		}
-		return &argDirective{base, name, defaultVal}, nil
+		return &ArgDirective{base, name, defaultVal, nil}, nil
 	}
 
 	args, err := splitArgs(base.Args)
@@ -51,7 +53,7 @@ func newArgDirective(base *baseDirective, state *parsingState) (*argDirective, e
 		return nil, base.err(errNotExactlyOneArg)
 	}
 
-	return &argDirective{base, base.Args, ""}, nil
+	return &ArgDirective{base, base.Args, "", nil}, nil
 }
 
 // ARGs only update global/stage variables.
@@ -59,15 +61,22 @@ func newArgDirective(base *baseDirective, state *parsingState) (*argDirective, e
 // the global args map.
 // Else, we update the current stage variables.
 // In either case, we only update the variable if it has a default value or a value is passed.
-func (d *argDirective) update(state *parsingState) error {
+func (d *ArgDirective) update(state *parsingState) error {
+	var global bool
 	vars := state.stageVars
 	if vars == nil {
+		global = true
 		vars = state.globalArgs
 	}
-	if val, ok := state.passedArgs[d.name]; ok {
-		vars[d.name] = val
-	} else if d.defaultVal != "" {
-		vars[d.name] = d.defaultVal
+	if val, ok := state.passedArgs[d.Name]; ok {
+		vars[d.Name] = val
+		d.ResolvedVal = &val
+	} else if d.DefaultVal != "" {
+		vars[d.Name] = d.DefaultVal
+		d.ResolvedVal = &d.DefaultVal
+	}
+	if !global {
+		return state.addToCurrStage(d)
 	}
 	return nil
 }
