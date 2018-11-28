@@ -47,7 +47,7 @@ type buildStage struct {
 
 	// forceCommit will make every step attampt to commit a layer.
 	// Commit() is noop for steps other than ADD/COPY/RUN if they are not after
-	// an uncommited RUN, so this won't generate extra empty layers.
+	// an uncommitted RUN, so this won't generate extra empty layers.
 	forceCommit bool
 }
 
@@ -225,7 +225,7 @@ func (stage *buildStage) saveImage(store storage.ImageStore, repo, tag string) (
 	}
 
 	manifestPath := manifestFile.Name()
-	// Remove temp file after hardlinked to manifest store
+	// Remove temp file after hardline to manifest store
 	defer os.Remove(manifestPath)
 
 	if err := ioutil.WriteFile(manifestPath, manifestJSON, 0755); err != nil {

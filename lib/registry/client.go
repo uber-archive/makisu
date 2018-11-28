@@ -73,7 +73,7 @@ func New(store storage.ImageStore, registry, repository string) *DockerRegistryC
 	return newClient(store, registry, repository, nil)
 }
 
-// NewWithClient returns a new Client with a costumized http.Client.
+// NewWithClient returns a new Client with a customized http.Client.
 func NewWithClient(store storage.ImageStore, registry, repository string, client *http.Client) *DockerRegistryClient {
 	return newClient(store, registry, repository, client)
 }

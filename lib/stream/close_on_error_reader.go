@@ -24,7 +24,7 @@ import (
 
 // CloseOnErrorReader closes reader on any error (includes EOF) and execute a callback function.
 // This is useful when caller wants to read until EOF and cleans up after error when Close() is not
-// guranteed to be called.
+// guaranteed to be called.
 type CloseOnErrorReader struct {
 	readCloser io.ReadCloser
 	callBack   func() error

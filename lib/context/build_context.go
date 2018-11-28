@@ -36,7 +36,7 @@ type BuildContext struct {
 	RootDir    string // Root of the build file system. Always "/" in production.
 	ContextDir string // Source of copy/add operations.
 
-	// MemFS and ImageStore can be shared accross all copies of the BuildContext.
+	// MemFS and ImageStore can be shared across all copies of the BuildContext.
 	MemFS      *archive.MemFS     // Merged view of base layers. Layers should be merged in order.
 	ImageStore storage.ImageStore // Stores image layers and manifests.
 
