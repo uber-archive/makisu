@@ -28,7 +28,7 @@ type UserStep struct {
 	user string
 }
 
-// NewUserStep returns a BuildStep from give build step.
+// NewUserStep returns a BuildStep from given arguments.
 func NewUserStep(args, user string, commit bool) BuildStep {
 	return &UserStep{
 		baseStep: newBaseStep(User, args, commit),

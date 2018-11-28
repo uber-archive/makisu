@@ -29,7 +29,7 @@ type RunStep struct {
 	cmd string
 }
 
-// NewRunStep returns a BuildStep from give build step.
+// NewRunStep returns a BuildStep from given arguments.
 func NewRunStep(args, cmd string, commit bool) *RunStep {
 	return &RunStep{
 		baseStep: newBaseStep(Run, args, commit),

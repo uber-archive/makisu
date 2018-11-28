@@ -28,7 +28,7 @@ type MaintainerStep struct {
 	Author string
 }
 
-// NewMaintainerStep returns a BuildStep from give build step.
+// NewMaintainerStep returns a BuildStep from given arguments.
 func NewMaintainerStep(args string, author string, commit bool) BuildStep {
 	return &MaintainerStep{
 		baseStep: newBaseStep(Maintainer, args, commit),

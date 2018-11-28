@@ -30,7 +30,7 @@ type EnvStep struct {
 	envs map[string]string
 }
 
-// NewEnvStep returns a BuildStep from give build step.
+// NewEnvStep returns a BuildStep from given arguments.
 func NewEnvStep(args string, envs map[string]string, commit bool) BuildStep {
 	return &EnvStep{
 		baseStep: newBaseStep(Env, args, commit),

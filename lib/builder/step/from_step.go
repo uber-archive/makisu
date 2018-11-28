@@ -47,7 +47,7 @@ type FromStep struct {
 	client   registry.Client
 }
 
-// NewFromStep returns a BuildStep from give build step.
+// NewFromStep returns a BuildStep from given arguments.
 func NewFromStep(args, imageName, alias string) (*FromStep, error) {
 	if !strings.EqualFold(imageName, image.Scratch) {
 		image, err := image.ParseNameForPull(imageName)

@@ -45,7 +45,7 @@ type parsingState struct {
 	// used for variable replacement in FROM directives.
 	globalArgs map[string]string
 
-	// globalArgs contains the resolved values corresponding to ARG and
+	// stageVars contains the resolved values corresponding to ARG and
 	// ENV directives that occurred during the current stage, used in
 	// variable replacements in other directives in the stage.
 	stageVars map[string]string

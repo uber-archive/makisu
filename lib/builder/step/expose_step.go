@@ -29,7 +29,7 @@ type ExposeStep struct {
 	exposedPorts map[string]struct{}
 }
 
-// NewExposeStep returns a BuildStep from give build step.
+// NewExposeStep returns a BuildStep from given arguments.
 func NewExposeStep(args string, ports []string, commit bool) BuildStep {
 	exposedPorts := make(map[string]struct{}, len(ports))
 	for _, port := range ports {
