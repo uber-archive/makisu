@@ -25,7 +25,7 @@ ALL_SRC = $(shell find . -name "*.go" | grep -v -e vendor \
 	-e ".*/*.pb.go")
 ALL_PKGS = $(shell go list $(sort $(dir $(ALL_SRC))) | grep -v vendor)
 FMT_SRC = $(shell echo "$(ALL_SRC)" | tr ' ' '\n')
-EXT_TOOLS = github.com/axw/gocov/gocov github.com/AlekSi/gocov-xml github.com/matm/gocov-html github.com/golang/mock/mockgen golang.org/x/lint/golint golang.org/x/tools/cmd/goimports
+EXT_TOOLS = github.com/axw/gocov/gocov github.com/AlekSi/gocov-xml github.com/matm/gocov-html github.com/golang/mock/mockgen golang.org/x/lint/golint golang.org/x/tools/cmd/goimports github.com/client9/misspell/cmd/misspell
 EXT_TOOLS_DIR = ext-tools/$(OS)
 DEP_TOOL = $(EXT_TOOLS_DIR)/dep
 
@@ -123,6 +123,13 @@ integration: env image
 .PHONY: clean integration-single
 integration-single: env image
 	PACKAGE_VERSION=$(PACKAGE_VERSION) ./env/bin/py.test test/python/test_build.py::$(TEST_NAME)
+
+
+# TODO(pourchet) fix gometalinter installation from source
+lint: ext-tools
+	$(EXT_TOOLS_DIR)/misspell -w --error -i hardlinked $(shell go list -f '{{.Dir}}' ./...)
+	gometalinter --vendor --disable vet -e 'warning' --fast ./...
+
 
 clean:
 	git clean -fd

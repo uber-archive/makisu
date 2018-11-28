@@ -25,7 +25,7 @@ import (
 	"github.com/uber/makisu/lib/utils"
 )
 
-// baseStep is the struct that will be embeded in all kinds of steps.
+// baseStep is the struct that will be embedded in all kinds of steps.
 type baseStep struct {
 	directive  Directive
 	args       string

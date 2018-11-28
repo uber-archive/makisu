@@ -104,7 +104,7 @@ func (cmd *BuildFlags) postInit() error {
 	case "implicit":
 		// forceCommit will make every step attempt to commit a layer.
 		// Commit() is noop for steps other than ADD/COPY/RUN if they are not
-		// after an uncommited RUN, so this won't generate extra empty layers.
+		// after an uncommitted RUN, so this won't generate extra empty layers.
 		cmd.forceCommit = true
 	default:
 		return fmt.Errorf("invalid commit option: %s", cmd.Commit)
