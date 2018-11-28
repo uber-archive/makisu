@@ -422,8 +422,8 @@ func TestGetAncestors(t *testing.T) {
 		require.NoError(addDirectoryToLayer(l2, tmpRoot, dst2, 0755))
 		require.NoError(fs.merge(l2))
 
-		resovled, err := fs.addAncestors(l2, "/nonexistent1/nonexistent2", false, 0, 0, 0)
-		require.Equal("/nonexistent1/nonexistent2", resovled)
+		resolved, err := fs.addAncestors(l2, "/nonexistent1/nonexistent2", false, 0, 0, 0)
+		require.Equal("/nonexistent1/nonexistent2", resolved)
 		require.NoError(err)
 
 		n1, err := findNode(fs, "/nonexistent1", false, 0)

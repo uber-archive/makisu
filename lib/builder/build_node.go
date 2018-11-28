@@ -47,7 +47,7 @@ type buildNode struct {
 	digestPairs []*image.DigestPair
 }
 
-// newBuildNode initalizes a buildNode.
+// newBuildNode initializes a buildNode.
 func newBuildNode(ctx *context.BuildContext, step step.BuildStep) *buildNode {
 	return &buildNode{
 		BuildStep: step,

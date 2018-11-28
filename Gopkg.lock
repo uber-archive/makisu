@@ -18,6 +18,22 @@
   version = "v1.2.0"
 
 [[projects]]
+  digest = "1:0df377184583929dc6e7cb503d6671ed41e1a013a4c870304bf3215a5ef721f0"
+  name = "github.com/alecthomas/gometalinter"
+  packages = ["."]
+  pruneopts = ""
+  revision = "17a7ffa42374937bfecabfb8d2efbd4db0c26741"
+  version = "v2.0.11"
+
+[[projects]]
+  branch = "master"
+  digest = "1:8483994d21404c8a1d489f6be756e25bfccd3b45d65821f25695577791a08e68"
+  name = "github.com/alecthomas/units"
+  packages = ["."]
+  pruneopts = ""
+  revision = "2efee857e7cfd4f3d0138cc3cbb1b4966962b93a"
+
+[[projects]]
   branch = "master"
   digest = "1:3cce78d5d0090e3f1162945fba60ba74e72e8422e8e41bb9c701afb67237bb65"
   name = "github.com/alicebob/gopher-json"
@@ -67,6 +83,17 @@
   ]
   pruneopts = ""
   revision = "3a69a0d2a4ef1f263e2d92b041a69593d6964fe8"
+
+[[projects]]
+  digest = "1:dbf28ceee27335219701dd4c6639c767eee31e2abb61485cdb1044587a04c077"
+  name = "github.com/client9/misspell"
+  packages = [
+    ".",
+    "cmd/misspell",
+  ]
+  pruneopts = ""
+  revision = "b90dc15cfd220ecf8bbc9043ecb928cef381f011"
+  version = "v0.3.4"
 
 [[projects]]
   digest = "1:56c130d885a4aacae1dd9c7b71cfe39912c7ebc1ff7d2b46083c8812996dc43b"
@@ -167,6 +194,14 @@
   version = "v2.0.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:d0899ec7c2f61fd5e4ccba7dbefe72e366a3ecce23ecdb982c768fa1d38812fb"
+  name = "github.com/google/shlex"
+  packages = ["."]
+  pruneopts = ""
+  revision = "c34317bd91bf98fab745d77b03933cf8769299fe"
+
+[[projects]]
   digest = "1:dbbeb8ddb0be949954c8157ee8439c2adfd8dc1c9510eb44a6e58cb68c3dce28"
   name = "github.com/gorilla/context"
   packages = ["."]
@@ -240,6 +275,27 @@
   pruneopts = ""
   revision = "b72939949367438bf52c0cf976f22daa6777b509"
   version = "v1.1"
+
+[[projects]]
+  digest = "1:9fa4a4a684dfb36f3ba1b0a163225140e19e3219e5576d0761d02dbd4c31b743"
+  name = "github.com/nicksnyder/go-i18n"
+  packages = [
+    "i18n",
+    "i18n/bundle",
+    "i18n/language",
+    "i18n/translation",
+  ]
+  pruneopts = ""
+  revision = "0dc1626d56435e9d605a29875701721c54bc9bbd"
+  version = "v1.10.0"
+
+[[projects]]
+  digest = "1:894aef961c056b6d85d12bac890bf60c44e99b46292888bfa66caf529f804457"
+  name = "github.com/pelletier/go-toml"
+  packages = ["."]
+  pruneopts = ""
+  revision = "c01d1270ff3e442a8a57cddc1c92dc1138598194"
+  version = "v1.2.0"
 
 [[projects]]
   digest = "1:7365acd48986e205ccb8652cc746f09c8b7876030d53710ea6ef7d0bd0dcd7ca"
@@ -379,6 +435,14 @@
   revision = "4b1f3b6b1646cd96503e999bfa428631d60c74ca"
 
 [[projects]]
+  branch = "v3-unstable"
+  digest = "1:7c4ffda5286eb300da092725594bcab1d204798f5a30c48336c8e5750d405352"
+  name = "gopkg.in/alecthomas/kingpin.v3-unstable"
+  packages = ["."]
+  pruneopts = ""
+  revision = "df19058c872cddcd279411d709047160e543a700"
+
+[[projects]]
   digest = "1:f0620375dd1f6251d9973b5f2596228cc8042e887cd7f827e4220bc1ce8c30e2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -391,10 +455,12 @@
   analyzer-version = 1
   input-imports = [
     "github.com/AlekSi/gocov-xml",
+    "github.com/alecthomas/gometalinter",
     "github.com/alicebob/miniredis",
     "github.com/andres-erbsen/clock",
     "github.com/apourchet/commander",
     "github.com/axw/gocov/gocov",
+    "github.com/client9/misspell/cmd/misspell",
     "github.com/docker/distribution/registry/client/auth",
     "github.com/docker/distribution/registry/client/auth/challenge",
     "github.com/docker/distribution/registry/client/transport",

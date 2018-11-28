@@ -47,7 +47,7 @@ type buildStage struct {
 
 	// forceCommit will make every step attampt to commit a layer.
 	// Commit() is noop for steps other than ADD/COPY/RUN if they are not after
-	// an uncommited RUN, so this won't generate extra empty layers.
+	// an uncommitted RUN, so this won't generate extra empty layers.
 	forceCommit bool
 }
 
