@@ -124,6 +124,12 @@ integration: env image
 integration-single: env image
 	PACKAGE_VERSION=$(PACKAGE_VERSION) ./env/bin/py.test test/python/test_build.py::$(TEST_NAME)
 
+
+lint: 
+	misspell -w --error -i hardlinked $(shell go list -f '{{.Dir}}' ./...)
+	gometalinter --vendor --disable vet -e 'warning' --fast ./...
+
+
 clean:
 	git clean -fd
 	-rm -rf vendor ext-tools mocks env
