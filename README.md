@@ -1,6 +1,8 @@
 # Makisu :sushi:
 
 [![Build Status](https://travis-ci.org/uber/makisu.svg?branch=master)](https://travis-ci.org/uber/makisu)
+[![GoReportCard](https://goreportcard.com/badge/github.com/uber/makisu)](https://goreportcard.com/report/github.com/uber/makisu)
+[![Github Release](https://img.shields.io/github/release/uber/makisu.svg)](https://github.com/uber/makisu/releases)
 
 Makisu is a fast and flexible Docker image build tool designed for containerized environments such as Mesos or Kubernetes.
 
