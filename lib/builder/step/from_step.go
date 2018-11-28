@@ -169,8 +169,11 @@ func (s *FromStep) Commit(ctx *context.BuildContext) ([]*image.DigestPair, error
 	return digestPairs, nil
 }
 
-// GenerateConfig generates a new image config base on config from previous step.
-func (s *FromStep) GenerateConfig(ctx *context.BuildContext, imageConfig *image.Config) (*image.Config, error) {
+// UpdateCtxAndConfig updates mutable states in build context, and generates a
+// new image config base on config from previous step.
+func (s *FromStep) UpdateCtxAndConfig(
+	ctx *context.BuildContext, imageConfig *image.Config) (*image.Config, error) {
+
 	if isScratch(s.image) {
 		config := image.NewDefaultImageConfig()
 		return &config, nil

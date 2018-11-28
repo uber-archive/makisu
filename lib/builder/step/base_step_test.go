@@ -39,7 +39,7 @@ func TestBaseStep(t *testing.T) {
 
 	c := image.NewDefaultImageConfig()
 	c.Config.WorkingDir = tmpDir
-	err = step.ApplyConfig(ctx, &c)
+	err = step.ApplyCtxAndConfig(ctx, &c)
 	require.NoError(err)
 	require.Equal(step.workingDir, tmpDir)
 	require.NoError(step.Execute(ctx, false))
@@ -60,6 +60,6 @@ func TestBaseStepNilConfig(t *testing.T) {
 
 	step := newBaseStep(Run, "", false)
 
-	_, err := step.GenerateConfig(ctx, nil)
+	_, err := step.UpdateCtxAndConfig(ctx, nil)
 	require.Error(err)
 }

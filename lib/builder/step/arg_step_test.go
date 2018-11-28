@@ -33,7 +33,7 @@ func TestArgStepUpdateCtx(t *testing.T) {
 	step := NewArgStep("", "key", &val, false)
 
 	c := image.NewDefaultImageConfig()
-	_, err := step.GenerateConfig(ctx, &c)
+	_, err := step.UpdateCtxAndConfig(ctx, &c)
 	require.NoError(err)
 	require.Equal(val, ctx.StageVars["key"])
 }
@@ -47,7 +47,7 @@ func TestArgStepNilResolvedVal(t *testing.T) {
 	step := NewArgStep("", "key", nil, false)
 
 	c := image.NewDefaultImageConfig()
-	_, err := step.GenerateConfig(ctx, &c)
+	_, err := step.UpdateCtxAndConfig(ctx, &c)
 	require.NoError(err)
 	_, ok := ctx.StageVars["key"]
 	require.False(ok)

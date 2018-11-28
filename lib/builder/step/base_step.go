@@ -33,9 +33,9 @@ type baseStep struct {
 	commit     bool
 }
 
-// newBaseStep returns a new baseStep. baseStep is not sufficient to implement BuildStep, but
-// should instead be imbeded in specific steps, as it implements many of the functions that
-// each BuildStep needs.
+// newBaseStep returns a new baseStep. baseStep is not sufficient to implement
+// BuildStep, but should instead be imbeded in specific steps, as it implements
+// many of the functions that each BuildStep needs.
 func newBaseStep(directive Directive, args string, commit bool) *baseStep {
 	return &baseStep{directive: directive, args: args, commit: commit}
 }
@@ -66,10 +66,10 @@ func (s *baseStep) SetCacheID(ctx *context.BuildContext, seed string) error {
 	return nil
 }
 
-// ApplyConfig sets up the execution environment using image config from
-// previous step.
+// ApplyCtxAndConfig sets up the execution environment from build context and
+// image config.
 // This function will not be skipped.
-func (s *baseStep) ApplyConfig(
+func (s *baseStep) ApplyCtxAndConfig(
 	ctx *context.BuildContext, imageConfig *image.Config) error {
 	s.workingDir = ctx.RootDir // Default workingDir to root.
 	if imageConfig == nil {
@@ -105,8 +105,8 @@ func (s *baseStep) ApplyConfig(
 	return nil
 }
 
-// Execute executes the step. If modifyFS is true, the command might change the local
-// file system.
+// Execute executes the step. If modifyFS is true, the command might change the
+// local file system.
 // Default implementation is noop.
 func (s *baseStep) Execute(ctx *context.BuildContext, modifyFS bool) error {
 	return nil
@@ -117,11 +117,15 @@ func (s *baseStep) Commit(ctx *context.BuildContext) ([]*image.DigestPair, error
 	return commitLayer(ctx)
 }
 
-// GenerateConfig generates a new image config base on config from previous step.
+// UpdateCtxAndConfig updates mutable states in build context, and generates a
+// new image config base on config from previous step.
 // Default implementation makes a copy of given image config.
-func (s *baseStep) GenerateConfig(ctx *context.BuildContext, imageConfig *image.Config) (*image.Config, error) {
+func (s *baseStep) UpdateCtxAndConfig(
+	ctx *context.BuildContext, imageConfig *image.Config) (*image.Config, error) {
+
 	return image.NewImageConfigFromCopy(imageConfig)
 }
 
-// HasCommit returns whether or not a particular commit step has a commit annotation.
+// HasCommit returns whether or not a particular commit step has a commit
+// annotation.
 func (s *baseStep) HasCommit() bool { return s.commit }

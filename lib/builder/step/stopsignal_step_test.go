@@ -23,7 +23,7 @@ import (
 	"github.com/uber/makisu/lib/docker/image"
 )
 
-func TestStopsignalStepGenerateConfig(t *testing.T) {
+func TestStopsignalStepUpdateCtxAndConfig(t *testing.T) {
 	require := require.New(t)
 
 	ctx, cleanup := context.BuildContextFixture()
@@ -33,7 +33,7 @@ func TestStopsignalStepGenerateConfig(t *testing.T) {
 	step := NewStopsignalStep("", signal, false)
 
 	c := image.NewDefaultImageConfig()
-	result, err := step.GenerateConfig(ctx, &c)
+	result, err := step.UpdateCtxAndConfig(ctx, &c)
 	require.NoError(err)
 
 	require.Equal(strconv.Itoa(signal), result.Config.StopSignal)

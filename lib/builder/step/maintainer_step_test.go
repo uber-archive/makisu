@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMaintainerStepGenerateConfig(t *testing.T) {
+func TestMaintainerStepUpdateCtxAndConfig(t *testing.T) {
 	require := require.New(t)
 
 	ctx, cleanup := context.BuildContextFixture()
@@ -33,7 +33,7 @@ func TestMaintainerStepGenerateConfig(t *testing.T) {
 	step := NewMaintainerStep("", author, false)
 
 	c := image.NewDefaultImageConfig()
-	result, err := step.GenerateConfig(ctx, &c)
+	result, err := step.UpdateCtxAndConfig(ctx, &c)
 	require.NoError(err)
 
 	require.Equal(author, result.Author)
@@ -47,6 +47,6 @@ func TestMaintainerStepEmptyConfig(t *testing.T) {
 
 	step := NewMaintainerStep("", "", false)
 
-	_, err := step.GenerateConfig(ctx, nil)
+	_, err := step.UpdateCtxAndConfig(ctx, nil)
 	require.Error(err)
 }
