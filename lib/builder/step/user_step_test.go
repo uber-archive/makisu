@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUserStepGenerateConfig(t *testing.T) {
+func TestUserStepUpdateCtxAndConfig(t *testing.T) {
 	require := require.New(t)
 
 	ctx, cleanup := context.BuildContextFixture()
@@ -33,7 +33,7 @@ func TestUserStepGenerateConfig(t *testing.T) {
 	step := NewUserStep("", user, false)
 
 	c := image.NewDefaultImageConfig()
-	result, err := step.GenerateConfig(ctx, &c)
+	result, err := step.UpdateCtxAndConfig(ctx, &c)
 	require.NoError(err)
 	require.Equal(result.Config.User, user)
 }
@@ -46,6 +46,6 @@ func TestUserStepNilConfig(t *testing.T) {
 
 	step := NewUserStep("", "", false)
 
-	_, err := step.GenerateConfig(ctx, nil)
+	_, err := step.UpdateCtxAndConfig(ctx, nil)
 	require.Error(err)
 }

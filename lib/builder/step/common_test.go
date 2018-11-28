@@ -138,7 +138,7 @@ func TestCommitDiffs(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		require.NoError(test.runStep.ApplyConfig(ctx, nil))
+		require.NoError(test.runStep.ApplyCtxAndConfig(ctx, nil))
 		require.NoError(test.runStep.Execute(ctx, true))
 		digestPairs, err := test.runStep.Commit(ctx)
 		require.NoError(err)

@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCmdStepGenerateConfig(t *testing.T) {
+func TestCmdStepUpdateCtxAndConfig(t *testing.T) {
 	require := require.New(t)
 
 	ctx, cleanup := context.BuildContextFixture()
@@ -33,7 +33,7 @@ func TestCmdStepGenerateConfig(t *testing.T) {
 	step := NewCmdStep("", cmd, false)
 
 	c := image.NewDefaultImageConfig()
-	result, err := step.GenerateConfig(ctx, &c)
+	result, err := step.UpdateCtxAndConfig(ctx, &c)
 	require.NoError(err)
 	require.Equal(result.Config.Cmd, cmd)
 }
@@ -46,6 +46,6 @@ func TestCmdStepNilConfig(t *testing.T) {
 
 	step := NewCmdStep("", nil, false)
 
-	_, err := step.GenerateConfig(ctx, nil)
+	_, err := step.UpdateCtxAndConfig(ctx, nil)
 	require.Error(err)
 }

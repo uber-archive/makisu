@@ -22,9 +22,9 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/uber/makisu/lib/archive"
 	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/log"
+	"github.com/uber/makisu/lib/snapshot"
 	"github.com/uber/makisu/lib/storage"
 	"github.com/uber/makisu/lib/stream"
 )
@@ -58,7 +58,7 @@ func (tarer DefaultImageTarer) CreateTarReadCloser(imageName image.Name) (io.Rea
 
 	// Create target tar file
 	targetPath := dir + ".tar"
-	if err := archive.CreateTarFromDirectory(targetPath, dir); err != nil {
+	if err := snapshot.CreateTarFromDirectory(targetPath, dir); err != nil {
 		os.RemoveAll(dir)
 		return nil, err
 	}
@@ -85,7 +85,7 @@ func (tarer DefaultImageTarer) CreateTarReader(imageName image.Name) (io.Reader,
 
 	// Create target tar file.
 	targetPath := dir + ".tar"
-	if err := archive.CreateTarFromDirectory(targetPath, dir); err != nil {
+	if err := snapshot.CreateTarFromDirectory(targetPath, dir); err != nil {
 		os.RemoveAll(dir)
 		return nil, err
 	}

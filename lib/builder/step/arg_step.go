@@ -36,8 +36,11 @@ func NewArgStep(args string, name string, resolvedVal *string, commit bool) Buil
 	}
 }
 
-// GenerateConfig generates a new image config base on config from previous step.
-func (s *ArgStep) GenerateConfig(ctx *context.BuildContext, imageConfig *image.Config) (*image.Config, error) {
+// UpdateCtxAndConfig updates mutable states in build context, and generates a
+// new image config base on config from previous step.
+func (s *ArgStep) UpdateCtxAndConfig(
+	ctx *context.BuildContext, imageConfig *image.Config) (*image.Config, error) {
+
 	// Update in-memory map of merged stage vars from ARG and ENV.
 	if s.resolvedVal != nil {
 		ctx.StageVars[s.name] = *s.resolvedVal

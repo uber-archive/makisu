@@ -22,7 +22,10 @@ type CopyStep struct {
 }
 
 // NewCopyStep creates a new CopyStep.
-func NewCopyStep(args, chown, fromStage string, fromPaths []string, toPath string, commit bool) (*CopyStep, error) {
+func NewCopyStep(
+	args, chown, fromStage string, fromPaths []string, toPath string, commit bool,
+) (*CopyStep, error) {
+
 	s, err := newAddCopyStep(Copy, args, chown, fromStage, fromPaths, toPath, commit)
 	if err != nil {
 		return nil, fmt.Errorf("new add/copy step: %s", err)

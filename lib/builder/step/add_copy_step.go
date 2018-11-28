@@ -24,9 +24,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/uber/makisu/lib/archive"
 	"github.com/uber/makisu/lib/context"
 	"github.com/uber/makisu/lib/pathutils"
+	"github.com/uber/makisu/lib/snapshot"
 	"github.com/uber/makisu/lib/utils"
 )
 
@@ -128,7 +128,7 @@ func (s *addCopyStep) Execute(ctx *context.BuildContext, modifyFS bool) (err err
 
 	internal := s.fromStage != ""
 	blacklist := append(pathutils.DefaultBlacklist, ctx.ImageStore.RootDir)
-	copyOp, err := archive.NewCopyOperation(
+	copyOp, err := snapshot.NewCopyOperation(
 		relPaths, sourceRoot, s.workingDir, s.toPath, s.chown, blacklist, internal)
 	if err != nil {
 		return fmt.Errorf("invalid copy operation: %s", err)

@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestEntrypointStepGenerateConfig(t *testing.T) {
+func TestEntrypointStepUpdateCtxAndConfig(t *testing.T) {
 	require := require.New(t)
 
 	ctx, cleanup := context.BuildContextFixture()
@@ -33,7 +33,7 @@ func TestEntrypointStepGenerateConfig(t *testing.T) {
 	step := NewEntrypointStep("", entrypoint, false)
 
 	c := image.NewDefaultImageConfig()
-	result, err := step.GenerateConfig(ctx, &c)
+	result, err := step.UpdateCtxAndConfig(ctx, &c)
 	require.NoError(err)
 	require.Equal(result.Config.Entrypoint, entrypoint)
 }
@@ -46,6 +46,6 @@ func TestEntrypointStepNilConfig(t *testing.T) {
 
 	step := NewEntrypointStep("", nil, false)
 
-	_, err := step.GenerateConfig(ctx, nil)
+	_, err := step.UpdateCtxAndConfig(ctx, nil)
 	require.Error(err)
 }

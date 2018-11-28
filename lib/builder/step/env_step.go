@@ -38,8 +38,11 @@ func NewEnvStep(args string, envs map[string]string, commit bool) BuildStep {
 	}
 }
 
-// GenerateConfig generates a new image config base on config from previous step.
-func (s *EnvStep) GenerateConfig(ctx *context.BuildContext, imageConfig *image.Config) (*image.Config, error) {
+// UpdateCtxAndConfig updates mutable states in build context, and generates a
+// new image config base on config from previous step.
+func (s *EnvStep) UpdateCtxAndConfig(
+	ctx *context.BuildContext, imageConfig *image.Config) (*image.Config, error) {
+
 	// Update in-memory map of merged stage vars from ARG and ENV.
 	for k, v := range s.envs {
 		ctx.StageVars[k] = v
