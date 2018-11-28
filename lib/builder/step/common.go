@@ -23,9 +23,9 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/uber/makisu/lib/archive"
 	"github.com/uber/makisu/lib/context"
 	"github.com/uber/makisu/lib/docker/image"
+	"github.com/uber/makisu/lib/snapshot"
 	"github.com/uber/makisu/lib/stream"
 	"github.com/uber/makisu/lib/tario"
 )
@@ -100,7 +100,7 @@ func commitLayer(ctx *context.BuildContext) ([]*image.DigestPair, error) {
 		Digest:    image.Digest("sha256:" + gzipTarSHA256),
 	}
 	ctx.MustScan = false
-	ctx.CopyOps = make([]*archive.CopyOperation, 0)
+	ctx.CopyOps = make([]*snapshot.CopyOperation, 0)
 	return []*image.DigestPair{
 		{
 			TarDigest:      layerTarDigest,

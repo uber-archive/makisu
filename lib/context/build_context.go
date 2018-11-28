@@ -20,8 +20,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/uber/makisu/lib/archive"
 	"github.com/uber/makisu/lib/pathutils"
+	"github.com/uber/makisu/lib/snapshot"
 	"github.com/uber/makisu/lib/storage"
 
 	"github.com/andres-erbsen/clock"
@@ -44,10 +44,10 @@ type BuildContext struct {
 	StageVars map[string]string
 
 	// MemFS and ImageStore can be shared accross all copies of the BuildContext.
-	MemFS      *archive.MemFS     // Merged view of base layers. Layers should be merged in order.
+	MemFS      *snapshot.MemFS    // Merged view of base layers. Layers should be merged in order.
 	ImageStore storage.ImageStore // Stores image layers and manifests.
 
-	CopyOps   []*archive.CopyOperation
+	CopyOps   []*snapshot.CopyOperation
 	MustScan  bool
 	stagesDir string // Contains dirs with files needed for 'copy --from' operations.
 }
@@ -62,7 +62,7 @@ func NewBuildContext(
 	}
 
 	blacklist := append(pathutils.DefaultBlacklist, contextDir, imageStore.RootDir)
-	memFS, err := archive.NewMemFS(clock.New(), rootDir, blacklist)
+	memFS, err := snapshot.NewMemFS(clock.New(), rootDir, blacklist)
 	if err != nil {
 		return nil, fmt.Errorf("init memfs: %s", err)
 	}
@@ -73,7 +73,7 @@ func NewBuildContext(
 		StageVars:  make(map[string]string, 0),
 		MemFS:      memFS,
 		ImageStore: imageStore,
-		CopyOps:    make([]*archive.CopyOperation, 0),
+		CopyOps:    make([]*snapshot.CopyOperation, 0),
 		MustScan:   false,
 		stagesDir:  stagesDir,
 	}, nil
