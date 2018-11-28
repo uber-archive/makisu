@@ -111,11 +111,7 @@ func (s *fsStore) Put(key, value string) error {
 	if err := ioutil.WriteFile(tempFile.Name(), content, 0755); err != nil {
 		return err
 	}
-	if err := os.Rename(tempFile.Name(), s.fullpath); err != nil {
-		return err
-	}
-
-	return nil
+	return os.Rename(tempFile.Name(), s.fullpath)
 }
 
 func (s *fsStore) Cleanup() error {
