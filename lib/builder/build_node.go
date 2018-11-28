@@ -105,13 +105,13 @@ func (n *buildNode) doCommit(cacheMgr cache.Manager, opts *buildOptions) error {
 		return fmt.Errorf("commit: %s", err)
 	}
 
-	// If the number of digestPairs is 0 or greater than 1 then we cannot push
+	// If the number of digestPairs is greater than 1 then we cannot push
 	// the resulting layer mappings to the distributed cache.
-	if len(n.digestPairs) != 1 {
+	if len(n.digestPairs) > 1 {
 		return nil
 	}
 
-	if err := n.pushCacheLayers(cacheMgr); err != nil {
+	if err := n.pushCacheLayer(cacheMgr); err != nil {
 		return fmt.Errorf("push cache: %s", err)
 	}
 	return nil
@@ -147,20 +147,28 @@ func (n *buildNode) applyLayer(digestPair *image.DigestPair, modifyfs bool) erro
 }
 
 // pushCacheLayers pushs cached layers for this node's digest pair(s).
-func (n *buildNode) pushCacheLayers(cacheMgr cache.Manager) error {
-	digestPair := n.digestPairs[0]
-	log.Infof("* Committed gzipped layer %s (%d bytes)",
-		digestPair.GzipDescriptor.Digest, digestPair.GzipDescriptor.Size)
+func (n *buildNode) pushCacheLayer(cacheMgr cache.Manager) error {
+	var digestPair *image.DigestPair
+	if len(n.digestPairs) != 0 {
+		digestPair = n.digestPairs[0]
+	}
+
+	if digestPair != nil {
+		log.Infof("* Committed gzipped layer %s (%d bytes)",
+			digestPair.GzipDescriptor.Digest, digestPair.GzipDescriptor.Size)
+	}
 	log.Infof("* Pushing with cache ID %s", n.CacheID())
 	return cacheMgr.PushCache(n.CacheID(), digestPair)
 }
 
-// pullCacheLayers pulls cached layers for this node's digest pair(s).
-func (n *buildNode) pullCacheLayers(cacheMgr cache.Manager) bool {
+// pullCacheLayer pulls cached layers for this node's digest pair(s).
+func (n *buildNode) pullCacheLayer(cacheMgr cache.Manager) bool {
 	digestPair, err := cacheMgr.PullCache(n.CacheID())
 	if err != nil {
 		log.Errorf("Failed to fetch intermediate layer with cache ID %s: %s", n.CacheID(), err)
 		return false
+	} else if digestPair == nil {
+		return true
 	}
 	n.digestPairs = []*image.DigestPair{digestPair}
 	return true

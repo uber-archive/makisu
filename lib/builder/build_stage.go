@@ -245,8 +245,8 @@ func (stage *buildStage) pullCacheLayers(cacheMgr cache.Manager) {
 	// it gets executed.
 	for _, node := range stage.nodes[1:] {
 		// Stop once the cache chain is broken.
-		if node.HasCommit() {
-			if !node.pullCacheLayers(cacheMgr) {
+		if node.HasCommit() || stage.forceCommit {
+			if !node.pullCacheLayer(cacheMgr) {
 				return
 			}
 		}

@@ -108,6 +108,24 @@ def test_build_go_from_scratch(registry1, storage_dir):
     assert code == 0, err
 
 
+def test_build_commit_empty_pair(registry1, storage_dir, cache_dir, tmpdir):
+    utils.registry_ensure_image('debian:8', registry1.addr)
+    new_image1 = new_image_name()
+    new_image2 = new_image_name()
+    context_dir = os.path.join(os.getcwd(), 'testdata/build-context/commit-empty-pair')
+    test_file = tmpdir.mkdir("d1").join("f1")
+    test_file.write("hello")
+
+    # First build, mount in test file.
+    additional_volumes = {test_file: '/mnt/f1'}
+    utils.makisu_build_image(new_image1, registry1.addr, context_dir, storage_dir, cache_dir, additional_volumes)
+
+    # Second build, without test file. It would fail if distributed cache doesn't work.
+    utils.makisu_build_image(new_image2, registry1.addr, context_dir, storage_dir, cache_dir)
+    code, err = utils.docker_run_image(registry1.addr, new_image2)
+    assert code == 0, err
+
+
 def test_build_with_cache(registry1, storage_dir, cache_dir):
     utils.registry_ensure_image('debian:8', registry1.addr)
     new_image1 = new_image_name()
