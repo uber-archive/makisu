@@ -108,7 +108,7 @@ func (app *BuildApplication) PostFlagParse() error {
 	}
 
 	if err := app.BuildFlags.postInit(); err != nil {
-		return fmt.Errorf("Process flags: %v", err)
+		return fmt.Errorf("process flags: %v", err)
 	}
 	return nil
 }
