@@ -165,11 +165,11 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 	for alias, stage := range plan.remoteImageStages {
 		// Building that pseudo stage will unpack the image directly into the
 		// stage's cross stage directory.
-		_, err := image.ParseNameForPull(alias)
+		name, err := image.ParseNameForPull(alias)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse cross stage reference name %s: %s", alias, err)
 		}
-		log.Infof("Pulling image %s for cross stage reference", alias)
+		log.Infof("Pulling image %s for cross stage reference", name)
 
 		if err := plan.executeStage(stage, false, true); err != nil {
 			return nil, fmt.Errorf("execute cross referenced stage: %s", err)
@@ -217,13 +217,16 @@ func (plan *BuildPlan) executeStage(stage *buildStage, lastStage, copiedFrom boo
 		return fmt.Errorf("build stage %s: %s", stage.alias, err)
 	}
 
-	if plan.allowModifyFS {
-		if err := stage.checkpoint(plan.copyFromDirs[stage.alias]); err != nil {
-			return fmt.Errorf("checkpoint stage %s: %s", stage.alias, err)
-		}
-		if err := stage.cleanup(); err != nil {
-			return fmt.Errorf("cleanup stage %s: %s", stage.alias, err)
-		}
+	if !plan.allowModifyFS {
+		return nil
 	}
+
+	if err := stage.checkpoint(plan.copyFromDirs[stage.alias]); err != nil {
+		return fmt.Errorf("checkpoint stage %s: %s", stage.alias, err)
+	}
+	if err := stage.cleanup(); err != nil {
+		return fmt.Errorf("cleanup stage %s: %s", stage.alias, err)
+	}
+
 	return nil
 }
