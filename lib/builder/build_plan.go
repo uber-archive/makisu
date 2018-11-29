@@ -189,18 +189,8 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 			return nil, fmt.Errorf("build stage: %s", err)
 		}
 
-		if plan.allowModifyFS {
-			if k < len(plan.stages)-1 {
-				// Save context directories needed for cross-stage copy operations.
-				copyFromDirs := plan.copyFromDirs[currStage.alias]
-				if err := currStage.checkpoint(copyFromDirs); err != nil {
-					return nil, fmt.Errorf("checkpoint memfs: %s", err)
-				}
-			}
-
-			if err := currStage.cleanup(); err != nil {
-				return nil, fmt.Errorf("remove memfs: %s", err)
-			}
+		if err := plan.postStageBuild(currStage, k); err != nil {
+			return nil, fmt.Errorf("post stage build: %v", err)
 		}
 	}
 
@@ -225,4 +215,24 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 	log.Infow(fmt.Sprintf("Computed total image size %d", size), "total_image_size", size)
 
 	return manifest, nil
+}
+
+func (plan *BuildPlan) postStageBuild(stage *buildStage, index int) error {
+	if !plan.allowModifyFS {
+		// Nothing to do if the FS cannot be modified.
+		return nil
+	}
+
+	if index < len(plan.stages)-1 {
+		// Save context directories needed for cross-stage copy operations.
+		copyFromDirs := plan.copyFromDirs[stage.alias]
+		if err := stage.checkpoint(copyFromDirs); err != nil {
+			return fmt.Errorf("checkpoint memfs: %s", err)
+		}
+	}
+
+	if err := stage.cleanup(); err != nil {
+		return fmt.Errorf("stage cleanup: %s", err)
+	}
+	return nil
 }
