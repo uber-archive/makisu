@@ -19,8 +19,8 @@ import (
 	"fmt"
 )
 
-// replaceVariables replaces all variables in the input string with their
-// values as defined in the provided map.
+// replaceVariables replaces all variables in the input string with their values
+// as defined in the provided map.
 func replaceVariables(input string, vars map[string]string) (string, error) {
 	var err error
 	var state replaceVarsState = &replaceVarsStateNone{
@@ -59,9 +59,9 @@ func (b *replaceVarsBase) reset() {
 	b.currDefaultVal = ""
 }
 
-// resolveCurrVar attempts to resolve the current variable using the vars map and
-// the default value if it has been set. Returns true if the variable was resolved
-// b.vars, else false.
+// resolveCurrVar attempts to resolve the current variable using the vars map
+// and the default value if it has been set. Returns true if the variable was
+// resolved b.vars, else false.
 func (b *replaceVarsBase) resolveCurrVar() (string, bool, error) {
 	val, ok := b.vars[b.currVar]
 	if b.currDefaultCmd == '-' {
@@ -88,8 +88,8 @@ func (b *replaceVarsBase) resolveCurrVar() (string, bool, error) {
 	return val, true, nil
 }
 
-// replaceVarsStateNone is the starting state for the state machine. It should be entered
-// any time a variable has finished being replaced.
+// replaceVarsStateNone is the starting state for the state machine.
+// It should be entered any time a variable has finished being replaced.
 type replaceVarsStateNone struct{ *replaceVarsBase }
 
 // nextRune appends all characters that it encounters to the result string until
@@ -138,8 +138,8 @@ func (s *replaceVarsStateDollar) endOfInput() (string, error) {
 // the form '$<var>'
 type replaceVarsStateVar struct{ *replaceVarsBase }
 
-// resolveCurrVar attempts to resolve the current variable. If it fails, it returns
-// the variable itself, including $ and {} where applicable.
+// resolveCurrVar attempts to resolve the current variable. If it fails, it
+// returns the variable itself, including $ and {} where applicable.
 func (s *replaceVarsStateVar) resolveCurrVar(recursing bool) (string, error) {
 	val, ok, err := s.replaceVarsBase.resolveCurrVar()
 	if err != nil {
@@ -178,10 +178,10 @@ func (s *replaceVarsStateVar) nextRune(r rune) (replaceVarsState, error) {
 			s.reset()
 			return &replaceVarsStateNone{s.replaceVarsBase}, nil
 
-			// We are recursing and have encountered a close bracket. If this
-			// is the end of the recursion, we need to resolve the calling variable
-			// too, as we cannot transition back to the bracket state after having
-			// already consumed the close bracket.
+			// We are recursing and have encountered a close bracket. If this is the
+			// end of the recursion, we need to resolve the calling variable too, as
+			// we cannot transition back to the bracket state after having already
+			// consumed the close bracket.
 		} else if r == '}' {
 			s.currVar = s.varsInProgress[len(s.varsInProgress)-1] + val
 			s.varsInProgress = s.varsInProgress[0 : len(s.varsInProgress)-1]
@@ -198,9 +198,9 @@ func (s *replaceVarsStateVar) nextRune(r rune) (replaceVarsState, error) {
 			s.reset()
 			return &replaceVarsStateNone{s.replaceVarsBase}, nil
 
-			// We are recursing and have encountered a colon. This must be the
-			// end of the recursion, so if there are still varsInProgress, throw
-			// an error. Else, resolve the variable end enter replaceVarsStateVarColon.
+			// We are recursing and have encountered a colon. This must be the end of
+			// the recursion, so if there are still varsInProgress, throw an error.
+			// Else, resolve the variable end enter replaceVarsStateVarColon.
 		} else if r == ':' {
 			if len(s.varsInProgress) != 1 {
 				return nil, errors.New("TODO")
@@ -213,9 +213,9 @@ func (s *replaceVarsStateVar) nextRune(r rune) (replaceVarsState, error) {
 			s.varsInProgress = s.varsInProgress[0 : len(s.varsInProgress)-1]
 			return &replaceVarsStateVarColon{s.replaceVarsBase}, nil
 
-			// We are recursing and have encountered another non-variable character.
-			// In this case, we return to the bracket state and continue processing.
 		}
+		// We are recursing and have encountered another non-variable character.
+		// In this case, we return to the bracket state and continue processing.
 		s.currVar = s.varsInProgress[len(s.varsInProgress)-1] + val
 		s.varsInProgress = s.varsInProgress[0 : len(s.varsInProgress)-1]
 		return &replaceVarsStateVarBracket{s.replaceVarsBase}, nil
