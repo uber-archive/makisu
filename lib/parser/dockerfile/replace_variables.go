@@ -215,11 +215,10 @@ func (s *replaceVarsStateVar) nextRune(r rune) (replaceVarsState, error) {
 
 			// We are recursing and have encountered another non-variable character.
 			// In this case, we return to the bracket state and continue processing.
-		} else {
-			s.currVar = s.varsInProgress[len(s.varsInProgress)-1] + val
-			s.varsInProgress = s.varsInProgress[0 : len(s.varsInProgress)-1]
-			return &replaceVarsStateVarBracket{s.replaceVarsBase}, nil
 		}
+		s.currVar = s.varsInProgress[len(s.varsInProgress)-1] + val
+		s.varsInProgress = s.varsInProgress[0 : len(s.varsInProgress)-1]
+		return &replaceVarsStateVarBracket{s.replaceVarsBase}, nil
 	}
 	s.currVar += string(r)
 	return s, nil

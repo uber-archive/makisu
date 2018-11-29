@@ -32,6 +32,7 @@ func TestUntarFromPath(t *testing.T) {
 	require := require.New(t)
 
 	tmpBase, err := ioutil.TempDir("/tmp", "makisu-test")
+	require.NoError(err)
 	defer os.RemoveAll(tmpBase)
 
 	tmpRoot, err := ioutil.TempDir(tmpBase, "root")
@@ -597,6 +598,7 @@ func TestCreateLayerByScan(t *testing.T) {
 		dst23 := "/test1/test2/test3"
 		require.NoError(addDirectoryToLayer(l2, tmpRoot, dst23, 0755))
 		l, err = fs.createLayerByScan()
+		require.NoError(err)
 		requireEqualLayers(require, l2, l)
 	})
 
@@ -1065,6 +1067,7 @@ func TestAddLayerByScanWhiteout(t *testing.T) {
 	require.NoError(err)
 	w1 := tar.NewWriter(tarFile1)
 	err = fs.AddLayerByScan(w1)
+	require.NoError(err)
 	require.Equal(6, fs.layers[len(fs.layers)-1].count())
 	w1.Close()
 	tarFile1.Close()
@@ -1168,6 +1171,7 @@ func TestAddLayersEqual(t *testing.T) {
 	require.NoError(err)
 	w2 := tar.NewWriter(tarFile2)
 	err = fs2.AddLayerByScan(w2)
+	require.NoError(err)
 	w2.Close()
 
 	// Commit layer created using fixtures.

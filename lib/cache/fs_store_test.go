@@ -30,6 +30,7 @@ func TestFSStore(t *testing.T) {
 		require.NoError(err)
 		defer os.RemoveAll(tempDir)
 		tempFile, err := ioutil.TempFile(tempDir, "cache")
+		require.NoError(err)
 
 		store, err := NewFSStore(tempFile.Name(), tempDir, 60)
 		require.NoError(err)
@@ -47,6 +48,7 @@ func TestFSStore(t *testing.T) {
 		require.NoError(err)
 		defer os.RemoveAll(tempDir)
 		tempFile, err := ioutil.TempFile(tempDir, "cache")
+		require.NoError(err)
 
 		store, err := NewFSStore(tempFile.Name(), tempDir, 60)
 		require.NoError(err)
