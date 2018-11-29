@@ -171,7 +171,6 @@ func (fs *MemFS) UpdateFromTarReader(r *tar.Reader, untar bool) error {
 		} else if err != nil {
 			return fmt.Errorf("read header: %s", err)
 		}
-		count++
 
 		if skip, err := fs.shouldSkipHeader(hdr); err != nil {
 			return fmt.Errorf("should skip header: %s", err)
@@ -193,6 +192,7 @@ func (fs *MemFS) UpdateFromTarReader(r *tar.Reader, untar bool) error {
 		if err := fs.maybeAddToLayer(l, "", pathutils.AbsPath(hdr.Name), hdr, false); err != nil {
 			return fmt.Errorf("add hdr from tar to layer: %s", err)
 		}
+		count++
 	}
 
 	// Run through all the hard links and create them.
