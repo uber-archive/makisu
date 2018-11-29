@@ -25,7 +25,7 @@ type EntrypointDirective struct {
 // Formats:
 //   ENTRYPOINT ["<executable>", "<param>"...]
 //   ENTRYPOINT <command>
-func newEntrypointDirective(base *baseDirective, state *parsingState) (*EntrypointDirective, error) {
+func newEntrypointDirective(base *baseDirective, state *parsingState) (Directive, error) {
 	if err := base.replaceVarsCurrStage(state); err != nil {
 		return nil, err
 	}

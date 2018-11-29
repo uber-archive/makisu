@@ -27,7 +27,7 @@ type StopsignalDirective struct {
 
 // Formats:
 //   STOPSIGNAL <value> ...
-func newStopsignalDirective(base *baseDirective, state *parsingState) (*StopsignalDirective, error) {
+func newStopsignalDirective(base *baseDirective, state *parsingState) (Directive, error) {
 	signal, err := strconv.Atoi(base.Args)
 	if err != nil {
 		return nil, fmt.Errorf("signal must be integer: %v", err)

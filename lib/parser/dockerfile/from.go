@@ -32,7 +32,7 @@ type FromDirective struct {
 //   Only replaced using globally defined ARGs (those defined before the first FROM directive.
 // Formats:
 //   FROM <image> [AS <name>]
-func newFromDirective(base *baseDirective, state *parsingState) (*FromDirective, error) {
+func newFromDirective(base *baseDirective, state *parsingState) (Directive, error) {
 	if err := base.replaceVarsGlobal(state); err != nil {
 		return nil, err
 	}

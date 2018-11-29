@@ -29,7 +29,7 @@ type CopyDirective struct {
 // Formats:
 //   COPY [--from=<name|index>] [--chown=<user>:<group>] ["<src>",... "<dest>"]
 //   COPY [--from=<name|index>] [--chown=<user>:<group>] <src>... <dest>
-func newCopyDirective(base *baseDirective, state *parsingState) (*CopyDirective, error) {
+func newCopyDirective(base *baseDirective, state *parsingState) (Directive, error) {
 	if err := base.replaceVarsCurrStage(state); err != nil {
 		return nil, err
 	}

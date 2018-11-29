@@ -32,7 +32,7 @@ type EnvDirective struct {
 // Formats:
 //   ENV <key> <value>
 //   ENV <key>=<value> ...
-func newEnvDirective(base *baseDirective, state *parsingState) (*EnvDirective, error) {
+func newEnvDirective(base *baseDirective, state *parsingState) (Directive, error) {
 	if err := base.replaceVarsCurrStage(state); err != nil {
 		return nil, err
 	}
