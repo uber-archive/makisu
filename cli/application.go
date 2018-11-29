@@ -97,18 +97,18 @@ func (app *BuildApplication) PostFlagParse() error {
 
 	logger, err := app.getLogger()
 	if err != nil {
-		return fmt.Errorf("build logger: %v", err)
+		return fmt.Errorf("build logger: %s", err)
 	}
 	log.SetLogger(logger.Sugar())
 
 	if app.Profile {
 		if err := app.setupProfiler(); err != nil {
-			return fmt.Errorf("setup profiler: %v", err)
+			return fmt.Errorf("setup profiler: %s", err)
 		}
 	}
 
 	if err := app.BuildFlags.postInit(); err != nil {
-		return fmt.Errorf("process flags: %v", err)
+		return fmt.Errorf("process flags: %s", err)
 	}
 	return nil
 }
