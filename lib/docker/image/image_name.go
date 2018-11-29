@@ -46,6 +46,12 @@ func NewImageName(registry, repo, tag string) Name {
 	return MustParseName(rawName)
 }
 
+// WithRegistry makes a copy of the image name and sets the registry.
+func (name Name) WithRegistry(registry string) Name {
+	name.registry = registry
+	return name
+}
+
 // GetRepository returns image repository
 func (name Name) GetRepository() string {
 	if name.repository == Scratch {
