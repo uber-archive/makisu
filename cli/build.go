@@ -160,6 +160,9 @@ func (cmd BuildFlags) initRegistryGlobals() error {
 	return nil
 }
 
+// forceCommit will make every step attempt to commit a layer.
+// Commit() is noop for steps other than ADD/COPY/RUN if they are not
+// after an uncommitted RUN, so this won't generate extra empty layers.
 func (cmd BuildFlags) forceCommit() bool {
 	return cmd.Commit == "implicit"
 }
