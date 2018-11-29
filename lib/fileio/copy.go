@@ -115,21 +115,7 @@ func (c copier) copyFile(src, dst string) error {
 	// Handle symlinks.
 	// They should not be chown'ed, as chown will change the target's uid/gid.
 	if fi.Mode()&os.ModeSymlink != 0 {
-		// Remove existing file if path exists.
-		if _, err := os.Lstat(dst); err == nil {
-			if err := os.Remove(dst); err != nil {
-				return fmt.Errorf("remove existing file %s: %s", dst, err)
-			}
-		}
-		// Set symlink target to the original link target.
-		linkTarget, err := os.Readlink(src)
-		if err != nil {
-			return fmt.Errorf("read link %s: %s", src, err)
-		}
-		if err := os.Symlink(linkTarget, dst); err != nil {
-			return fmt.Errorf("write link %s with content %s: %s", dst, linkTarget, err)
-		}
-		return nil
+		return c.copySymlink(src, dst)
 	}
 
 	// If the file already exists, then we will overwrite that file.
@@ -142,7 +128,11 @@ func (c copier) copyFile(src, dst string) error {
 	}
 
 	// Handle regular files.
-	// Open both files, creating dst if need be.
+	return c.copyRegularFile(fi, src, dst)
+}
+
+// Open both files, creating dst if need be.
+func (c copier) copyRegularFile(fi os.FileInfo, src, dst string) error {
 	r, err := os.Open(src)
 	if err != nil {
 		return fmt.Errorf("open %s: %s", dst, err)
@@ -171,6 +161,24 @@ func (c copier) copyFile(src, dst string) error {
 	}
 	if err := os.Chmod(dst, fi.Mode()); err != nil {
 		return fmt.Errorf("chmod %s: %s", dst, err)
+	}
+	return nil
+}
+
+func (c copier) copySymlink(src, dst string) error {
+	// Remove existing file if path exists.
+	if _, err := os.Lstat(dst); err == nil {
+		if err := os.Remove(dst); err != nil {
+			return fmt.Errorf("remove existing file %s: %s", dst, err)
+		}
+	}
+	// Set symlink target to the original link target.
+	linkTarget, err := os.Readlink(src)
+	if err != nil {
+		return fmt.Errorf("read link %s: %s", src, err)
+	}
+	if err := os.Symlink(linkTarget, dst); err != nil {
+		return fmt.Errorf("write link %s with content %s: %s", dst, linkTarget, err)
 	}
 	return nil
 }
