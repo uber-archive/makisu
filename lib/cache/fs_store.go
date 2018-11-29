@@ -16,6 +16,7 @@ package cache
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"sync"
@@ -52,11 +53,11 @@ func NewFSStore(fullpath string, sandboxDir string, ttlsec int64) (KVStore, erro
 	if os.IsNotExist(err) {
 		return s, nil
 	} else if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read cache id file: %s", err)
 	}
 	if err := json.Unmarshal(contents, &s.entries); err != nil {
 		if err := os.Remove(fullpath); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("remove cache id file: %s", err)
 		}
 		return s, nil
 	}
@@ -99,20 +100,20 @@ func (s *fsStore) Put(key, value string) error {
 
 	content, err := json.Marshal(s.entries)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal cache id file: %s", err)
 	}
 
 	tempFile, err := ioutil.TempFile(s.sandboxDir, "cache")
 	if err != nil {
-		return err
+		return fmt.Errorf("create temp cache id file: %s", err)
 	}
 	defer os.Remove(tempFile.Name())
 
 	if err := ioutil.WriteFile(tempFile.Name(), content, 0755); err != nil {
-		return err
+		return fmt.Errorf("write to temp cache id file: %s", err)
 	}
 	if err := os.Rename(tempFile.Name(), s.fullpath); err != nil {
-		return err
+		return fmt.Errorf("rename cache id file: %s", err)
 	}
 
 	return nil
@@ -124,5 +125,9 @@ func (s *fsStore) Cleanup() error {
 
 	s.entries = make(map[string]*cacheEntry)
 
-	return os.Remove(s.fullpath)
+	if err := os.Remove(s.fullpath); err != nil {
+		return fmt.Errorf("remove cache id file: %s", err)
+	}
+
+	return nil
 }

@@ -201,7 +201,7 @@ func findNode(fs *MemFS, p string, followSymlink bool, depth int) (*memFSNode, e
 }
 
 func writeTarHelper(m *memFile, srcRoot string, w *tar.Writer) error {
-	if err := filepath.Walk(srcRoot, func(p string, fi os.FileInfo, err error) error {
+	return filepath.Walk(srcRoot, func(p string, fi os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -213,14 +213,8 @@ func writeTarHelper(m *memFile, srcRoot string, w *tar.Writer) error {
 			return err
 		}
 
-		if err := tario.WriteEntry(w, p, h); err != nil {
-			return err
-		}
-		return nil
-	}); err != nil {
-		return err
-	}
-	return nil
+		return tario.WriteEntry(w, p, h)
+	})
 }
 
 func readTarHelper(r *tar.Reader) (map[string]*tar.Header, error) {
