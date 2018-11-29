@@ -60,8 +60,10 @@ $(DEP_TOOL):
 	go get github.com/golang/dep/cmd/dep
 	cp $(GOPATH)/bin/dep $(EXT_TOOLS_DIR)
 
+# TODO(pourchet): Remove this hack to make dep more reliable. For some reason `dep ensure` fails 
+# sometimes on TravisCI, so run it twice if it fails the first time.
 vendor: $(DEP_TOOL) Gopkg.toml
-	$(EXT_TOOLS_DIR)/dep ensure
+	$(EXT_TOOLS_DIR)/dep ensure || $(EXT_TOOLS_DIR)/dep ensure
 
 cvendor:
 	docker run --rm -v $(PWD):/go/src/$(PACKAGE_NAME) \
