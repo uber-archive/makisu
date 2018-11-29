@@ -42,42 +42,42 @@ func (t pushTransportFixture) RoundTrip(r *http.Request) (*http.Response, error)
 	url := r.URL.String()
 
 	resps := map[string]*http.Response{
-		"HEAD" + manifestURL: &http.Response{
+		"HEAD" + manifestURL: {
 			StatusCode: http.StatusOK,
 			Body:       ioutil.NopCloser(bytes.NewReader([]byte{})),
 			Header:     make(http.Header),
 		},
-		"HEAD" + imageConfigURL: &http.Response{
+		"HEAD" + imageConfigURL: {
 			StatusCode: http.StatusOK,
 			Body:       ioutil.NopCloser(bytes.NewReader([]byte{})),
 			Header:     make(http.Header),
 		},
-		"HEAD" + layerTarURL: &http.Response{
+		"HEAD" + layerTarURL: {
 			StatusCode: http.StatusOK,
 			Body:       ioutil.NopCloser(bytes.NewReader([]byte{})),
 			Header:     make(http.Header),
 		},
-		"PUT" + manifestURL: &http.Response{
+		"PUT" + manifestURL: {
 			StatusCode: http.StatusOK,
 			Body:       ioutil.NopCloser(bytes.NewReader([]byte{})),
 			Header:     make(http.Header),
 		},
-		"POST" + startUploadURL: &http.Response{
+		"POST" + startUploadURL: {
 			StatusCode: http.StatusAccepted,
 			Body:       ioutil.NopCloser(bytes.NewReader([]byte{})),
 			Header:     make(http.Header),
 		},
-		"PATCH" + chunkUploadURL: &http.Response{
+		"PATCH" + chunkUploadURL: {
 			StatusCode: http.StatusAccepted,
 			Body:       ioutil.NopCloser(bytes.NewReader([]byte{})),
 			Header:     make(http.Header),
 		},
-		"PUT" + imageConfigCommitUploadURL: &http.Response{
+		"PUT" + imageConfigCommitUploadURL: {
 			StatusCode: http.StatusCreated,
 			Body:       ioutil.NopCloser(bytes.NewReader([]byte{})),
 			Header:     make(http.Header),
 		},
-		"PUT" + layerTarCommitUploadURL: &http.Response{
+		"PUT" + layerTarCommitUploadURL: {
 			StatusCode: http.StatusCreated,
 			Body:       ioutil.NopCloser(bytes.NewReader([]byte{})),
 			Header:     make(http.Header),
