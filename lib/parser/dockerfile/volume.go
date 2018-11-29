@@ -29,7 +29,7 @@ type VolumeDirective struct {
 // Formats:
 //   VOLUME ["<volume>", ...]
 //   VOLUME <volume> ...
-func newVolumeDirective(base *baseDirective, state *parsingState) (*VolumeDirective, error) {
+func newVolumeDirective(base *baseDirective, state *parsingState) (Directive, error) {
 	if err := base.replaceVarsCurrStage(state); err != nil {
 		return nil, err
 	}

@@ -23,7 +23,7 @@ type AddDirective struct {
 	*addCopyDirective
 }
 
-func newAddDirective(base *baseDirective, state *parsingState) (*AddDirective, error) {
+func newAddDirective(base *baseDirective, state *parsingState) (Directive, error) {
 	if err := base.replaceVarsCurrStage(state); err != nil {
 		return nil, err
 	}

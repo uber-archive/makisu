@@ -22,7 +22,7 @@ type MaintainerDirective struct {
 
 // Formats:
 //   MAINTAINER <value> ...
-func newMaintainerDirective(base *baseDirective, state *parsingState) (*MaintainerDirective, error) {
+func newMaintainerDirective(base *baseDirective, state *parsingState) (Directive, error) {
 	return &MaintainerDirective{base, base.Args}, nil
 }
 

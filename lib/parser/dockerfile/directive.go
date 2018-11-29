@@ -22,41 +22,21 @@ type Directive interface {
 type directiveConstructor func(*baseDirective, *parsingState) (Directive, error)
 
 var directiveConstructors = map[string]directiveConstructor{
-	"add": func(base *baseDirective, state *parsingState) (Directive, error) { return newAddDirective(base, state) },
-	"arg": func(base *baseDirective, state *parsingState) (Directive, error) { return newArgDirective(base, state) },
-	"cmd": func(base *baseDirective, state *parsingState) (Directive, error) { return newCmdDirective(base, state) },
-	"copy": func(base *baseDirective, state *parsingState) (Directive, error) {
-		return newCopyDirective(base, state)
-	},
-	"entrypoint": func(base *baseDirective, state *parsingState) (Directive, error) {
-		return newEntrypointDirective(base, state)
-	},
-	"env": func(base *baseDirective, state *parsingState) (Directive, error) { return newEnvDirective(base, state) },
-	"expose": func(base *baseDirective, state *parsingState) (Directive, error) {
-		return newExposeDirective(base, state)
-	},
-	"from": func(base *baseDirective, state *parsingState) (Directive, error) {
-		return newFromDirective(base, state)
-	},
-	"label": func(base *baseDirective, state *parsingState) (Directive, error) {
-		return newLabelDirective(base, state)
-	},
-	"maintainer": func(base *baseDirective, state *parsingState) (Directive, error) {
-		return newMaintainerDirective(base, state)
-	},
-	"run": func(base *baseDirective, state *parsingState) (Directive, error) { return newRunDirective(base, state) },
-	"stopsignal": func(base *baseDirective, state *parsingState) (Directive, error) {
-		return newStopsignalDirective(base, state)
-	},
-	"user": func(base *baseDirective, state *parsingState) (Directive, error) {
-		return newUserDirective(base, state)
-	},
-	"volume": func(base *baseDirective, state *parsingState) (Directive, error) {
-		return newVolumeDirective(base, state)
-	},
-	"workdir": func(base *baseDirective, state *parsingState) (Directive, error) {
-		return newWorkdirDirective(base, state)
-	},
+	"add":        newAddDirective,
+	"arg":        newArgDirective,
+	"cmd":        newCmdDirective,
+	"copy":       newCopyDirective,
+	"entrypoint": newEntrypointDirective,
+	"env":        newEnvDirective,
+	"expose":     newExposeDirective,
+	"from":       newFromDirective,
+	"label":      newLabelDirective,
+	"maintainer": newMaintainerDirective,
+	"run":        newRunDirective,
+	"stopsignal": newStopsignalDirective,
+	"user":       newUserDirective,
+	"volume":     newVolumeDirective,
+	"workdir":    newWorkdirDirective,
 }
 
 // newDirective initializes a directive from a line of a Dockerfile and

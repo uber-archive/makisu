@@ -26,7 +26,7 @@ type CmdDirective struct {
 //   CMD ["<executable>", "<param>"...]
 //   CMD ["<param>"...]
 //   CMD <command> <param>...
-func newCmdDirective(base *baseDirective, state *parsingState) (*CmdDirective, error) {
+func newCmdDirective(base *baseDirective, state *parsingState) (Directive, error) {
 	if err := base.replaceVarsCurrStage(state); err != nil {
 		return nil, err
 	}
