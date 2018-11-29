@@ -60,14 +60,14 @@ func NewBuildPlan(
 
 	aliases, err := buildAliases(parsedStages)
 	if err != nil {
-		return nil, fmt.Errorf("build alias list: %v", err)
+		return nil, fmt.Errorf("build alias list: %s", err)
 	}
 
 	digestPairs := make(image.DigestPairMap)
 	for i, parsedStage := range parsedStages {
 		steps, err := step.NewDockerfileSteps(plan.baseCtx, parsedStage)
 		if err != nil {
-			return nil, fmt.Errorf("new dockerfile steps: %v", err)
+			return nil, fmt.Errorf("new dockerfile steps: %s", err)
 		}
 
 		// Add this stage to the plan.
@@ -85,7 +85,7 @@ func NewBuildPlan(
 	}
 
 	if err := plan.handleCopyFromDirs(aliases, digestPairs); err != nil {
-		return nil, fmt.Errorf("handle cross refs: %v", err)
+		return nil, fmt.Errorf("handle cross refs: %s", err)
 	}
 	return plan, nil
 }
@@ -106,7 +106,7 @@ func (plan *BuildPlan) handleCopyFromDirs(aliases map[string]bool, digestPairs i
 				}
 				remoteImageStage, err := plan.newRemoteImageStage(alias, digestPairs)
 				if err != nil {
-					return fmt.Errorf("new image stage: %v", err)
+					return fmt.Errorf("new image stage: %s", err)
 				}
 				plan.remoteImageStages[alias] = remoteImageStage
 				aliases[alias] = true
@@ -143,12 +143,12 @@ func buildAliases(stages dockerfile.Stages) (map[string]bool, error) {
 func (plan *BuildPlan) newRemoteImageStage(alias string, digestPairs image.DigestPairMap) (*buildStage, error) {
 	from, err := step.NewFromStep(alias, alias, alias)
 	if err != nil {
-		return nil, fmt.Errorf("new from step: %v", err)
+		return nil, fmt.Errorf("new from step: %s", err)
 	}
 	steps := []step.BuildStep{from}
 	stage, err := newBuildStage(plan.baseCtx, alias, steps, digestPairs, plan.allowModifyFS, false)
 	if err != nil {
-		return nil, fmt.Errorf("new build stage: %v", err)
+		return nil, fmt.Errorf("new build stage: %s", err)
 	}
 	return stage, nil
 }
@@ -165,17 +165,14 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 	for alias, stage := range plan.remoteImageStages {
 		// Building that pseudo stage will unpack the image directly into the
 		// stage's cross stage directory.
-		name, err := image.ParseNameForPull(alias)
+		_, err := image.ParseNameForPull(alias)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse cross stage reference name %v: %v", alias, err)
+			return nil, fmt.Errorf("failed to parse cross stage reference name %s: %s", alias, err)
 		}
-		log.Infof("Pulling image %v for cross stage reference", name)
-		if err := stage.build(plan.cacheMgr, false, true); err != nil {
-			return nil, fmt.Errorf("build stage %v for cross stage reference: %v", name, err)
-		} else if err := stage.checkpoint(plan.copyFromDirs[alias]); err != nil {
-			return nil, fmt.Errorf("stage checkpoint %v for cross stage reference: %v", name, err)
-		} else if err := stage.cleanup(); err != nil {
-			return nil, fmt.Errorf("stage cleanup %v for cross stage reference: %v", name, err)
+		log.Infof("Pulling image %s for cross stage reference", alias)
+
+		if err := plan.executeStage(stage, false, true); err != nil {
+			return nil, fmt.Errorf("execute cross referenced stage: %s", err)
 		}
 	}
 
@@ -186,22 +183,9 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 
 		lastStage := k == len(plan.stages)-1
 		_, copiedFrom := plan.copyFromDirs[currStage.alias]
-		if err := currStage.build(plan.cacheMgr, lastStage, copiedFrom); err != nil {
-			return nil, fmt.Errorf("build stage: %s", err)
-		}
 
-		if plan.allowModifyFS {
-			if k < len(plan.stages)-1 {
-				// Save context directories needed for cross-stage copy operations.
-				copyFromDirs := plan.copyFromDirs[currStage.alias]
-				if err := currStage.checkpoint(copyFromDirs); err != nil {
-					return nil, fmt.Errorf("checkpoint memfs: %s", err)
-				}
-			}
-
-			if err := currStage.cleanup(); err != nil {
-				return nil, fmt.Errorf("remove memfs: %s", err)
-			}
+		if err := plan.executeStage(currStage, lastStage, copiedFrom); err != nil {
+			return nil, fmt.Errorf("execute stage: %s", err)
 		}
 	}
 
@@ -226,4 +210,21 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 	log.Infow(fmt.Sprintf("Computed total image size %d", size), "total_image_size", size)
 
 	return manifest, nil
+}
+
+func (plan *BuildPlan) executeStage(stage *buildStage, lastStage, copiedFrom bool) error {
+
+	if err := stage.build(plan.cacheMgr, lastStage, copiedFrom); err != nil {
+		return fmt.Errorf("build stage %s: %s", stage.alias, err)
+	}
+
+	if plan.allowModifyFS {
+		if err := stage.checkpoint(plan.copyFromDirs[stage.alias]); err != nil {
+			return fmt.Errorf("checkpoint stage %s: %s", stage.alias, err)
+		}
+		if err := stage.cleanup(); err != nil {
+			return fmt.Errorf("cleanup stage %s: %s", stage.alias, err)
+		}
+	}
+	return nil
 }
