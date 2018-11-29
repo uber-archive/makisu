@@ -43,7 +43,7 @@ type BuildContext struct {
 	// persisted.
 	StageVars map[string]string
 
-	// MemFS and ImageStore can be shared accross all copies of the BuildContext.
+	// MemFS and ImageStore can be shared across all copies of the BuildContext.
 	MemFS      *snapshot.MemFS    // Merged view of base layers. Layers should be merged in order.
 	ImageStore storage.ImageStore // Stores image layers and manifests.
 
