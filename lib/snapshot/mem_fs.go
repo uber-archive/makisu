@@ -171,57 +171,22 @@ func (fs *MemFS) UpdateFromTarReader(r *tar.Reader, untar bool) error {
 		} else if err != nil {
 			return fmt.Errorf("read header: %s", err)
 		}
+		count++
 
-		path := filepath.Join(fs.tree.src, hdr.Name)
-		if skip, err := shouldSkip(path, hdr.FileInfo(), fs.blacklist); err != nil {
-			return fmt.Errorf("check if should skip %s: %s", path, err)
+		if skip, err := fs.shouldSkipHeader(hdr); err != nil {
+			return fmt.Errorf("should skip header: %s", err)
 		} else if skip {
 			continue
-		} else if isMounted, err := mountutils.IsMounted(path); err != nil {
-			return fmt.Errorf("check if mounted %s: %s", path, err)
-		} else if isMounted {
-			continue
+		}
+		path := filepath.Join(fs.tree.src, hdr.Name)
+
+		if err := fs.gatherHeaderMeta(hdr, untar, modtimes, hardlinks); err != nil {
+			return fmt.Errorf("gather header meta: %s", err)
 		}
 
-		// Record the modtime of the parent directory to reset it after we deal with all of
-		// the other files. If we are not untarring, this is not necessary and may fail
-		// because not all files are necessarily on disk.
+		// Deal with regular files.
 		if untar {
-			parentDir := filepath.Dir(path)
-			if _, found := modtimes[parentDir]; !found {
-				parentFi, err := os.Lstat(parentDir)
-				if err != nil {
-					return fmt.Errorf("stat parent dir of %s: %s", path, err)
-				}
-				modtimes[parentDir] = parentFi.ModTime()
-			}
-		}
-
-		hdr.Name = pathutils.RelPath(hdr.Name)
-
-		// If the new file is a hard link, then append it to the list
-		// that will be created later.
-		if hdr.Typeflag == tar.TypeLink {
-			// Docker hard link names are all absolute, but don't have a leading slash.
-			hdr.Linkname = pathutils.AbsPath(hdr.Linkname)
-			hardlinks[path] = hdr
-		} else {
-			if untar {
-				if err := fs.untarOneItem(path, hdr, r); err != nil {
-					return fmt.Errorf("untar one item %s: %s", path, err)
-				}
-			}
-			if err := fs.maybeAddToLayer(l, "", pathutils.AbsPath(hdr.Name), hdr, false); err != nil {
-				return fmt.Errorf("add hdr from tar to layer: %s", err)
-			}
-		}
-		count++
-	}
-
-	// Run through all the hard links and create them.
-	for path, hdr := range hardlinks {
-		if untar {
-			if err := fs.untarOneItem(path, hdr, nil); err != nil {
+			if err := fs.untarOneItem(path, hdr, r); err != nil {
 				return fmt.Errorf("untar one item %s: %s", path, err)
 			}
 		}
@@ -230,14 +195,83 @@ func (fs *MemFS) UpdateFromTarReader(r *tar.Reader, untar bool) error {
 		}
 	}
 
+	// Run through all the hard links and create them.
+	if err := fs.updateFromHardlinks(l, hardlinks, untar); err != nil {
+		return fmt.Errorf("update hard links: %s", err)
+	}
+
 	// Reset the mod times on all of the directory we changed.
+	if err := fs.updateModtimes(modtimes); err != nil {
+		return fmt.Errorf("update modtimes: %s", err)
+	}
+
+	fs.layers = append(fs.layers, l)
+	log.Infof("* Merged %d headers from tar to memfs", l.count())
+	return nil
+}
+
+func (fs *MemFS) gatherHeaderMeta(hdr *tar.Header, untar bool, modtimes map[string]time.Time, hardlinks map[string]*tar.Header) error {
+	// Record the modtime of the parent directory to reset it after we deal with all of
+	// the other files. If we are not untarring, this is not necessary and may fail
+	// because not all files are necessarily on disk.
+	path := filepath.Join(fs.tree.src, hdr.Name)
+	if untar {
+		parentDir := filepath.Dir(path)
+		if _, found := modtimes[parentDir]; !found {
+			parentFi, err := os.Lstat(parentDir)
+			if err != nil {
+				return fmt.Errorf("stat parent dir of %s: %s", path, err)
+			}
+			modtimes[parentDir] = parentFi.ModTime()
+		}
+	}
+
+	hdr.Name = pathutils.RelPath(hdr.Name)
+
+	// If the new file is a hard link, then append it to the list
+	// that will be created later.
+	if hdr.Typeflag == tar.TypeLink {
+		// Docker hard link names are all absolute, but don't have a leading slash.
+		hdr.Linkname = pathutils.AbsPath(hdr.Linkname)
+		hardlinks[path] = hdr
+	}
+	return nil
+}
+
+func (fs *MemFS) shouldSkipHeader(hdr *tar.Header) (bool, error) {
+	path := filepath.Join(fs.tree.src, hdr.Name)
+	if skip, err := shouldSkip(path, hdr.FileInfo(), fs.blacklist); err != nil {
+		return false, fmt.Errorf("check if should skip %s: %s", path, err)
+	} else if skip {
+		return true, nil
+	} else if isMounted, err := mountutils.IsMounted(path); err != nil {
+		return false, fmt.Errorf("check if mounted %s: %s", path, err)
+	} else if isMounted {
+		return true, nil
+	}
+	return false, nil
+}
+
+func (fs *MemFS) updateFromHardlinks(layer *memLayer, hardlinks map[string]*tar.Header, untar bool) error {
+	for path, hdr := range hardlinks {
+		if untar {
+			if err := fs.untarOneItem(path, hdr, nil); err != nil {
+				return fmt.Errorf("untar one item %s: %s", path, err)
+			}
+		}
+		if err := fs.maybeAddToLayer(layer, "", pathutils.AbsPath(hdr.Name), hdr, false); err != nil {
+			return fmt.Errorf("add hdr from tar to layer: %s", err)
+		}
+	}
+	return nil
+}
+
+func (fs *MemFS) updateModtimes(modtimes map[string]time.Time) error {
 	for path, modtime := range modtimes {
 		if err := os.Chtimes(path, modtime, modtime); err != nil {
 			return fmt.Errorf("chtimes on parent directory %s: %s", path, err)
 		}
 	}
-	fs.layers = append(fs.layers, l)
-	log.Infof("* Merged %d headers from tar to memfs", l.count())
 	return nil
 }
 
