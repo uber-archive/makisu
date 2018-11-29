@@ -134,13 +134,13 @@ func (cmd *BuildFlags) postInit() error {
 	return nil
 }
 
-func (cmd BuildFlags) initRegistryGlobals() error {
+func (cmd BuildFlags) initRegistryConfig() error {
 	if cmd.RegistryConfig == "" {
-		// TODO(pourchet): Shouldn't we do this regardless of if a registry config was passed?
 		registry.ConfigurationMap[image.DockerHubRegistry] = make(registry.RepositoryMap)
 		registry.ConfigurationMap[image.DockerHubRegistry][".*"] = registry.DefaultDockerHubConfiguration
 		return nil
 	}
+
 	data, err := ioutil.ReadFile(cmd.RegistryConfig)
 	if err != nil {
 		return fmt.Errorf("read registry config: %s", err)
