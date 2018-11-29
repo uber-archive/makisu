@@ -113,8 +113,8 @@ def test_build_commit_empty_pair(registry1, storage_dir, cache_dir, tmpdir):
     new_image1 = new_image_name()
     new_image2 = new_image_name()
     context_dir = os.path.join(os.getcwd(), 'testdata/build-context/commit-empty-pair')
-    test_file = tmpdir.mkdir("d1").join("f1")
-    test_file.write("hello")
+    test_file = tmpdir.join("f1")
+    test_file.write("")
 
     # First build, mount in test file.
     additional_volumes = {test_file: '/mnt/f1'}
@@ -126,13 +126,15 @@ def test_build_commit_empty_pair(registry1, storage_dir, cache_dir, tmpdir):
     assert code == 0, err
 
 
-def test_build_with_cache(registry1, storage_dir, cache_dir):
+def test_build_with_cache(registry1, storage_dir, cache_dir, tmpdir):
     utils.registry_ensure_image('debian:8', registry1.addr)
     new_image1 = new_image_name()
     new_image2 = new_image_name()
     context_dir = os.path.join(os.getcwd(), 'testdata/build-context/mount')
-    _, test_file = tempfile.mkstemp(dir='/tmp')  # TODO: prevent leaking if test failed
-    _, test_file2 = tempfile.mkstemp(dir='/tmp')  # TODO: prevent leadking if test failed
+    test_file = tmpdir.join("f1")
+    test_file.write("")
+    test_file2 = tmpdir.join("f2")
+    test_file2.write("")
 
     # First build, mount in test file.
     additional_volumes = {test_file: '/tmp/test.txt', test_file2: '/root/mounted.txt'}
