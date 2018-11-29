@@ -124,6 +124,9 @@ func (s *addCopyStep) Execute(ctx *context.BuildContext, modifyFS bool) (err err
 	relPaths := make([]string, len(sources))
 	for i, source := range sources {
 		relPaths[i], err = pathutils.TrimRoot(source, sourceRoot)
+		if err != nil {
+			return fmt.Errorf("trim root: %s", err)
+		}
 	}
 
 	internal := s.fromStage != ""

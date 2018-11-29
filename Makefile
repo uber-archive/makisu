@@ -24,6 +24,7 @@ ALL_SRC = $(shell find . -name "*.go" | grep -v -e vendor \
 	-e ".*/mocks.*" \
 	-e ".*/*.pb.go")
 ALL_PKGS = $(shell go list $(sort $(dir $(ALL_SRC))) | grep -v vendor)
+ALL_PKG_PATHS = $(shell go list -f '{{.Dir}}' ./...)
 FMT_SRC = $(shell echo "$(ALL_SRC)" | tr ' ' '\n')
 EXT_TOOLS = github.com/axw/gocov/gocov github.com/AlekSi/gocov-xml github.com/matm/gocov-html github.com/golang/mock/mockgen golang.org/x/lint/golint golang.org/x/tools/cmd/goimports github.com/client9/misspell/cmd/misspell
 EXT_TOOLS_DIR = ext-tools/$(OS)
@@ -129,8 +130,12 @@ integration-single: env image
 
 # TODO(pourchet) fix gometalinter installation from source
 lint: ext-tools
-	$(EXT_TOOLS_DIR)/misspell -w --error -i hardlinked $(shell go list -f '{{.Dir}}' ./...)
+	@echo "Running ineffassign, gofmt, misspell, gometalinter, gocyclo"
+	@ineffassign <<< $(ALL_PKG_PATHS)
+	@gofmt -l -s $(ALL_PKG_PATHS) | read; if [ $$? == 0 ]; then echo "gofmt check failed for:"; gofmt -l -s $(ALL_PKG_PATHS); exit 1; fi
+	@$(EXT_TOOLS_DIR)/misspell -w --error -i hardlinked $(ALL_PKG_PATHS)
 	gometalinter --vendor --disable vet -e 'warning' --fast ./...
+	@xargs -I@ gocyclo --over 15 @ <<< $(ALL_PKG_PATHS)
 
 
 clean:
