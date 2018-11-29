@@ -213,7 +213,6 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 }
 
 func (plan *BuildPlan) executeStage(stage *buildStage, lastStage, copiedFrom bool) error {
-
 	if err := stage.build(plan.cacheMgr, lastStage, copiedFrom); err != nil {
 		return fmt.Errorf("build stage %s: %s", stage.alias, err)
 	}
