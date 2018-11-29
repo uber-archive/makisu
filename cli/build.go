@@ -58,8 +58,7 @@ type BuildFlags struct {
 	CompressionLevelStr string `commander:"flag=compression,Image compression level, could be 'no', 'speed', 'size', 'default'."`
 	Commit              string `commander:"flag=commit,Set to explicit to only commit at steps with '#!COMMIT' annotations; Set to implicit to commit at every ADD/COPY/RUN step."`
 
-	forceCommit bool
-	imageStore  storage.ImageStore
+	imageStore storage.ImageStore
 }
 
 func newBuildFlags() BuildFlags {
@@ -98,40 +97,12 @@ func (cmd *BuildFlags) postInit() error {
 		return fmt.Errorf("set compression level: %s", err)
 	}
 
-	// Configure commit option.
-	switch cmd.Commit {
-	case "explicit":
-		cmd.forceCommit = false
-	case "implicit":
-		// forceCommit will make every step attempt to commit a layer.
-		// Commit() is noop for steps other than ADD/COPY/RUN if they are not
-		// after an uncommitted RUN, so this won't generate extra empty layers.
-		cmd.forceCommit = true
-	default:
+	if cmd.Commit != "explicit" && cmd.Commit != "implicit" {
 		return fmt.Errorf("invalid commit option: %s", cmd.Commit)
 	}
 
-	// Configure registries.
-	if cmd.RegistryConfig != "" {
-		data, err := ioutil.ReadFile(cmd.RegistryConfig)
-		if err != nil {
-			return fmt.Errorf("read registry config: %s", err)
-		}
-		config := make(registry.Map)
-		if err := yaml.Unmarshal(data, &config); err != nil {
-			return fmt.Errorf("unmarshal registry config: %s", err)
-		}
-		for reg, repoConfig := range config {
-			if _, ok := registry.ConfigurationMap[reg]; !ok {
-				registry.ConfigurationMap[reg] = make(registry.RepositoryMap)
-			}
-			for repo, config := range repoConfig {
-				registry.ConfigurationMap[reg][repo] = config
-			}
-		}
-	} else {
-		registry.ConfigurationMap[image.DockerHubRegistry] = make(registry.RepositoryMap)
-		registry.ConfigurationMap[image.DockerHubRegistry][".*"] = registry.DefaultDockerHubConfiguration
+	if err := cmd.initRegistryGlobals(); err != nil {
+		return fmt.Errorf("failed to initialize registry configuration: %v", err)
 	}
 
 	// Verify it's not runninng on Mac if modifyfs is true.
@@ -160,8 +131,37 @@ func (cmd *BuildFlags) postInit() error {
 		return fmt.Errorf("storage dir cannot be under internal dir %s",
 			pathutils.DefaultInternalDir)
 	}
-
 	return nil
+}
+
+func (cmd BuildFlags) initRegistryGlobals() error {
+	if cmd.RegistryConfig == "" {
+		// TODO(pourchet): Shouldn't we do this regardless of if a registry config was passed?
+		registry.ConfigurationMap[image.DockerHubRegistry] = make(registry.RepositoryMap)
+		registry.ConfigurationMap[image.DockerHubRegistry][".*"] = registry.DefaultDockerHubConfiguration
+		return nil
+	}
+	data, err := ioutil.ReadFile(cmd.RegistryConfig)
+	if err != nil {
+		return fmt.Errorf("read registry config: %s", err)
+	}
+	config := make(registry.Map)
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return fmt.Errorf("unmarshal registry config: %s", err)
+	}
+	for reg, repoConfig := range config {
+		if _, ok := registry.ConfigurationMap[reg]; !ok {
+			registry.ConfigurationMap[reg] = make(registry.RepositoryMap)
+		}
+		for repo, config := range repoConfig {
+			registry.ConfigurationMap[reg][repo] = config
+		}
+	}
+	return nil
+}
+
+func (cmd BuildFlags) forceCommit() bool {
+	return cmd.Commit == "implicit"
 }
 
 // GetTargetRegistries returns the target registries that the image should
@@ -176,19 +176,19 @@ func (cmd BuildFlags) GetTargetRegistries() []string {
 
 func (cmd BuildFlags) getTargetImageName() (image.Name, error) {
 	if cmd.Tag == "" {
-		return image.Name{}, fmt.Errorf("please specify a target image name: makisu build -t=(<registry:port>/)<repo>:<tag> ./")
+		msg := "please specify a target image name: makisu build -t=(<registry:port>/)<repo>:<tag> ./"
+		return image.Name{}, fmt.Errorf(msg)
 	}
 
 	// Parse the target's image name into its components.
 	targetImageName := image.MustParseName(cmd.Tag)
-
-	// If the --push flag is specified we ignore the registry in the image name
-	// and replace it with the first registry in the --push value. This will cause
-	// all of the cache layers to go to that registry.
 	if len(cmd.GetTargetRegistries()) == 0 {
 		return targetImageName, nil
 	}
 
+	// If the --push flag is specified we ignore the registry in the image name
+	// and replace it with the first registry in the --push value. This will cause
+	// all of the cache layers to go to that registry.
 	return image.NewImageName(
 		cmd.GetTargetRegistries()[0],
 		targetImageName.GetRepository(),
@@ -224,7 +224,7 @@ func (cmd BuildFlags) getBuildPlan(contextDir string, imageName image.Name) (*bu
 
 	// Create BuildPlan and validate it.
 	return builder.NewBuildPlan(buildContext, imageName, cacheMgr,
-		dockerfile, cmd.AllowModifyFS, cmd.forceCommit)
+		dockerfile, cmd.AllowModifyFS, cmd.forceCommit())
 }
 
 // Build image from the specified dockerfile.
