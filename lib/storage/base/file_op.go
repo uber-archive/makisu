@@ -54,6 +54,8 @@ type FileOp interface {
 	SetFileMetadataAt(name string, md metadata.Metadata, b []byte, offset int64) (bool, error)
 	GetOrSetFileMetadata(name string, md metadata.Metadata) error
 	DeleteFileMetadata(name string, md metadata.Metadata) error
+
+	ListNames() ([]string, error)
 }
 
 var _ FileOp = (*localFileOp)(nil)
@@ -409,4 +411,17 @@ func (op *localFileOp) DeleteFileMetadata(name string, md metadata.Metadata) (er
 		return loadErr
 	}
 	return err
+}
+
+// ListNames returns all file entry names in states associated with op.
+func (op *localFileOp) ListNames() ([]string, error) {
+	var names []string
+	for state := range op.states {
+		stateNames, err := op.s.fileEntryFactory.ListNames(state)
+		if err != nil {
+			return nil, err
+		}
+		names = append(names, stateNames...)
+	}
+	return names, nil
 }

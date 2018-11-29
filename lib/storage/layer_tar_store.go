@@ -15,12 +15,16 @@
 package storage
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
+	"time"
 
 	"github.com/andres-erbsen/clock"
+	"github.com/uber/makisu/lib/log"
 	"github.com/uber/makisu/lib/storage/base"
+	"github.com/uber/makisu/lib/storage/metadata"
 	"github.com/uber/makisu/lib/utils"
 )
 
@@ -124,4 +128,51 @@ func (s *LayerTarStore) DeleteStoreFile(fileName string) error {
 // LinkStoreFileTo hardlinks file from store to target
 func (s *LayerTarStore) LinkStoreFileTo(fileName, target string) error {
 	return s.backend.NewFileOp().AcceptState(s.cacheState).LinkFileTo(fileName, target)
+}
+
+// cleanup scans the store for idle or expired files.
+// Also returns the total disk usage.
+func (s *LayerTarStore) cleanup(
+	op base.FileOp, tti time.Duration, ttl time.Duration) (usage int64, err error) {
+
+	names, err := s.backend.NewFileOp().AcceptState(s.cacheState).ListNames()
+	if err != nil {
+		return 0, fmt.Errorf("list names: %s", err)
+	}
+	for _, name := range names {
+		info, err := op.GetFileStat(name)
+		if err != nil {
+			log.With("name", name).Errorf("Error getting file stat: %s", err)
+			continue
+		}
+		if ready, err := s.readyForDeletion(op, name, info, tti, ttl); err != nil {
+			log.With("name", name).Errorf("Error checking if file expired: %s", err)
+		} else if ready {
+			if err := op.DeleteFile(name); err != nil && err != base.ErrFilePersisted {
+				log.With("name", name).Errorf("Error deleting expired file: %s", err)
+			}
+		}
+		usage += info.Size()
+	}
+	return usage, nil
+}
+
+func (s *LayerTarStore) readyForDeletion(
+	op base.FileOp,
+	name string,
+	info os.FileInfo,
+	tti time.Duration,
+	ttl time.Duration) (bool, error) {
+
+	if ttl > 0 && s.clk.Now().Sub(info.ModTime()) > ttl {
+		return true, nil
+	}
+
+	var lat metadata.LastAccessTime
+	if err := op.GetFileMetadata(name, &lat); os.IsNotExist(err) {
+		return false, nil
+	} else if err != nil {
+		return false, fmt.Errorf("get file lat: %s", err)
+	}
+	return s.clk.Now().Sub(lat.Time) > tti, nil
 }

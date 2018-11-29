@@ -58,6 +58,9 @@ type FileEntryFactory interface {
 	// The path is relative to the state directory that file entry belongs to.
 	// i.e. a file entry can have a relative path of 00/0e/filename under directory /var/cache/
 	GetRelativePath(name string) string
+
+	// ListNames lists all file entry names in state.
+	ListNames(state FileState) ([]string, error)
 }
 
 // FileEntry manages one file and its metadata.
@@ -111,6 +114,42 @@ func (f *localFileEntryFactory) GetRelativePath(name string) string {
 	return filepath.Join(name, DefaultDataFileName)
 }
 
+// ListNames returns the names of all entries in state's directory.
+func (f *localFileEntryFactory) ListNames(state FileState) ([]string, error) {
+	var names []string
+
+	var readNames func(string) error
+	readNames = func(dir string) error {
+		infos, err := ioutil.ReadDir(dir)
+		if err != nil {
+			if os.IsNotExist(err) {
+				return nil
+			}
+			return err
+		}
+		for _, info := range infos {
+			if info.IsDir() {
+				if err := readNames(filepath.Join(dir, info.Name())); err != nil {
+					return err
+				}
+				continue
+			}
+			if info.Name() == DefaultDataFileName {
+				name, err := filepath.Rel(state.GetDirectory(), dir)
+				if err != nil {
+					return err
+				}
+				names = append(names, name)
+			}
+		}
+		return nil
+	}
+
+	err := readNames(state.GetDirectory())
+
+	return names, err
+}
+
 // casFileEntryFactory initializes localFileEntry obj.
 // It uses the first few bytes of file digest (which is also used as file name) as shard ID.
 // For every byte, one more level of directories will be created.
@@ -140,6 +179,36 @@ func (f *casFileEntryFactory) GetRelativePath(name string) string {
 	}
 
 	return filepath.Join(filePath, name, DefaultDataFileName)
+}
+
+// ListNames returns the names of all entries within the shards of state.
+func (f *casFileEntryFactory) ListNames(state FileState) ([]string, error) {
+	var names []string
+
+	var readNames func(string, int) error
+	readNames = func(dir string, depth int) error {
+		infos, err := ioutil.ReadDir(dir)
+		if err != nil {
+			return err
+		}
+		for _, info := range infos {
+			if depth == 0 {
+				names = append(names, info.Name())
+			} else {
+				if !info.IsDir() {
+					continue
+				}
+				if err := readNames(filepath.Join(dir, info.Name()), depth-1); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	}
+
+	err := readNames(state.GetDirectory(), DefaultShardIDLength)
+
+	return names, err
 }
 
 // localFileEntry implements FileEntry interface, handles IO operations for one file on local disk.

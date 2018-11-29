@@ -15,6 +15,7 @@
 package base
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -27,6 +28,69 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
+
+func checkListNames(t *testing.T, factory FileEntryFactory, state FileState, expected []FileEntry) {
+	t.Helper()
+
+	var expectedNames []string
+	for _, e := range expected {
+		expectedNames = append(expectedNames, e.GetName())
+	}
+
+	names, err := factory.ListNames(state)
+	require.NoError(t, err)
+
+	require.ElementsMatch(t, expectedNames, names)
+}
+
+func TestFileEntryFactoryListNames(t *testing.T) {
+	for _, factory := range []FileEntryFactory{
+		NewLocalFileEntryFactory(),
+		NewCASFileEntryFactory(),
+	} {
+		fname := reflect.Indirect(reflect.ValueOf(factory)).Type().Name()
+		t.Run(fname, func(t *testing.T) {
+			require := require.New(t)
+
+			state, _, _, cleanup := fileStatesFixture()
+			defer cleanup()
+
+			// ListNames should show all created entries.
+			var entries []FileEntry
+			for i := 0; i < 100; i++ {
+				entry := factory.Create(core.DigestFixture().Hex(), state)
+				require.NoError(entry.Create(state, 1))
+				entries = append(entries, entry)
+			}
+			checkListNames(t, factory, state, entries)
+
+			// ListNames should not show deleted entries.
+			for _, e := range entries[:50] {
+				require.NoError(e.Delete())
+			}
+			checkListNames(t, factory, state, entries[50:])
+		})
+	}
+}
+
+func TestLocalFileEntryFactoryListNamesWithSlashes(t *testing.T) {
+	require := require.New(t)
+
+	state, _, _, cleanup := fileStatesFixture()
+	defer cleanup()
+
+	factory := NewLocalFileEntryFactory()
+
+	// ListNames should show all created entries.
+	var entries []FileEntry
+	for i := 0; i < 100; i++ {
+		name := fmt.Sprintf("dir%d/subdir", i)
+		entry := factory.Create(name, state)
+		require.NoError(entry.Create(state, 1))
+		entries = append(entries, entry)
+	}
+	checkListNames(t, factory, state, entries)
+}
 
 // These tests should pass for all FileEntry implementations
 func TestFileEntry(t *testing.T) {

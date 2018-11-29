@@ -88,8 +88,8 @@ func (b *replaceVarsBase) resolveCurrVar() (string, bool, error) {
 	return val, true, nil
 }
 
-// replaceVarsStateNone is the starting state for the state machine. It should be entered
-// any time a variable has finished being replaced.
+// replaceVarsStateNone is the starting state for the state machine.
+// It should be entered any time a variable has finished being replaced.
 type replaceVarsStateNone struct{ *replaceVarsBase }
 
 // nextRune appends all characters that it encounters to the result string until
@@ -213,13 +213,13 @@ func (s *replaceVarsStateVar) nextRune(r rune) (replaceVarsState, error) {
 			s.varsInProgress = s.varsInProgress[0 : len(s.varsInProgress)-1]
 			return &replaceVarsStateVarColon{s.replaceVarsBase}, nil
 
-			// We are recursing and have encountered another non-variable character.
-			// In this case, we return to the bracket state and continue processing.
-		} else {
-			s.currVar = s.varsInProgress[len(s.varsInProgress)-1] + val
-			s.varsInProgress = s.varsInProgress[0 : len(s.varsInProgress)-1]
-			return &replaceVarsStateVarBracket{s.replaceVarsBase}, nil
 		}
+
+		// We are recursing and have encountered another non-variable character.
+		// In this case, we return to the bracket state and continue processing.
+		s.currVar = s.varsInProgress[len(s.varsInProgress)-1] + val
+		s.varsInProgress = s.varsInProgress[0 : len(s.varsInProgress)-1]
+		return &replaceVarsStateVarBracket{s.replaceVarsBase}, nil
 	}
 	s.currVar += string(r)
 	return s, nil
