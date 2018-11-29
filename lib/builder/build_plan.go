@@ -90,16 +90,16 @@ func NewBuildPlan(
 	return plan, nil
 }
 
-// handleCopyFromDirs goes through all of the stages in the build plan and looks at the `COPY --from` steps
-// to make sure they are valid. If the --from source is another image, we create a new image stage in
-// the build plan.
+// handleCopyFromDirs goes through all of the stages in the build plan and looks
+// at the `COPY --from` steps to make sure they are valid. If the --from source
+// is another image, we create a new image stage in the build plan.
 func (plan *BuildPlan) handleCopyFromDirs(aliases map[string]bool, digestPairs image.DigestPairMap) error {
 	for _, stage := range plan.stages {
 		for alias, dirs := range stage.copyFromDirs {
 			if _, ok := aliases[alias]; !ok {
-				// If we see that the alias of the cross referenced directory is an image name,
-				// we add a fake stage to the build plan that will download that image directly
-				// into the cross referencing root for that alias.
+				// If we see that the alias of the cross referenced directory is an
+				// image name, we add a fake stage to the build plan that will download
+				// that image directly into the cross referencing root for that alias.
 				name, err := image.ParseNameForPull(alias)
 				if err != nil || !name.IsValid() {
 					return fmt.Errorf("copy from nonexistent stage %s", alias)
@@ -119,8 +119,8 @@ func (plan *BuildPlan) handleCopyFromDirs(aliases map[string]bool, digestPairs i
 	return nil
 }
 
-// buildAliases mutates the list of stages to assign default aliases. Those will be integers starting
-// from 0.
+// buildAliases mutates the list of stages to assign default aliases.
+// Default aliases will be integers starting from 0.
 func buildAliases(stages dockerfile.Stages) (map[string]bool, error) {
 	aliases := make(map[string]bool)
 	for i, parsedStage := range stages {
@@ -155,15 +155,16 @@ func (plan *BuildPlan) newRemoteImageStage(alias string, digestPairs image.Diges
 
 // Execute executes all build stages in order.
 func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
-	// Execute pre-build procedures. Try to pull some reusable layers from the registry.
-	// TODO: in parallel
+	// Execute pre-build procedures. Try to pull some reusable layers from the
+	// registry.
+	// TODO: Pull in parallel
 	for _, stage := range plan.stages {
 		stage.pullCacheLayers(plan.cacheMgr)
 	}
 
 	for alias, stage := range plan.remoteImageStages {
-		// Building that pseudo stage will unpack the image directly into the stage's
-		// cross stage directory.
+		// Building that pseudo stage will unpack the image directly into the
+		// stage's cross stage directory.
 		name, err := image.ParseNameForPull(alias)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse cross stage reference name %v: %v", alias, err)
@@ -204,17 +205,17 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 		}
 	}
 
-	// Wait for cache layers to be pushed.
-	// This will make them available to other builds ongoing on different machines.
+	// Wait for cache layers to be pushed. This will make them available to other
+	// builds ongoing on different machines.
 	if err := plan.cacheMgr.WaitForPush(); err != nil {
 		log.Errorf("Failed to push cache: %s", err)
 	}
 
-	// Save image.
+	// Save image manifest.
 	repo, tag := plan.target.GetRepository(), plan.target.GetTag()
 	manifest, err := currStage.saveImage(plan.baseCtx.ImageStore, repo, tag)
 	if err != nil {
-		return nil, fmt.Errorf("save context image: %s", err)
+		return nil, fmt.Errorf("save image manifest: %s", err)
 	}
 
 	// Print out the image size.
