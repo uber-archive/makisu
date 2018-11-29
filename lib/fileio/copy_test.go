@@ -111,6 +111,7 @@ func TestCopyFileSetSpecialBit(t *testing.T) {
 	require.NoError(err)
 	require.Equal(testString, string(result))
 	targetFi, err := os.Stat(target.Name())
+	require.NoError(err)
 	require.Equal(targetFi.Mode(), os.ModePerm|os.ModeSetuid)
 }
 
@@ -182,10 +183,12 @@ func TestCopyDirectoryTargetNotExist(t *testing.T) {
 	require.NoError(err)
 	defer sourceFileOne.Close()
 	_, err = sourceFileOne.WriteString("Test source file one")
+	require.NoError(err)
 	sourceFileTwo, err := ioutil.TempFile(sourceDir, "testCopy")
 	require.NoError(err)
 	defer sourceFileTwo.Close()
 	_, err = sourceFileTwo.WriteString("Test source file two")
+	require.NoError(err)
 
 	// Perform copy.
 	c := NewCopier(pathutils.DefaultBlacklist)
@@ -234,6 +237,7 @@ func TestCopyDirectoryTargetExists(t *testing.T) {
 	require.NoError(err)
 	defer targetFileOne.Close()
 	_, err = targetFileOne.WriteString("Test target file one")
+	require.NoError(err)
 
 	// Perform copy.
 	c := NewCopier(pathutils.DefaultBlacklist)
