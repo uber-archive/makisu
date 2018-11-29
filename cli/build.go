@@ -101,7 +101,7 @@ func (cmd *BuildFlags) postInit() error {
 		return fmt.Errorf("invalid commit option: %s", cmd.Commit)
 	}
 
-	if err := cmd.initRegistryGlobals(); err != nil {
+	if err := cmd.initRegistryConfig(); err != nil {
 		return fmt.Errorf("failed to initialize registry configuration: %v", err)
 	}
 
