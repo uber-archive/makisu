@@ -159,7 +159,6 @@ func (l *memLayer) createHeader(root, src, dst string, fi os.FileInfo) (*tar.Hea
 	hdr.Gname = ""
 
 	src = pathutils.AbsPath(src)
-	dst = pathutils.AbsPath(dst)
 
 	switch hdr.Typeflag {
 	case tar.TypeDir:

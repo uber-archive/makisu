@@ -74,7 +74,7 @@ func TestTrimRoot(t *testing.T) {
 
 	testRoot3 := "/test/root/"
 	testPath3 := "/test/root2/test1"
-	trimmed, err = TrimRoot(testPath3, testRoot3)
+	_, err = TrimRoot(testPath3, testRoot3)
 	require.Error(err)
 }
 

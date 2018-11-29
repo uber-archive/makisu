@@ -119,6 +119,7 @@ func TestFromStepScratch(t *testing.T) {
 
 	// Generate config.
 	conf, err := step.UpdateCtxAndConfig(ctx, nil)
+	require.NoError(err)
 	require.Equal(image.NewDefaultImageConfig(), *conf)
 }
 
@@ -132,6 +133,7 @@ func TestFromStepRegularFlow(t *testing.T) {
 	require.NoError(err)
 
 	step, err := NewFromStep("", "fakeregistry.dev/library/alpine:latest", "")
+	require.NoError(err)
 	step.setRegistryClient(p)
 
 	// Execute with modifyfs=false.
