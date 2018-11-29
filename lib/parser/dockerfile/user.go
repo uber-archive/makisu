@@ -28,7 +28,7 @@ type UserDirective struct {
 //   Replaced from ARGs and ENVs from within our stage.
 // Formats:
 //   USER <user>[:<group>]
-func newUserDirective(base *baseDirective, state *parsingState) (*UserDirective, error) {
+func newUserDirective(base *baseDirective, state *parsingState) (Directive, error) {
 	if err := base.replaceVarsCurrStage(state); err != nil {
 		return nil, err
 	}

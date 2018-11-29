@@ -28,7 +28,7 @@ type ArgDirective struct {
 //   Else, variables are replaced from ARGs and ENVs from within our stage.
 // Formats:
 //   ARG <name>[=<default value>]
-func newArgDirective(base *baseDirective, state *parsingState) (*ArgDirective, error) {
+func newArgDirective(base *baseDirective, state *parsingState) (Directive, error) {
 	if err := base.replaceVarsCurrStageOrGlobal(state); err != nil {
 		return nil, err
 	}

@@ -30,7 +30,7 @@ type RunDirective struct {
 //   RUN ["<executable>", "<param>"...]
 //   RUN ["<param>"...]
 //   RUN <command>
-func newRunDirective(base *baseDirective, state *parsingState) (*RunDirective, error) {
+func newRunDirective(base *baseDirective, state *parsingState) (Directive, error) {
 	if err := base.replaceVarsCurrStage(state); err != nil {
 		return nil, err
 	}

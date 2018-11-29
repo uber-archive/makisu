@@ -24,7 +24,7 @@ type LabelDirective struct {
 //   Replaced from ARGs and ENVs from within our stage.
 // Formats:
 //   LABEL <key>=<value> <key>=<value> <key>=<value> ...
-func newLabelDirective(base *baseDirective, state *parsingState) (*LabelDirective, error) {
+func newLabelDirective(base *baseDirective, state *parsingState) (Directive, error) {
 	if err := base.replaceVarsCurrStage(state); err != nil {
 		return nil, err
 	}

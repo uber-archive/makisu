@@ -28,7 +28,7 @@ type WorkdirDirective struct {
 //   Replaced from ARGs and ENVs from within our stage.
 // Formats:
 //   WORKDIR <path>
-func newWorkdirDirective(base *baseDirective, state *parsingState) (*WorkdirDirective, error) {
+func newWorkdirDirective(base *baseDirective, state *parsingState) (Directive, error) {
 	if err := base.replaceVarsCurrStage(state); err != nil {
 		return nil, err
 	}
