@@ -58,7 +58,7 @@ type BuildFlags struct {
 	CompressionLevelStr string `commander:"flag=compression,Image compression level, could be 'no', 'speed', 'size', 'default'."`
 	Commit              string `commander:"flag=commit,Set to explicit to only commit at steps with '#!COMMIT' annotations; Set to implicit to commit at every ADD/COPY/RUN step."`
 
-	forceCommit bool
+	imageStore storage.ImageStore
 }
 
 func newBuildFlags() BuildFlags {
@@ -97,40 +97,12 @@ func (cmd *BuildFlags) postInit() error {
 		return fmt.Errorf("set compression level: %s", err)
 	}
 
-	// Configure commit option.
-	switch cmd.Commit {
-	case "explicit":
-		cmd.forceCommit = false
-	case "implicit":
-		// forceCommit will make every step attempt to commit a layer.
-		// Commit() is noop for steps other than ADD/COPY/RUN if they are not
-		// after an uncommitted RUN, so this won't generate extra empty layers.
-		cmd.forceCommit = true
-	default:
+	if cmd.Commit != "explicit" && cmd.Commit != "implicit" {
 		return fmt.Errorf("invalid commit option: %s", cmd.Commit)
 	}
 
-	// Configure registries.
-	if cmd.RegistryConfig != "" {
-		data, err := ioutil.ReadFile(cmd.RegistryConfig)
-		if err != nil {
-			return fmt.Errorf("read registry config: %s", err)
-		}
-		config := make(registry.Map)
-		if err := yaml.Unmarshal(data, &config); err != nil {
-			return fmt.Errorf("unmarshal registry config: %s", err)
-		}
-		for reg, repoConfig := range config {
-			if _, ok := registry.ConfigurationMap[reg]; !ok {
-				registry.ConfigurationMap[reg] = make(registry.RepositoryMap)
-			}
-			for repo, config := range repoConfig {
-				registry.ConfigurationMap[reg][repo] = config
-			}
-		}
-	} else {
-		registry.ConfigurationMap[image.DockerHubRegistry] = make(registry.RepositoryMap)
-		registry.ConfigurationMap[image.DockerHubRegistry][".*"] = registry.DefaultDockerHubConfiguration
+	if err := cmd.initRegistryConfig(); err != nil {
+		return fmt.Errorf("failed to initialize registry configuration: %v", err)
 	}
 
 	// Verify it's not runninng on Mac if modifyfs is true.
@@ -147,13 +119,52 @@ func (cmd *BuildFlags) postInit() error {
 		}
 	}
 
+	// Init the image store.
+	imageStore, err := storage.NewImageStore(cmd.StorageDir)
+	if err != nil {
+		return fmt.Errorf("failed to init image store: %s", err)
+	}
+	cmd.imageStore = imageStore
+
 	// Verify storage dir is not child of internal dir.
 	if pathutils.IsDescendantOfAny(cmd.StorageDir, []string{pathutils.DefaultInternalDir}) {
 		return fmt.Errorf("storage dir cannot be under internal dir %s",
 			pathutils.DefaultInternalDir)
 	}
-
 	return nil
+}
+
+func (cmd BuildFlags) initRegistryConfig() error {
+	if cmd.RegistryConfig == "" {
+		registry.ConfigurationMap[image.DockerHubRegistry] = make(registry.RepositoryMap)
+		registry.ConfigurationMap[image.DockerHubRegistry][".*"] = registry.DefaultDockerHubConfiguration
+		return nil
+	}
+
+	data, err := ioutil.ReadFile(cmd.RegistryConfig)
+	if err != nil {
+		return fmt.Errorf("read registry config: %s", err)
+	}
+	config := make(registry.Map)
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return fmt.Errorf("unmarshal registry config: %s", err)
+	}
+	for reg, repoConfig := range config {
+		if _, ok := registry.ConfigurationMap[reg]; !ok {
+			registry.ConfigurationMap[reg] = make(registry.RepositoryMap)
+		}
+		for repo, config := range repoConfig {
+			registry.ConfigurationMap[reg][repo] = config
+		}
+	}
+	return nil
+}
+
+// forceCommit will make every step attempt to commit a layer.
+// Commit() is noop for steps other than ADD/COPY/RUN if they are not
+// after an uncommitted RUN, so this won't generate extra empty layers.
+func (cmd BuildFlags) forceCommit() bool {
+	return cmd.Commit == "implicit"
 }
 
 // GetTargetRegistries returns the target registries that the image should
@@ -166,63 +177,70 @@ func (cmd BuildFlags) GetTargetRegistries() []string {
 	return strings.Split(registries, ",")
 }
 
+func (cmd BuildFlags) getTargetImageName() (image.Name, error) {
+	if cmd.Tag == "" {
+		msg := "please specify a target image name: makisu build -t=(<registry:port>/)<repo>:<tag> ./"
+		return image.Name{}, fmt.Errorf(msg)
+	}
+
+	// Parse the target's image name into its components.
+	targetImageName := image.MustParseName(cmd.Tag)
+	if len(cmd.GetTargetRegistries()) == 0 {
+		return targetImageName, nil
+	}
+
+	// If the --push flag is specified we ignore the registry in the image name
+	// and replace it with the first registry in the --push value. This will cause
+	// all of the cache layers to go to that registry.
+	return image.NewImageName(
+		cmd.GetTargetRegistries()[0],
+		targetImageName.GetRepository(),
+		targetImageName.GetTag(),
+	), nil
+}
+
+func (cmd BuildFlags) getBuildPlan(contextDir string, imageName image.Name) (*builder.BuildPlan, error) {
+	// Remove image manifest if it already exists.
+	if err := cmd.cleanManifest(imageName); err != nil {
+		return nil, fmt.Errorf("failed to clean manifest: %v", err)
+	}
+
+	// Read in and parse dockerfile.
+	contextDir, err := filepath.Abs(contextDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve context dir: %s", err)
+	}
+	dockerfile, err := cmd.getDockerfile(contextDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get dockerfile: %v", err)
+	}
+
+	// Create BuildContext.
+	buildContext, err := context.NewBuildContext("/", contextDir, cmd.imageStore)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create initial build context: %s", err)
+	}
+	defer buildContext.Cleanup()
+
+	// Init cache manager.
+	cacheMgr := cmd.getCacheManager(imageName)
+
+	// Create BuildPlan and validate it.
+	return builder.NewBuildPlan(buildContext, imageName, cacheMgr,
+		dockerfile, cmd.AllowModifyFS, cmd.forceCommit())
+}
+
 // Build image from the specified dockerfile.
 // If -push is specified, will also push the image to those registries.
 // If -load is specified, will load the image into the local docker daemon.
 func (cmd BuildFlags) Build(contextDir string) error {
 	log.Infof("Starting Makisu build (version=%s)", utils.BuildHash)
-	if cmd.Tag == "" {
-		return fmt.Errorf("please specify a target image name: makisu build -t=(<registry:port>/)<repo>:<tag> ./")
-	}
-
-	// Parse the target's image name into its components.
-	targetImageName := image.MustParseName(cmd.Tag)
-
-	// If the --push flag is specified we ignore the registry in the image name
-	// and replace it with the first registry in the --push value. This will cause
-	// all of the cache layers to go to that registry.
-	if len(cmd.GetTargetRegistries()) != 0 {
-		targetImageName = image.NewImageName(
-			cmd.GetTargetRegistries()[0],
-			targetImageName.GetRepository(),
-			targetImageName.GetTag(),
-		)
-	}
-
-	// Init storage.
-	imageStore, err := storage.NewImageStore(cmd.StorageDir)
+	imageName, err := cmd.getTargetImageName()
 	if err != nil {
-		return fmt.Errorf("failed to init image store: %s", err)
+		return fmt.Errorf("failed to get target image name: %v", err)
 	}
 
-	// Remove image manifest if it already exists.
-	if err := cmd.cleanManifest(targetImageName, imageStore); err != nil {
-		return fmt.Errorf("failed to clean manifest: %v", err)
-	}
-
-	// Read in and parse dockerfile.
-	contextDir, err = filepath.Abs(contextDir)
-	if err != nil {
-		return fmt.Errorf("failed to resolve context dir: %s", err)
-	}
-	dockerfile, err := cmd.getDockerfile(contextDir, imageStore)
-	if err != nil {
-		return fmt.Errorf("failed to get dockerfile: %v", err)
-	}
-
-	// Create BuildContext.
-	buildContext, err := context.NewBuildContext("/", contextDir, imageStore)
-	if err != nil {
-		return fmt.Errorf("failed to create initial build context: %s", err)
-	}
-	defer buildContext.Cleanup()
-
-	// Init cache manager.
-	cacheMgr := cmd.getCacheManager(imageStore, targetImageName)
-
-	// Create BuildPlan and validate it.
-	buildPlan, err := builder.NewBuildPlan(
-		buildContext, targetImageName, cacheMgr, dockerfile, cmd.AllowModifyFS, cmd.forceCommit)
+	buildPlan, err := cmd.getBuildPlan(contextDir, imageName)
 	if err != nil {
 		return fmt.Errorf("failed to create build plan: %s", err)
 	}
@@ -231,30 +249,29 @@ func (cmd BuildFlags) Build(contextDir string) error {
 	if _, err = buildPlan.Execute(); err != nil {
 		return fmt.Errorf("failed to execute build plan: %s", err)
 	}
-	log.Infof("Successfully built image %s", targetImageName.ShortName())
+	log.Infof("Successfully built image %s", imageName.ShortName())
 
 	// Push image to registries that were specified in the --push flag.
 	for _, registry := range cmd.GetTargetRegistries() {
-		target := image.NewImageName(
-			registry, targetImageName.GetRepository(), targetImageName.GetTag())
-		if err := cmd.pushImage(target, imageStore); err != nil {
+		target := imageName.WithRegistry(registry)
+		if err := cmd.pushImage(target); err != nil {
 			return fmt.Errorf("failed to push image: %v", err)
 		}
 	}
 
 	if cmd.Destination != "" {
-		if err := cmd.saveImage(targetImageName, imageStore); err != nil {
+		if err := cmd.saveImage(imageName); err != nil {
 			return fmt.Errorf("failed to save image: %v", err)
 		}
 	}
 
 	// Load image to local docker daemon.
 	if cmd.DoLoad {
-		if err := cmd.loadImage(targetImageName, imageStore); err != nil {
+		if err := cmd.loadImage(imageName); err != nil {
 			return fmt.Errorf("failed to load image: %v", err)
 		}
 	}
 
-	log.Infof("Finished building %s", targetImageName.ShortName())
+	log.Infof("Finished building %s", imageName.ShortName())
 	return nil
 }
