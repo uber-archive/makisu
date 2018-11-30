@@ -180,6 +180,7 @@ func (fs *MemFS) UpdateFromTarReader(r *tar.Reader, untar bool) error {
 		count++
 
 		path := filepath.Join(fs.tree.src, hdr.Name)
+		hdr.Name = pathutils.RelPath(hdr.Name)
 		if err := fs.recordHeaderMeta(hdr, path, untar, modtimes, hardlinks); err != nil {
 			return fmt.Errorf("gather header meta: %s", err)
 		}
@@ -229,8 +230,6 @@ func (fs *MemFS) recordHeaderMeta(hdr *tar.Header, path string, untar bool,
 			modtimes[parentDir] = parentFi.ModTime()
 		}
 	}
-
-	hdr.Name = pathutils.RelPath(hdr.Name)
 
 	// If the new file is a hard link, then append it to the list
 	// that will be created later.
