@@ -134,7 +134,7 @@ spec:
         secret:
           secretName: docker-registry-config
 ```
-With this job spec, a simple `kubectl create -f job.yaml` will start the build. The job status will reflect whether the build succeeded or failed.
+With this job spec, a simple `kubectl create -f job.yaml` will start the build. The job status will reflect whether the build succeeded or failed (see out of the box example [here](examples/k8s/github-job.yaml).
 
 # Using cache
 ## Configuring distributed cache
