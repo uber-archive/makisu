@@ -182,8 +182,10 @@ func (fs *MemFS) UpdateFromTarReader(r *tar.Reader, untar bool) error {
 			return fmt.Errorf("gather header meta: %s", err)
 		}
 
-		if err := fs.maybeAddToLayer(l, "", pathutils.AbsPath(hdr.Name), hdr, false); err != nil {
-			return fmt.Errorf("add hdr from tar to layer: %s", err)
+		if hdr.Typeflag != tar.TypeLink {
+			if err := fs.maybeAddToLayer(l, "", pathutils.AbsPath(hdr.Name), hdr, false); err != nil {
+				return fmt.Errorf("add hdr from tar to layer: %s", err)
+			}
 		}
 		count++
 	}
