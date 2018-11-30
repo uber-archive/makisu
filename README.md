@@ -63,6 +63,7 @@ function makisu_build() {
         -v /var/run/docker.sock:/docker.sock \
         -e DOCKER_HOST=unix:///docker.sock \
         -v $(pwd):/makisu-context \
+        -v /tmp/makisu-storage:/makisu-storage \
         gcr.io/makisu-project/makisu:$makisu_version build \
             --modifyfs=true --load \
             ${@:1:-1} /makisu-context
