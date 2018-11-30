@@ -177,18 +177,11 @@ func (fs *MemFS) UpdateFromTarReader(r *tar.Reader, untar bool) error {
 		} else if skip {
 			continue
 		}
-		path := filepath.Join(fs.tree.src, hdr.Name)
 
-		if err := fs.gatherHeaderMeta(hdr, untar, modtimes, hardlinks); err != nil {
+		if err := fs.recordHeaderMeta(hdr, r, untar, modtimes, hardlinks); err != nil {
 			return fmt.Errorf("gather header meta: %s", err)
 		}
 
-		// Deal with regular files.
-		if untar {
-			if err := fs.untarOneItem(path, hdr, r); err != nil {
-				return fmt.Errorf("untar one item %s: %s", path, err)
-			}
-		}
 		if err := fs.maybeAddToLayer(l, "", pathutils.AbsPath(hdr.Name), hdr, false); err != nil {
 			return fmt.Errorf("add hdr from tar to layer: %s", err)
 		}
@@ -210,7 +203,8 @@ func (fs *MemFS) UpdateFromTarReader(r *tar.Reader, untar bool) error {
 	return nil
 }
 
-func (fs *MemFS) gatherHeaderMeta(hdr *tar.Header, untar bool, modtimes map[string]time.Time, hardlinks map[string]*tar.Header) error {
+func (fs *MemFS) recordHeaderMeta(hdr *tar.Header, r *tar.Reader, untar bool,
+	modtimes map[string]time.Time, hardlinks map[string]*tar.Header) error {
 	// Record the modtime of the parent directory to reset it after we deal with all of
 	// the other files. If we are not untarring, this is not necessary and may fail
 	// because not all files are necessarily on disk.
@@ -234,6 +228,11 @@ func (fs *MemFS) gatherHeaderMeta(hdr *tar.Header, untar bool, modtimes map[stri
 		// Docker hard link names are all absolute, but don't have a leading slash.
 		hdr.Linkname = pathutils.AbsPath(hdr.Linkname)
 		hardlinks[path] = hdr
+	} else if untar {
+		// Deal with regular files.
+		if err := fs.untarOneItem(path, hdr, r); err != nil {
+			return fmt.Errorf("untar one item %s: %s", path, err)
+		}
 	}
 	return nil
 }
