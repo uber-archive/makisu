@@ -63,6 +63,7 @@ function makisu_build() {
         -v /var/run/docker.sock:/docker.sock \
         -e DOCKER_HOST=unix:///docker.sock \
         -v $(pwd):/makisu-context \
+        -v /tmp/makisu-storage:/makisu-storage \
         gcr.io/makisu-project/makisu:$makisu_version build \
             --modifyfs=true --load \
             ${@:1:-1} /makisu-context
@@ -133,7 +134,7 @@ spec:
         secret:
           secretName: docker-registry-config
 ```
-With this job spec, a simple `kubectl create -f job.yaml` will start the build. The job status will reflect whether the build succeeded or failed.
+With this job spec, a simple `kubectl create -f job.yaml` will start the build. The job status will reflect whether the build succeeded or failed (see out of the box example [here](examples/k8s/github-job.yaml).
 
 # Using cache
 ## Configuring distributed cache
