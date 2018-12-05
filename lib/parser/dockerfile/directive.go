@@ -22,21 +22,22 @@ type Directive interface {
 type directiveConstructor func(*baseDirective, *parsingState) (Directive, error)
 
 var directiveConstructors = map[string]directiveConstructor{
-	"add":        newAddDirective,
-	"arg":        newArgDirective,
-	"cmd":        newCmdDirective,
-	"copy":       newCopyDirective,
-	"entrypoint": newEntrypointDirective,
-	"env":        newEnvDirective,
-	"expose":     newExposeDirective,
-	"from":       newFromDirective,
-	"label":      newLabelDirective,
-	"maintainer": newMaintainerDirective,
-	"run":        newRunDirective,
-	"stopsignal": newStopsignalDirective,
-	"user":       newUserDirective,
-	"volume":     newVolumeDirective,
-	"workdir":    newWorkdirDirective,
+	"add":         newAddDirective,
+	"arg":         newArgDirective,
+	"cmd":         newCmdDirective,
+	"copy":        newCopyDirective,
+	"entrypoint":  newEntrypointDirective,
+	"env":         newEnvDirective,
+	"expose":      newExposeDirective,
+	"from":        newFromDirective,
+	"healthcheck": newHealthcheckDirective,
+	"label":       newLabelDirective,
+	"maintainer":  newMaintainerDirective,
+	"run":         newRunDirective,
+	"stopsignal":  newStopsignalDirective,
+	"user":        newUserDirective,
+	"volume":      newVolumeDirective,
+	"workdir":     newWorkdirDirective,
 }
 
 // newDirective initializes a directive from a line of a Dockerfile and
