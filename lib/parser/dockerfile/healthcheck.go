@@ -43,13 +43,13 @@ type HealthcheckDirective struct {
 //     CMD <command> <param>...
 func newHealthcheckDirective(base *baseDirective, state *parsingState) (Directive, error) {
 	// TODO: regexp is not the ideal solution.
-	if isNone := regexp.MustCompile(`^[\s|\\]*none[\s|\\]*$`).MatchString(base.Args); isNone {
+	if isNone := regexp.MustCompile(`(?i)^[\s|\\]*none[\s|\\]*$`).MatchString(base.Args); isNone {
 		return &HealthcheckDirective{
 			baseDirective: base,
 			Test:          []string{"None"},
 		}, nil
 	}
-	cmdIndices := regexp.MustCompile(`[\s|\\]*cmd[\s|\\]*`).FindStringIndex(base.Args)
+	cmdIndices := regexp.MustCompile(`(?i)[\s|\\]*cmd[\s|\\]*`).FindStringIndex(base.Args)
 	if len(cmdIndices) < 2 {
 		return nil, base.err(fmt.Errorf("CMD not defined"))
 	}
