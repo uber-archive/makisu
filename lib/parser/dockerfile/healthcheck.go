@@ -58,73 +58,51 @@ func newHealthcheckDirective(base *baseDirective, state *parsingState) (Directiv
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse interval")
 	}
-	var intervalStr, timeoutStr, startPeriodStr, retriesStr string
+
+	var interval, timeout, startPeriod time.Duration
+	var retries int
 	for _, flag := range flags {
 		if val, ok, err := parseFlag(flag, "interval"); err != nil {
 			return nil, base.err(err)
 		} else if ok {
-			intervalStr = val
+			interval, err = time.ParseDuration(val)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse interval")
+			}
 			continue
 		}
 
 		if val, ok, err := parseFlag(flag, "timeout"); err != nil {
 			return nil, base.err(err)
 		} else if ok {
-			timeoutStr = val
+			timeout, err = time.ParseDuration(val)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse timeout")
+			}
 			continue
 		}
 
 		if val, ok, err := parseFlag(flag, "start-period"); err != nil {
 			return nil, base.err(err)
 		} else if ok {
-			startPeriodStr = val
+			startPeriod, err = time.ParseDuration(val)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse start-period")
+			}
 			continue
 		}
 
 		if val, ok, err := parseFlag(flag, "retries"); err != nil {
 			return nil, base.err(err)
 		} else if ok {
-			retriesStr = val
+			retries, err = strconv.Atoi(val)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse retries")
+			}
 			continue
 		}
 
 		return nil, base.err(fmt.Errorf("Unsupported flag %s", flag))
-	}
-
-	// Assign defaults.
-	var interval, timeout, startPeriod time.Duration
-	var retries int
-
-	if intervalStr == "" {
-		intervalStr = "30s"
-	}
-	interval, err = time.ParseDuration(intervalStr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse interval")
-	}
-
-	if timeoutStr == "" {
-		timeoutStr = "30s"
-	}
-	timeout, err = time.ParseDuration(timeoutStr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse timeout")
-	}
-
-	if startPeriodStr == "" {
-		startPeriodStr = "0s"
-	}
-	startPeriod, err = time.ParseDuration(startPeriodStr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse start-period")
-	}
-
-	if retriesStr == "" {
-		retriesStr = "3"
-	}
-	retries, err = strconv.Atoi(retriesStr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse retries")
 	}
 
 	// Replace variables.
