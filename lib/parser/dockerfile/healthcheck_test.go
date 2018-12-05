@@ -45,7 +45,7 @@ func TestNewHealthcheckDirective(t *testing.T) {
 		{"empty cmd", false, "healthcheck cmd", d0, d0, d0, 0, nil},
 		{"substitution", true, `healthcheck cmd ["${prefix}this", "cmd${suffix}"]`, d30, d30, d0, 3, []string{"CMD", "test_this", "cmd_test"}},
 		{"substitution 2", true, `healthcheck cmd ["this"$comma "cmd"]`, d30, d30, d0, 3, []string{"CMD", "this", "cmd"}},
-		{"good cmd", true, "healthcheck --interval=15s --timeout=5s --start-period=5s --retries=10 \\\ncmd this cmd", d15, d5, d5, 10, []string{"CMD-SHELL", "this cmd"}},
+		{"good cmd", true, "healthcheck --interval=15s --timeout=5s --start-period=5s --retries=10\\\n \\\ncmd this cmd", d15, d5, d5, 10, []string{"CMD-SHELL", "this cmd"}},
 		{"quotes", true, `healthcheck cmd "this cmd"`, d30, d30, d0, 3, []string{"CMD-SHELL", "\"this cmd\""}},
 		{"quotes 2", true, `healthcheck cmd "this cmd" cmd2 "and cmd 3"`, d30, d30, d0, 3, []string{"CMD-SHELL", "\"this cmd\" cmd2 \"and cmd 3\""}},
 		{"substitution", true, "healthcheck cmd ${prefix}this cmd$suffix", d30, d30, d0, 3, []string{"CMD-SHELL", "test_this cmd_test"}},

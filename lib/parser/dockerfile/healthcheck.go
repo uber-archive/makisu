@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -43,70 +42,56 @@ type HealthcheckDirective struct {
 //   HEALTHCHECK [--interval=<t>] [--timeout=<t>] [--start-period=<t>] [--retries=<n>] \
 //     CMD <command> <param>...
 func newHealthcheckDirective(base *baseDirective, state *parsingState) (Directive, error) {
-	// Args are simply splited by whitespace, and those that are not flags are
-	// joined by space later.
-	args := whitespaceRegexp.Split(strings.TrimSpace(base.Args), -1)
+	// TODO: regexp is not the ideal solution.
+	if isNone := regexp.MustCompile(`^[\s|\\]*none[\s|\\]*$`).MatchString(base.Args); isNone {
+		return &HealthcheckDirective{
+			baseDirective: base,
+			Test:          []string{"None"},
+		}, nil
+	}
+	cmdIndices := regexp.MustCompile(`[\s|\\]*cmd[\s|\\]*`).FindStringIndex(base.Args)
+	if len(cmdIndices) < 2 {
+		return nil, base.err(fmt.Errorf("CMD not defined"))
+	}
 
+	flags, err := splitArgs(base.Args[:cmdIndices[0]])
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse interval")
+	}
 	var intervalStr, timeoutStr, startPeriodStr, retriesStr string
-	var cmdIdx int
-
-	for i, arg := range args {
-		if val, ok, err := parseFlag(arg, "interval"); err != nil {
+	for _, flag := range flags {
+		if val, ok, err := parseFlag(flag, "interval"); err != nil {
 			return nil, base.err(err)
 		} else if ok {
 			intervalStr = val
 			continue
 		}
 
-		if val, ok, err := parseFlag(arg, "timeout"); err != nil {
+		if val, ok, err := parseFlag(flag, "timeout"); err != nil {
 			return nil, base.err(err)
 		} else if ok {
 			timeoutStr = val
 			continue
 		}
 
-		if val, ok, err := parseFlag(arg, "start-period"); err != nil {
+		if val, ok, err := parseFlag(flag, "start-period"); err != nil {
 			return nil, base.err(err)
 		} else if ok {
 			startPeriodStr = val
 			continue
 		}
 
-		if val, ok, err := parseFlag(arg, "retries"); err != nil {
+		if val, ok, err := parseFlag(flag, "retries"); err != nil {
 			return nil, base.err(err)
 		} else if ok {
 			retriesStr = val
 			continue
 		}
 
-		// TODO: Find a better way to handle escaped whitespaces.
-		if regexp.MustCompile("^\\\\$").MatchString(arg) {
-			continue
-		}
-
-		if strings.EqualFold(arg, "none") {
-			cmdIdx = i
-			if cmdIdx != len(args)-1 {
-				return nil, base.err(fmt.Errorf("NONE cannot have arguments"))
-			}
-			return &HealthcheckDirective{
-				baseDirective: base,
-				Test:          []string{"None"},
-			}, nil
-		}
-		if strings.EqualFold(arg, "cmd") {
-			cmdIdx = i
-			if cmdIdx == len(args)-1 {
-				return nil, base.err(fmt.Errorf("CMD cannot be empty"))
-			}
-			break
-		}
-
-		return nil, base.err(fmt.Errorf("Unsupported flag %s", arg))
+		return nil, base.err(fmt.Errorf("Unsupported flag %s", flag))
 	}
 
 	// Assign defaults.
-	var err error
 	var interval, timeout, startPeriod time.Duration
 	var retries int
 
@@ -146,7 +131,7 @@ func newHealthcheckDirective(base *baseDirective, state *parsingState) (Directiv
 	if state.stageVars == nil {
 		return nil, base.err(errBeforeFirstFrom)
 	}
-	remaining := strings.Join(args[cmdIdx+1:], " ")
+	remaining := base.Args[cmdIndices[1]:]
 	replaced, err := replaceVariables(remaining, state.stageVars)
 	if err != nil {
 		return nil, base.err(fmt.Errorf("Failed to replace variables in input: %s", err))
@@ -155,6 +140,10 @@ func newHealthcheckDirective(base *baseDirective, state *parsingState) (Directiv
 
 	// Parse CMD.
 	if cmd, ok := parseJSONArray(remaining); ok {
+		if len(cmd) == 0 {
+			return nil, base.err(fmt.Errorf("missing CMD arguments: %s", err))
+		}
+
 		return &HealthcheckDirective{
 			baseDirective: base,
 			Interval:      interval,
@@ -166,9 +155,14 @@ func newHealthcheckDirective(base *baseDirective, state *parsingState) (Directiv
 	}
 
 	// Verify cmd arg is a valid array, but return the whole arg as one string.
-	if _, err := splitArgs(remaining); err != nil {
+	args, err := splitArgs(remaining)
+	if err != nil {
 		return nil, base.err(err)
 	}
+	if len(args) == 0 {
+		return nil, base.err(fmt.Errorf("missing CMD arguments: %s", err))
+	}
+
 	return &HealthcheckDirective{
 		baseDirective: base,
 		Interval:      interval,
