@@ -128,6 +128,9 @@ func NewDockerfileStep(
 	case *dockerfile.FromDirective:
 		s, _ := d.(*dockerfile.FromDirective)
 		step, err = NewFromStep(s.Args, s.Image, s.Alias)
+	case *dockerfile.HealthcheckDirective:
+		s, _ := d.(*dockerfile.HealthcheckDirective)
+		step, err = NewHealthcheckStep(s.Args, s.Interval, s.Timeout, s.StartPeriod, s.Retries, s.Test, s.Commit)
 	case *dockerfile.LabelDirective:
 		s, _ := d.(*dockerfile.LabelDirective)
 		step = NewLabelStep(s.Args, s.Labels, s.Commit)
