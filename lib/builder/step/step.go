@@ -28,20 +28,21 @@ type Directive string
 
 // Set of all valid directives.
 const (
-	Add        = Directive("ADD")
-	Cmd        = Directive("CMD")
-	Copy       = Directive("COPY")
-	Entrypoint = Directive("ENTRYPOINT")
-	Env        = Directive("ENV")
-	Expose     = Directive("EXPOSE")
-	From       = Directive("FROM")
-	Label      = Directive("LABEL")
-	Maintainer = Directive("MAINTAINER")
-	Run        = Directive("RUN")
-	Stopsignal = Directive("STOPSIGNAL")
-	User       = Directive("USER")
-	Volume     = Directive("VOLUME")
-	Workdir    = Directive("WORKDIR")
+	Add         = Directive("ADD")
+	Cmd         = Directive("CMD")
+	Copy        = Directive("COPY")
+	Entrypoint  = Directive("ENTRYPOINT")
+	Env         = Directive("ENV")
+	Expose      = Directive("EXPOSE")
+	From        = Directive("FROM")
+	Healthcheck = Directive("HEALTHCHECK")
+	Label       = Directive("LABEL")
+	Maintainer  = Directive("MAINTAINER")
+	Run         = Directive("RUN")
+	Stopsignal  = Directive("STOPSIGNAL")
+	User        = Directive("USER")
+	Volume      = Directive("VOLUME")
+	Workdir     = Directive("WORKDIR")
 )
 
 // BuildStep performs build for one build step.
@@ -127,6 +128,9 @@ func NewDockerfileStep(
 	case *dockerfile.FromDirective:
 		s, _ := d.(*dockerfile.FromDirective)
 		step, err = NewFromStep(s.Args, s.Image, s.Alias)
+	case *dockerfile.HealthcheckDirective:
+		s, _ := d.(*dockerfile.HealthcheckDirective)
+		step, err = NewHealthcheckStep(s.Args, s.Interval, s.Timeout, s.StartPeriod, s.Retries, s.Test, s.Commit)
 	case *dockerfile.LabelDirective:
 		s, _ := d.(*dockerfile.LabelDirective)
 		step = NewLabelStep(s.Args, s.Labels, s.Commit)
