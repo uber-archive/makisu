@@ -1,11 +1,11 @@
 #  Copyright (c) 2018 Uber Technologies, Inc.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ DEP_TOOL = $(EXT_TOOLS_DIR)/dep
 
 BUILD_LDFLAGS = -X $(PACKAGE_NAME)/lib/utils.BuildHash=$(PACKAGE_VERSION)
 GO_FLAGS = -gcflags '-N -l' -ldflags "$(BUILD_LDFLAGS)"
-GO_VERSION = 1.10
+GO_VERSION = 1.11
 
 REGISTRY ?= gcr.io/makisu-project
 
@@ -61,7 +61,7 @@ $(DEP_TOOL):
 	go get github.com/golang/dep/cmd/dep
 	cp $(GOPATH)/bin/dep $(EXT_TOOLS_DIR)
 
-# TODO(pourchet): Remove this hack to make dep more reliable. For some reason `dep ensure` fails 
+# TODO(pourchet): Remove this hack to make dep more reliable. For some reason `dep ensure` fails
 # sometimes on TravisCI, so run it twice if it fails the first time.
 vendor: $(DEP_TOOL) Gopkg.toml
 	$(EXT_TOOLS_DIR)/dep ensure || $(EXT_TOOLS_DIR)/dep ensure
@@ -98,7 +98,7 @@ image:
 	docker tag $(REGISTRY)/makisu:$(PACKAGE_VERSION) makisu:$(PACKAGE_VERSION)
 
 publish: image
-	docker push $(REGISTRY)/makisu:$(PACKAGE_VERSION) 
+	docker push $(REGISTRY)/makisu:$(PACKAGE_VERSION)
 
 
 
