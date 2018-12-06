@@ -60,7 +60,7 @@ It doesn't seem reasonable to accept such a Dockerfile.
 
 # Directives
 
-The following directives are not supported: ONBUILD, HEALTHCHECK, and SHELL.
+The following directives are not supported: ONBUILD and SHELL.
 
 ## COMMIT
 
@@ -138,6 +138,17 @@ Syntax:
 - FROM \<image\> [AS \<name\>]
 
 Variables are substituted using globally defined ARGs (those that appear before the first FROM directive).
+
+## HEALTHCHECK
+
+Syntax:
+- HEALTHCHECK NONE
+- HEALTHCHECK \[--interval=\<time\>\] \[--timeout=\<time\>\] \[--start-period=\<time\>\] \[--retries=\<n\>\] CMD ["\<arg\>", "\<arg\>"...]
+    - CMD section is in JSON format.
+- HEALTHCHECK \[--interval=\<time\>\] \[--timeout=\<time\>\] \[--start-period=\<time\>\] \[--retries=\<n\>\] CMD \<full\_cmd\>
+    - \<full\_cmd\> will be added to healthcheck section of image config as-is (after variable substitution).
+
+Variables after CMD are substituted using values from ARGs and ENVs within the stage.
 
 ## LABEL
 
