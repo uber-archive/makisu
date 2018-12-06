@@ -199,7 +199,9 @@ func (cmd BuildFlags) getTargetImageName() (image.Name, error) {
 	), nil
 }
 
-func (cmd BuildFlags) getBuildPlan(contextDir string, imageName image.Name) (*builder.BuildPlan, error) {
+func (cmd BuildFlags) getBuildPlan(
+	contextDir string, imageName image.Name) (*builder.BuildPlan, error) {
+
 	// Remove image manifest if it already exists.
 	if err := cmd.cleanManifest(imageName); err != nil {
 		return nil, fmt.Errorf("failed to clean manifest: %v", err)

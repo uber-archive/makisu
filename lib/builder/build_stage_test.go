@@ -124,10 +124,8 @@ func TestPullCacheLayers(t *testing.T) {
 			stage, err := newBuildStage(ctx, alias, steps, image.DigestPairMap{}, false, false)
 			require.NoError(err)
 
-			imageName, err := image.ParseName("registry.net/repo:tag")
-			require.NoError(err)
 			kvstore := cache.MemKVStore{}
-			cacheMgr := cache.New(kvstore, imageName, registry.NoopClientFixture())
+			cacheMgr := cache.New(kvstore, registry.NoopClientFixture())
 
 			for i, node := range stage.nodes {
 				if tc.cacheExistsFlags[i] {
