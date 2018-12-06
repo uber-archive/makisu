@@ -65,8 +65,7 @@ func (cmd BuildFlags) getDockerfile(contextDir string) ([]*dockerfile.Stage, err
 
 // pushImage pushes the specified image to docker registry.
 // Exits with non-0 status code if it encounters an error.
-func (cmd BuildFlags) pushImage(imageName image.Name) error {
-	registryClient := registry.New(cmd.imageStore, imageName.GetRegistry(), imageName.GetRepository())
+func (cmd BuildFlags) pushImage(imageName image.Name, registryClient registry.Client) error {
 	if err := registryClient.Push(imageName.GetTag()); err != nil {
 		return fmt.Errorf("failed to push image: %s", err)
 	}
@@ -115,9 +114,8 @@ func (cmd BuildFlags) cleanManifest(imageName image.Name) error {
 }
 
 // getCacheManager inits and returns a transfer.CacheManager object.
-func (cmd BuildFlags) getCacheManager(target image.Name) cache.Manager {
-	if len(cmd.GetTargetRegistries()) != 0 {
-		registryClient := registry.New(cmd.imageStore, cmd.GetTargetRegistries()[0], "makisu/cache")
+func (cmd BuildFlags) getCacheManager(registryCli registry.Client) cache.Manager {
+	if registryCli != nil {
 		if cmd.RedisCacheAddress != "" {
 			// If RedisCacheAddress is provided, init redis cache.
 			log.Infof("Using redis at %s for cacheID storage", cmd.RedisCacheAddress)
@@ -127,7 +125,7 @@ func (cmd BuildFlags) getCacheManager(target image.Name) cache.Manager {
 				log.Errorf("Failed to connect to redis store: %s", err)
 				cacheIDStore = nil
 			}
-			return cache.New(cacheIDStore, target, registryClient)
+			return cache.New(cacheIDStore, registryCli)
 		} else if cmd.CacheTTL != 0 {
 			// If redis cache address is not provided, and the cache ttl is not 0,
 			// use the FSStore as a key-value store.
@@ -139,7 +137,7 @@ func (cmd BuildFlags) getCacheManager(target image.Name) cache.Manager {
 				log.Errorf("Failed to init local cache ID store: %s", err)
 				cacheIDStore = nil
 			}
-			return cache.New(cacheIDStore, target, registryClient)
+			return cache.New(cacheIDStore, registryCli)
 		}
 	}
 

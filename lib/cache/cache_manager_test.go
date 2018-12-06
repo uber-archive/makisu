@@ -27,12 +27,9 @@ import (
 func TestNoopCache(t *testing.T) {
 	require := require.New(t)
 
-	imageName, err := image.ParseName("repo:tag")
-	require.NoError(err)
+	cacheMgr := cache.New(nil, registry.NoopClientFixture())
 
-	cacheMgr := cache.New(nil, imageName, registry.NoopClientFixture())
-
-	_, err = cacheMgr.PullCache("cacheid1")
+	_, err := cacheMgr.PullCache("cacheid1")
 	require.Equal(cache.ErrorLayerNotFound, errors.Cause(err))
 
 	err = cacheMgr.PushCache(
@@ -50,13 +47,11 @@ func TestNoopCache(t *testing.T) {
 func TestMemKVStore(t *testing.T) {
 	require := require.New(t)
 
-	imageName, err := image.ParseName("registry.net/repo:tag")
-	require.NoError(err)
 	kvstore := cache.MemKVStore{}
 
-	cacheMgr := cache.New(kvstore, imageName, registry.NoopClientFixture())
+	cacheMgr := cache.New(kvstore, registry.NoopClientFixture())
 
-	_, err = cacheMgr.PullCache("cacheid1")
+	_, err := cacheMgr.PullCache("cacheid1")
 	require.Equal(cache.ErrorLayerNotFound, errors.Cause(err))
 
 	err = cacheMgr.PushCache(
