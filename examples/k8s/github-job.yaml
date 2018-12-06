@@ -18,13 +18,13 @@ spec:
           mountPath: /makisu-context
       containers:
       - name: makisu
-        image: gcr.io/makisu-project/makisu:v0.1.3
+        image: gcr.io/makisu-project/makisu:v0.1.4
         imagePullPolicy: IfNotPresent
         args:
         - build
         - --push=gcr.io
         - --modifyfs=true
-        - -t=makisu-project/example-github:v0.1.3
+        - -t=makisu-project/example-github:v0.1.4
         - --registry-config=/registry-config/registry.yaml
         - /makisu-context
         volumeMounts:
