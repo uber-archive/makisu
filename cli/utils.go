@@ -65,7 +65,9 @@ func (cmd BuildFlags) getDockerfile(contextDir string) ([]*dockerfile.Stage, err
 
 // pushImage pushes the specified image to docker registry.
 // Exits with non-0 status code if it encounters an error.
-func (cmd BuildFlags) pushImage(imageName image.Name, registryClient registry.Client) error {
+func (cmd BuildFlags) pushImage(imageName image.Name) error {
+	registryClient := registry.New(
+		cmd.imageStore, imageName.GetRegistry(), imageName.GetRepository())
 	if err := registryClient.Push(imageName.GetTag()); err != nil {
 		return fmt.Errorf("failed to push image: %s", err)
 	}
@@ -114,8 +116,10 @@ func (cmd BuildFlags) cleanManifest(imageName image.Name) error {
 }
 
 // getCacheManager inits and returns a transfer.CacheManager object.
-func (cmd BuildFlags) getCacheManager(registryCli registry.Client) cache.Manager {
-	if registryCli != nil {
+func (cmd BuildFlags) getCacheManager(imageName image.Name) cache.Manager {
+	if len(cmd.GetTargetRegistries()) != 0 {
+		registryClient := registry.New(
+			cmd.imageStore, cmd.GetTargetRegistries()[0], imageName.GetRepository())
 		if cmd.RedisCacheAddress != "" {
 			// If RedisCacheAddress is provided, init redis cache.
 			log.Infof("Using redis at %s for cacheID storage", cmd.RedisCacheAddress)
@@ -125,19 +129,20 @@ func (cmd BuildFlags) getCacheManager(registryCli registry.Client) cache.Manager
 				log.Errorf("Failed to connect to redis store: %s", err)
 				cacheIDStore = nil
 			}
-			return cache.New(cacheIDStore, registryCli)
+			return cache.New(cacheIDStore, registryClient)
 		} else if cmd.CacheTTL != 0 {
 			// If redis cache address is not provided, and the cache ttl is not 0,
 			// use the FSStore as a key-value store.
 			fullpath := path.Join(cmd.imageStore.RootDir, pathutils.CacheKeyValueFileName)
 			log.Infof("Using file at %s for cacheID storage", fullpath)
 
-			cacheIDStore, err := cache.NewFSStore(fullpath, cmd.imageStore.SandboxDir, int64(cmd.CacheTTL))
+			cacheIDStore, err := cache.NewFSStore(
+				fullpath, cmd.imageStore.SandboxDir, int64(cmd.CacheTTL))
 			if err != nil {
 				log.Errorf("Failed to init local cache ID store: %s", err)
 				cacheIDStore = nil
 			}
-			return cache.New(cacheIDStore, registryCli)
+			return cache.New(cacheIDStore, registryClient)
 		}
 	}
 

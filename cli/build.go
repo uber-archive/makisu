@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	"github.com/uber/makisu/lib/builder"
-	"github.com/uber/makisu/lib/cache"
 	"github.com/uber/makisu/lib/context"
 	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/log"
@@ -201,7 +200,7 @@ func (cmd BuildFlags) getTargetImageName() (image.Name, error) {
 }
 
 func (cmd BuildFlags) getBuildPlan(
-	contextDir string, imageName image.Name, cacheMgr cache.Manager) (*builder.BuildPlan, error) {
+	contextDir string, imageName image.Name) (*builder.BuildPlan, error) {
 
 	// Remove image manifest if it already exists.
 	if err := cmd.cleanManifest(imageName); err != nil {
@@ -225,6 +224,9 @@ func (cmd BuildFlags) getBuildPlan(
 	}
 	defer buildContext.Cleanup()
 
+	// Init cache manager.
+	cacheMgr := cmd.getCacheManager(imageName)
+
 	// Create BuildPlan and validate it.
 	return builder.NewBuildPlan(buildContext, imageName, cacheMgr,
 		dockerfile, cmd.AllowModifyFS, cmd.forceCommit())
@@ -240,12 +242,7 @@ func (cmd BuildFlags) Build(contextDir string) error {
 		return fmt.Errorf("failed to get target image name: %v", err)
 	}
 
-	registryCli := registry.New(
-		cmd.imageStore, imageName.GetRegistry(), imageName.GetRepository())
-
-	cacheMgr := cmd.getCacheManager(registryCli)
-
-	buildPlan, err := cmd.getBuildPlan(contextDir, imageName, cacheMgr)
+	buildPlan, err := cmd.getBuildPlan(contextDir, imageName)
 	if err != nil {
 		return fmt.Errorf("failed to create build plan: %s", err)
 	}
@@ -259,7 +256,7 @@ func (cmd BuildFlags) Build(contextDir string) error {
 	// Push image to registries that were specified in the --push flag.
 	for _, registry := range cmd.GetTargetRegistries() {
 		target := imageName.WithRegistry(registry)
-		if err := cmd.pushImage(target, registryCli); err != nil {
+		if err := cmd.pushImage(target); err != nil {
 			return fmt.Errorf("failed to push image: %v", err)
 		}
 	}
