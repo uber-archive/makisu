@@ -74,7 +74,7 @@ Now you can use `makisu_build` like you would use `docker build`:
 ```shell
 $ makisu_build -t myimage .
 ```
-Note: Docker socket mount is not required. It's used together with `--load` for loading images back into Docker daemon for convenience of local development. Neither does /makisu-storage mount, which is used for local cache. 
+Note: Docker socket mount is not required. It's used together with `--load` for loading images back into Docker daemon for convenience of local development. Neither does the mount to /makisu-storage, which is used for local cache. 
 
 ## Makisu on Kubernetes
 
