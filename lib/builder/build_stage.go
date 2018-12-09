@@ -149,8 +149,7 @@ func newBuildStageHelper(
 	return stage, nil
 }
 
-// createDockerfileSteps returns a list of steps that correspond to the steps of
-// the stage passed in as input.
+// createDockerfileSteps returns a list of build steps given a parsed stage.
 func createDockerfileSteps(
 	ctx *context.BuildContext, stage *dockerfile.Stage,
 	planOpts *buildPlanOptions) ([]step.BuildStep, error) {
