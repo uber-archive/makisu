@@ -19,6 +19,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"hash/crc32"
 	"io/ioutil"
 	"os"
 	"path"
@@ -29,33 +30,36 @@ import (
 	"github.com/uber/makisu/lib/context"
 	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/log"
+	"github.com/uber/makisu/lib/parser/dockerfile"
 	"github.com/uber/makisu/lib/storage"
+	"github.com/uber/makisu/lib/utils"
 )
+
+type buildStageOptions struct {
+	// forceCommit will make every step attampt to commit a layer.
+	// Commit() is noop for steps other than ADD/COPY/RUN if they are not after
+	// an uncommitted RUN, so this won't generate extra empty layers.
+	forceCommit   bool
+	allowModifyFS bool
+	requireOnDisk bool
+}
 
 // buildStage represents a sequence of steps to build intermediate layers or a final image.
 type buildStage struct {
 	ctx               *context.BuildContext
-	copyFromDirs      map[string][]string
 	alias             string
+	copyFromDirs      map[string][]string
 	nodes             []*buildNode
 	lastImageConfig   *image.Config
 	sharedDigestPairs image.DigestPairMap
 
-	requireOnDisk bool
-
-	allowModifyFS bool
-
-	// forceCommit will make every step attampt to commit a layer.
-	// Commit() is noop for steps other than ADD/COPY/RUN if they are not after
-	// an uncommitted RUN, so this won't generate extra empty layers.
-	forceCommit bool
+	opts *buildStageOptions
 }
 
 // newBuildStage initializes a buildStage.
 func newBuildStage(
-	baseCtx *context.BuildContext, alias string,
-	steps []step.BuildStep, digestPairs image.DigestPairMap,
-	allowModifyFS, forceCommit bool) (*buildStage, error) {
+	baseCtx *context.BuildContext, alias string, parsedStage *dockerfile.Stage,
+	digestPairs image.DigestPairMap, planOpts *buildPlanOptions) (*buildStage, error) {
 
 	// Create a new build context for the stage.
 	ctx, err := context.NewBuildContext(
@@ -64,50 +68,111 @@ func newBuildStage(
 		return nil, fmt.Errorf("create stage build context: %s", err)
 	}
 
-	stage := &buildStage{
-		ctx:               ctx,
-		copyFromDirs:      make(map[string][]string),
-		alias:             alias,
-		nodes:             make([]*buildNode, 0),
-		sharedDigestPairs: digestPairs,
-		allowModifyFS:     allowModifyFS,
-		forceCommit:       forceCommit,
+	// Create steps from parsed stage.
+	steps, err := createDockerfileSteps(ctx, parsedStage, planOpts)
+	if err != nil {
+		return nil, fmt.Errorf("new dockerfile steps: %s", err)
 	}
 
-	// Convert each directive in the parsed stage to a build node.
-	if err := stage.createNodes(ctx, steps); err != nil {
-		return nil, fmt.Errorf("convert parsed stage to build stage: %s", err)
-	}
-	return stage, nil
+	return newBuildStageHelper(ctx, alias, steps, digestPairs, planOpts)
 }
 
-// convertParsedStage converts the directives in a parsed stage to build steps and keeps
-// track of directories needed for cross-stage copy operations.
-func (stage *buildStage) createNodes(ctx *context.BuildContext, steps []step.BuildStep) error {
+// newRemoteImageStage initializes a buildStage.
+func newRemoteImageStage(
+	baseCtx *context.BuildContext, alias string, digestPairs image.DigestPairMap,
+	planOpts *buildPlanOptions) (*buildStage, error) {
+
+	// Create a new build context for the stage.
+	ctx, err := context.NewBuildContext(
+		baseCtx.RootDir, baseCtx.ContextDir, baseCtx.ImageStore)
+	if err != nil {
+		return nil, fmt.Errorf("create stage build context: %s", err)
+	}
+
+	// Create from step.
+	from, err := step.NewFromStep(alias, alias, alias)
+	if err != nil {
+		return nil, fmt.Errorf("new from step: %s", err)
+	}
+	steps := []step.BuildStep{from}
+
+	// Set forceCommit to false.
+	// TODO: currently, allowModifyFS has to be true so FROM can be executed and
+	// checkpointed. Value of allowModifyFS is verified later, but maybe the
+	// verification should happen here?
+	opts := &buildPlanOptions{
+		forceCommit:   false,
+		allowModifyFS: planOpts.allowModifyFS,
+	}
+
+	return newBuildStageHelper(ctx, alias, steps, digestPairs, opts)
+}
+
+func newBuildStageHelper(
+	ctx *context.BuildContext, alias string, steps []step.BuildStep,
+	digestPairs image.DigestPairMap, planOpts *buildPlanOptions) (*buildStage, error) {
+
+	// Convert each step to a build node.
+	var requireOnDisk bool
+	nodes := make([]*buildNode, 0)
+	copyFromDirs := make(map[string][]string)
 	for _, step := range steps {
 		newNode := newBuildNode(ctx, step)
-		stage.nodes = append(stage.nodes, newNode)
+		nodes = append(nodes, newNode)
 
 		// Add context dirs for cross-stage copy, if any.
 		alias, dirs := step.ContextDirs()
 		if len(dirs) > 0 {
-			if _, ok := stage.copyFromDirs[alias]; !ok {
-				stage.copyFromDirs[alias] = make([]string, 0)
+			if _, ok := copyFromDirs[alias]; !ok {
+				copyFromDirs[alias] = make([]string, 0)
 			}
-			stage.copyFromDirs[alias] = append(stage.copyFromDirs[alias], dirs...)
+			copyFromDirs[alias] = append(copyFromDirs[alias], dirs...)
 		}
 		if step.RequireOnDisk() {
-			stage.requireOnDisk = true
+			requireOnDisk = true
 		}
 	}
-	return nil
+
+	stage := &buildStage{
+		ctx:               ctx,
+		copyFromDirs:      copyFromDirs,
+		alias:             alias,
+		nodes:             nodes,
+		sharedDigestPairs: digestPairs,
+		opts: &buildStageOptions{
+			allowModifyFS: planOpts.allowModifyFS,
+			forceCommit:   planOpts.forceCommit,
+			requireOnDisk: requireOnDisk,
+		},
+	}
+
+	return stage, nil
 }
 
-// build performs the build for that stage. There are side effects that should be expected on
-// each node within the stage.
-func (stage *buildStage) build(
-	cache cache.Manager, lastStage, copiedFrom bool) error {
+// createDockerfileSteps returns a list of steps that correspond to the steps of
+// the stage passed in as input.
+func createDockerfileSteps(
+	ctx *context.BuildContext, stage *dockerfile.Stage,
+	planOpts *buildPlanOptions) ([]step.BuildStep, error) {
 
+	checksum := crc32.ChecksumIEEE([]byte(utils.BuildHash + fmt.Sprintf("%v", *planOpts)))
+	seed := fmt.Sprintf("%x", checksum)
+	directives := append([]dockerfile.Directive{stage.From}, stage.Directives...)
+	var steps []step.BuildStep
+	for _, directive := range directives {
+		step, err := step.NewDockerfileStep(ctx, directive, seed)
+		if err != nil {
+			return nil, fmt.Errorf("directive to build step: %v", err)
+		}
+		steps = append(steps, step)
+		seed = step.CacheID()
+	}
+	return steps, nil
+}
+
+// build performs the build for that stage. There are side effects that should
+// be expected on each node within the stage.
+func (stage *buildStage) build(cacheMgr cache.Manager, lastStage, copiedFrom bool) error {
 	// Reuse the digestpairs that other stages have populated.
 	for _, node := range stage.nodes {
 		if pairs, ok := stage.sharedDigestPairs[node.CacheID()]; ok {
@@ -121,22 +186,22 @@ func (stage *buildStage) build(
 	histories := make([]image.History, 0)
 	for i, node := range stage.nodes {
 		// Build current step from the previous image config (possibly cached).
-		modifyFS := stage.requireOnDisk || copiedFrom
-		if modifyFS && !stage.allowModifyFS {
+		modifyFS := stage.opts.requireOnDisk || copiedFrom
+		if modifyFS && !stage.opts.allowModifyFS {
 			return fmt.Errorf("fs not allowed to be modified")
 		}
 		skipBuild := i < stage.latestFetched() && i > 0
 		lastStep := i == len(stage.nodes)-1
-		forceCommit := i == 0 || (lastStage && lastStep) || stage.forceCommit
+		forceCommit := i == 0 || (lastStage && lastStep) || stage.opts.forceCommit
 
-		opts := &buildOptions{
-			modifyFS:    modifyFS,
+		nodeOpts := &buildNodeOptions{
 			skipBuild:   skipBuild,
 			forceCommit: forceCommit,
+			modifyFS:    modifyFS,
 		}
 
-		log.Infof("* Step %d/%d (%s) : %s", i+1, len(stage.nodes), opts.String(), node.String())
-		stage.lastImageConfig, err = node.Build(cache, stage.lastImageConfig, opts)
+		log.Infof("* Step %d/%d (%s) : %s", i+1, len(stage.nodes), nodeOpts.String(), node.String())
+		stage.lastImageConfig, err = node.Build(cacheMgr, stage.lastImageConfig, nodeOpts)
 		if err != nil {
 			return fmt.Errorf("build node: %s", err)
 		}
@@ -245,7 +310,7 @@ func (stage *buildStage) pullCacheLayers(cacheMgr cache.Manager) {
 	// it gets executed.
 	for _, node := range stage.nodes[1:] {
 		// Stop once the cache chain is broken.
-		if node.HasCommit() || stage.forceCommit {
+		if node.HasCommit() || stage.opts.forceCommit {
 			if !node.pullCacheLayer(cacheMgr) {
 				return
 			}
