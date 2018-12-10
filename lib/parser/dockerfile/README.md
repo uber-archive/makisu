@@ -20,44 +20,6 @@ Variable substitutions can be specified in the following formats:
 
 If a variable fails to resolve, it is passed through to the resulting string exactly as it appears in the input.
 
-# Inline comments and backslash
-
-Makisu supports inline comments and backslashes in general, but not if the comment is between multiple lines of one RUN directive separated by backslash. For example, these instructions are supported:
-```
-# Print hello
-RUN echo \
-  hello
-# Print world
-RUN echo \
-  world
-```
-```
-RUN echo \
-  hello # Print hello
-RUN echo \
-  world # Print world
-```
-```
-# Print hello
-RUN echo \
-  hello
-# Print world
-RUN echo \
-  world
-```
-But the following is not supported:
-```
-RUN echo \
-# Print hello
-  hello
-```
-This is because `#!COMMIT` is a special keyword for Makisu, we don't know how to handle it if `#!COMMIT` is placed in the middle of a RUN directive; Besides, backslash is supposed to mean "ignore next character" in bash, so the above example is supposed to be equivalent to:
-```
-RUN echo # Print hello
-  hello
-```
-It doesn't seem reasonable to accept such a Dockerfile.
-
 # Directives
 
 The following directives are not supported: ONBUILD and SHELL.
@@ -66,7 +28,8 @@ The following directives are not supported: ONBUILD and SHELL.
 
 Syntax:
 - #!COMMIT
-    - 'COMMIT' can be any case and there can be whitespace preceding '#', after '!', or after 'COMMIT.'
+    - 'COMMIT' can be any case and there can be whitespace preceding '#', after '!', or after 'COMMIT'.
+    - It cannot be at the beginning of ta line, since all lines beginning with '#' would be ignored. 
 
 This is a special directive that indicates that a layer should be committed (used in the distributed cache). To enable this directive, `--commit=explicit` argument is required.
 
