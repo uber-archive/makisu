@@ -200,11 +200,19 @@ func (cmd BuildFlags) getTargetImageName() (image.Name, error) {
 }
 
 func (cmd BuildFlags) createBuildPlan(contextDir string, imageName image.Name) (*builder.BuildPlan, error) {
-	// Create BuildContext.
+	// Convert context dir to absolute path.
 	contextDir, err := filepath.Abs(contextDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve context dir: %s", err)
 	}
+
+	// Read in and parse dockerfile.
+	dockerfile, err := cmd.getDockerfile(contextDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get dockerfile: %v", err)
+	}
+
+	// Create BuildContext.
 	buildContext, err := context.NewBuildContext("/", contextDir, cmd.imageStore)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create initial build context: %s", err)
@@ -215,12 +223,6 @@ func (cmd BuildFlags) createBuildPlan(contextDir string, imageName image.Name) (
 	if cmd.AllowModifyFS {
 		buildContext.MemFS.Remove()
 		defer buildContext.MemFS.Remove()
-	}
-
-	// Read in and parse dockerfile.
-	dockerfile, err := cmd.getDockerfile(buildContext.ContextDir)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get dockerfile: %v", err)
 	}
 
 	// Init cache manager.
