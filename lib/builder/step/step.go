@@ -20,7 +20,6 @@ import (
 	"github.com/uber/makisu/lib/context"
 	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/parser/dockerfile"
-	"github.com/uber/makisu/lib/utils"
 )
 
 // Directive represents a valid directive type.
@@ -61,40 +60,26 @@ type BuildStep interface {
 	// SetCacheID sets the cache ID of the step given a seed value.
 	SetCacheID(ctx *context.BuildContext, seed string) error
 
-	// ApplyCtxAndConfig sets up the execution environment using image config from previous step.
+	// ApplyCtxAndConfig sets up the execution environment using image config
+	// from previous step.
 	// This function will not be skipped.
 	ApplyCtxAndConfig(ctx *context.BuildContext, imageConfig *image.Config) error
 
-	// Execute executes the step. If modifyFS is true, the command might change the local
-	// file system.
+	// Execute executes the step. If modifyFS is true, the command might change
+	// the local file system.
 	Execute(ctx *context.BuildContext, modifyFS bool) error
 
 	// Commit generates an image layer.
 	Commit(ctx *context.BuildContext) ([]*image.DigestPair, error)
 
-	// UpdateCtxAndConfig generates a new image config base on config from previous step.
+	// UpdateCtxAndConfig generates a new image config base on config from
+	// previous step.
 	// This function will not be skipped.
 	UpdateCtxAndConfig(ctx *context.BuildContext, imageConfig *image.Config) (*image.Config, error)
 
-	// HasCommit returns whether or not a particular commit step has a commit annotation.
+	// HasCommit returns whether or not a particular commit step has a commit
+	// annotation.
 	HasCommit() bool
-}
-
-// NewDockerfileSteps returns a list of steps that correspond to the steps of the stage
-// passed in as input.
-func NewDockerfileSteps(ctx *context.BuildContext, stage *dockerfile.Stage) ([]BuildStep, error) {
-	seed := utils.BuildHash
-	directives := append([]dockerfile.Directive{stage.From}, stage.Directives...)
-	var steps []BuildStep
-	for _, directive := range directives {
-		step, err := NewDockerfileStep(ctx, directive, seed)
-		if err != nil {
-			return nil, fmt.Errorf("directive to build step: %v", err)
-		}
-		steps = append(steps, step)
-		seed = step.CacheID()
-	}
-	return steps, nil
 }
 
 // NewDockerfileStep initializes a build step from a dockerfile directive.

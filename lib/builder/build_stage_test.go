@@ -17,7 +17,6 @@ package builder
 import (
 	"testing"
 
-	"github.com/uber/makisu/lib/builder/step"
 	"github.com/uber/makisu/lib/cache"
 	"github.com/uber/makisu/lib/context"
 	"github.com/uber/makisu/lib/docker/image"
@@ -118,10 +117,12 @@ func TestPullCacheLayers(t *testing.T) {
 			require := require.New(t)
 
 			alias := tc.stage.From.Alias
-			steps, err := step.NewDockerfileSteps(ctx, tc.stage)
-			require.NoError(err)
+			opts := &buildPlanOptions{
+				forceCommit:   false,
+				allowModifyFS: false,
+			}
 
-			stage, err := newBuildStage(ctx, alias, steps, image.DigestPairMap{}, false, false)
+			stage, err := newBuildStage(ctx, alias, tc.stage, image.DigestPairMap{}, opts)
 			require.NoError(err)
 
 			kvstore := cache.MemKVStore{}

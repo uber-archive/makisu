@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/uber/makisu/lib/builder/step"
 	"github.com/uber/makisu/lib/cache"
 	"github.com/uber/makisu/lib/context"
 	"github.com/uber/makisu/lib/docker/image"
@@ -26,6 +25,11 @@ import (
 	"github.com/uber/makisu/lib/parser/dockerfile"
 	"github.com/uber/makisu/lib/utils/stringset"
 )
+
+type buildPlanOptions struct {
+	forceCommit   bool
+	allowModifyFS bool
+}
 
 // BuildPlan describes a list of named buildStages, that can copy files between
 // one another.
@@ -36,16 +40,15 @@ type BuildPlan struct {
 	cacheMgr          cache.Manager
 	stages            []*buildStage
 	remoteImageStages map[string]*buildStage
-	allowModifyFS     bool
-	forceCommit       bool
+
+	opts *buildPlanOptions
 }
 
 // NewBuildPlan takes in contextDir, a target image and an ImageStore, and
 // returns a new BuildPlan.
 func NewBuildPlan(
-	ctx *context.BuildContext, target image.Name,
-	cacheMgr cache.Manager, parsedStages []*dockerfile.Stage,
-	allowModifyFS, forceCommit bool) (*BuildPlan, error) {
+	ctx *context.BuildContext, target image.Name, cacheMgr cache.Manager,
+	parsedStages []*dockerfile.Stage, allowModifyFS, forceCommit bool) (*BuildPlan, error) {
 
 	plan := &BuildPlan{
 		baseCtx:           ctx,
@@ -54,8 +57,10 @@ func NewBuildPlan(
 		cacheMgr:          cacheMgr,
 		stages:            make([]*buildStage, len(parsedStages)),
 		remoteImageStages: make(map[string]*buildStage),
-		allowModifyFS:     allowModifyFS,
-		forceCommit:       forceCommit,
+		opts: &buildPlanOptions{
+			forceCommit:   forceCommit,
+			allowModifyFS: allowModifyFS,
+		},
 	}
 
 	aliases, err := buildAliases(parsedStages)
@@ -65,19 +70,14 @@ func NewBuildPlan(
 
 	digestPairs := make(image.DigestPairMap)
 	for i, parsedStage := range parsedStages {
-		steps, err := step.NewDockerfileSteps(plan.baseCtx, parsedStage)
-		if err != nil {
-			return nil, fmt.Errorf("new dockerfile steps: %s", err)
-		}
-
 		// Add this stage to the plan.
-		stage, err := newBuildStage(plan.baseCtx, parsedStage.From.Alias,
-			steps, digestPairs, plan.allowModifyFS, plan.forceCommit)
+		stage, err := newBuildStage(
+			ctx, parsedStage.From.Alias, parsedStage, digestPairs, plan.opts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert parsed stage: %s", err)
 		}
 
-		if len(stage.copyFromDirs) > 0 && !plan.allowModifyFS {
+		if len(stage.copyFromDirs) > 0 && !plan.opts.allowModifyFS {
 			// TODO(pourchet): Support this at some point.
 			return nil, fmt.Errorf("must allow modifyfs for multi-stage dockerfiles with COPY --from")
 		}
@@ -93,18 +93,22 @@ func NewBuildPlan(
 // handleCopyFromDirs goes through all of the stages in the build plan and looks
 // at the `COPY --from` steps to make sure they are valid. If the --from source
 // is another image, we create a new image stage in the build plan.
-func (plan *BuildPlan) handleCopyFromDirs(aliases map[string]bool, digestPairs image.DigestPairMap) error {
+func (plan *BuildPlan) handleCopyFromDirs(
+	aliases map[string]bool, digestPairs image.DigestPairMap) error {
+
 	for _, stage := range plan.stages {
 		for alias, dirs := range stage.copyFromDirs {
 			if _, ok := aliases[alias]; !ok {
-				// If we see that the alias of the cross referenced directory is an
-				// image name, we add a fake stage to the build plan that will download
-				// that image directly into the cross referencing root for that alias.
+				// If the alias of the cross referenced directory is an image
+				// name, prepend a fake stage to the build plan that will
+				// download that image directly into the cross referencing root
+				// for that alias.
 				name, err := image.ParseNameForPull(alias)
 				if err != nil || !name.IsValid() {
 					return fmt.Errorf("copy from nonexistent stage %s", alias)
 				}
-				remoteImageStage, err := plan.newRemoteImageStage(alias, digestPairs)
+				remoteImageStage, err := newRemoteImageStage(
+					plan.baseCtx, alias, digestPairs, plan.opts)
 				if err != nil {
 					return fmt.Errorf("new image stage: %s", err)
 				}
@@ -138,19 +142,6 @@ func buildAliases(stages dockerfile.Stages) (map[string]bool, error) {
 		aliases[parsedStage.From.Alias] = true
 	}
 	return aliases, nil
-}
-
-func (plan *BuildPlan) newRemoteImageStage(alias string, digestPairs image.DigestPairMap) (*buildStage, error) {
-	from, err := step.NewFromStep(alias, alias, alias)
-	if err != nil {
-		return nil, fmt.Errorf("new from step: %s", err)
-	}
-	steps := []step.BuildStep{from}
-	stage, err := newBuildStage(plan.baseCtx, alias, steps, digestPairs, plan.allowModifyFS, false)
-	if err != nil {
-		return nil, fmt.Errorf("new build stage: %s", err)
-	}
-	return stage, nil
 }
 
 // Execute executes all build stages in order.
@@ -217,7 +208,7 @@ func (plan *BuildPlan) executeStage(stage *buildStage, lastStage, copiedFrom boo
 		return fmt.Errorf("build stage %s: %s", stage.alias, err)
 	}
 
-	if !plan.allowModifyFS {
+	if !plan.opts.allowModifyFS {
 		return nil
 	}
 
