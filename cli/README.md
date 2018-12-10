@@ -26,6 +26,8 @@ Usage of makisu build:
     	Arguments to the dockerfile as per the spec of ARG. Format is a json object. (type: map, default: {})
   -cache-ttl
     	The TTL of cacheID-sha mapping entries in seconds. (type: int, default: 604800)
+  -clean
+      Remove all files before and after each build. (type: bool, default: false)
   -commit
     	Set to explicit to only commit at steps with '#!COMMIT' annotations; Set to implicit to commit at every ADD/COPY/RUN step. (type: string, default: "implicit")
   -compression
