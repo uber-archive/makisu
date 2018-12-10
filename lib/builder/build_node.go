@@ -28,11 +28,11 @@ import (
 	"github.com/uber/makisu/lib/tario"
 )
 
-// buildOptions wraps options that are specified when a node is built.
-type buildOptions struct {
-	modifyFS    bool // If true, the node will modify the file system.
+// buildNodeOptions wraps options that are specified when a node is built.
+type buildNodeOptions struct {
 	skipBuild   bool // If true, the node will not call build on its build step.
 	forceCommit bool // If true, the node will always commit a layer if it can.
+	modifyFS    bool // If true, the node will modify the file system.
 }
 
 // buildNode corresponds to a single BuildStep and its metadata.
@@ -60,7 +60,8 @@ func newBuildNode(ctx *context.BuildContext, step step.BuildStep) *buildNode {
 // a layer.
 // TODO: Build and push intermediate cache layers concurrently.
 func (n *buildNode) Build(
-	cacheMgr cache.Manager, prevConfig *image.Config, opts *buildOptions) (*image.Config, error) {
+	cacheMgr cache.Manager, prevConfig *image.Config,
+	opts *buildNodeOptions) (*image.Config, error) {
 
 	// Always apply config.
 	if err := n.ApplyCtxAndConfig(n.ctx, prevConfig); err != nil {
@@ -98,7 +99,7 @@ func (n *buildNode) Build(
 	return config, nil
 }
 
-func (n *buildNode) doCommit(cacheMgr cache.Manager, opts *buildOptions) error {
+func (n *buildNode) doCommit(cacheMgr cache.Manager, opts *buildNodeOptions) error {
 	var err error
 	n.digestPairs, err = n.Commit(n.ctx)
 	if err != nil {
@@ -117,7 +118,7 @@ func (n *buildNode) doCommit(cacheMgr cache.Manager, opts *buildOptions) error {
 	return nil
 }
 
-func (n *buildNode) doExecute(cacheMgr cache.Manager, opts *buildOptions) error {
+func (n *buildNode) doExecute(cacheMgr cache.Manager, opts *buildNodeOptions) error {
 	start := time.Now()
 	err := n.Execute(n.ctx, opts.modifyFS)
 	if err != nil {
@@ -174,7 +175,7 @@ func (n *buildNode) pullCacheLayer(cacheMgr cache.Manager) bool {
 	return true
 }
 
-func (opts *buildOptions) String() string {
+func (opts *buildNodeOptions) String() string {
 	s := []string{}
 	if opts.skipBuild {
 		s = append(s, "skip")
