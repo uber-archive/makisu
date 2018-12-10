@@ -4,10 +4,19 @@ FROM $BASE_IMAGE AS phase1
 RUN apt-get update
 
 # Install runtime package
-RUN apt-get install -y --allow-unauthenticated hello    #!COMMIT
+RUN apt-get install -y --allow-unauthenticated \
+
+    # hello
+    hello    #!COMMIT
 
 # Install build-time package
-RUN apt-get install -y --allow-unauthenticated tree
+RUN apt-get install -y --allow-unauthenticated \
+
+    # tree
+    tree \
+
+    # other
+    jq
 
 # Perform build
 COPY . /home/udocker/simple-debian-package
