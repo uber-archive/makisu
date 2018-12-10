@@ -22,6 +22,7 @@ import (
 
 // ParseFile parses dockerfile from given reader, returns a ParsedFile object.
 func ParseFile(filecontents string, args map[string]string) ([]*Stage, error) {
+	filecontents = removeCommentLines(filecontents)
 	filecontents = strings.Replace(filecontents, "\\\n", "", -1)
 	reader := strings.NewReader(filecontents)
 	scanner := bufio.NewScanner(reader)
@@ -48,4 +49,19 @@ func ParseFile(filecontents string, args map[string]string) ([]*Stage, error) {
 	}
 
 	return state.stages, nil
+}
+
+func removeCommentLines(filecontents string) string {
+	lines := strings.Split(filecontents, "\n")
+	var output string
+	for _, line := range lines {
+		trimmed := strings.Trim(line, " \t")
+		if len(trimmed) != 0 && trimmed[0] == '#' {
+			continue
+		} else if len(trimmed) == 0 {
+			continue
+		}
+		output += line + "\n"
+	}
+	return output
 }
