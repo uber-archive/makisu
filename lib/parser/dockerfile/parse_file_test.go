@@ -89,6 +89,23 @@ func TestParseSucceeds(t *testing.T) {
 	}
 }
 
+func TestRemoveComments(t *testing.T) {
+	t.Run("simple", func(t *testing.T) {
+		contents := `RUN echo asd #!COMMIT
+	RUN apt-get install -y qwasd \
+
+		# asdwqe
+		zxczxd #!COMMIT
+`
+		cleaned := `RUN echo asd #!COMMIT
+	RUN apt-get install -y qwasd \
+		zxczxd #!COMMIT
+`
+		output := removeCommentLines(contents)
+		require.Equal(t, output, cleaned)
+	})
+}
+
 func invalidDirective() []*test {
 	return []*test{{
 		desc:       "invalid directive",
