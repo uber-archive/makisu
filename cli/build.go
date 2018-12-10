@@ -45,7 +45,7 @@ type BuildFlags struct {
 	RegistryConfig string            `commander:"flag=registry-config,Registry configuration file for pulling and pushing images. Default configuration for DockerHub is used if not specified."`
 
 	AllowModifyFS bool   `commander:"flag=modifyfs,Allow makisu to touch files outside of its own storage dir."`
-	StorageDir    string `commander:"flag=storage,Directory that makisu uses for temp files and cached layers. Mount this path for better caching performance. If modifyfs is set, default to /makisu-storage; Otherwise default to /tmp/makisu-storage."`
+	Commit        string `commander:"flag=commit,Set to explicit to only commit at steps with '#!COMMIT' annotations; Set to implicit to commit at every ADD/COPY/RUN step."`
 	Blacklist     string `commander:"flag=blacklist,Comma separated list of files/directories. Makisu will omit all changes to these locations in the resulting docker images."`
 
 	DockerHost    string `commander:"flag=docker-host,Docker host to load images to."`
@@ -55,8 +55,8 @@ type BuildFlags struct {
 
 	RedisCacheAddress   string `commander:"flag=redis-cache-addr,The address of a redis cache server for cacheID to layer sha mapping."`
 	CacheTTL            int    `commander:"flag=cache-ttl,The TTL of cacheID-sha mapping entries in seconds"`
+	StorageDir          string `commander:"flag=storage,Directory that makisu uses for temp files and cached layers. Mount this path for better caching performance. If modifyfs is set, default to /makisu-storage; Otherwise default to /tmp/makisu-storage."`
 	CompressionLevelStr string `commander:"flag=compression,Image compression level, could be 'no', 'speed', 'size', 'default'."`
-	Commit              string `commander:"flag=commit,Set to explicit to only commit at steps with '#!COMMIT' annotations; Set to implicit to commit at every ADD/COPY/RUN step."`
 
 	imageStore storage.ImageStore
 }
@@ -105,7 +105,7 @@ func (cmd *BuildFlags) postInit() error {
 		return fmt.Errorf("failed to initialize registry configuration: %v", err)
 	}
 
-	// Verify it's not runninng on Mac if modifyfs is true.
+	// If modifyfs is true, verify it's not runninng on Mac.
 	if cmd.AllowModifyFS && runtime.GOOS == "darwin" {
 		return fmt.Errorf("modifyfs option could erase fs and is not allowed on Mac")
 	}
@@ -199,30 +199,19 @@ func (cmd BuildFlags) getTargetImageName() (image.Name, error) {
 	), nil
 }
 
-func (cmd BuildFlags) getBuildPlan(
-	contextDir string, imageName image.Name) (*builder.BuildPlan, error) {
-
-	// Remove image manifest if it already exists.
-	if err := cmd.cleanManifest(imageName); err != nil {
-		return nil, fmt.Errorf("failed to clean manifest: %v", err)
-	}
+func (cmd BuildFlags) createBuildPlan(
+	buildContext *context.BuildContext, imageName image.Name) (*builder.BuildPlan, error) {
 
 	// Read in and parse dockerfile.
-	contextDir, err := filepath.Abs(contextDir)
-	if err != nil {
-		return nil, fmt.Errorf("failed to resolve context dir: %s", err)
-	}
-	dockerfile, err := cmd.getDockerfile(contextDir)
+	dockerfile, err := cmd.getDockerfile(buildContext.ContextDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get dockerfile: %v", err)
 	}
 
-	// Create BuildContext.
-	buildContext, err := context.NewBuildContext("/", contextDir, cmd.imageStore)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create initial build context: %s", err)
+	// Remove image manifest if an image with the same name already exists.
+	if err := cmd.cleanManifest(imageName); err != nil {
+		return nil, fmt.Errorf("failed to clean manifest: %v", err)
 	}
-	defer buildContext.Cleanup()
 
 	// Init cache manager.
 	cacheMgr := cmd.getCacheManager(imageName)
@@ -237,17 +226,36 @@ func (cmd BuildFlags) getBuildPlan(
 // If -load is specified, will load the image into the local docker daemon.
 func (cmd BuildFlags) Build(contextDir string) error {
 	log.Infof("Starting Makisu build (version=%s)", utils.BuildHash)
+
 	imageName, err := cmd.getTargetImageName()
 	if err != nil {
 		return fmt.Errorf("failed to get target image name: %v", err)
 	}
 
-	buildPlan, err := cmd.getBuildPlan(contextDir, imageName)
+	// Convert context dir to absolute path.
+	contextDir, err = filepath.Abs(contextDir)
+	if err != nil {
+		return fmt.Errorf("failed to resolve context dir: %s", err)
+	}
+
+	// Create BuildContext.
+	buildContext, err := context.NewBuildContext("/", contextDir, cmd.imageStore)
+	if err != nil {
+		return fmt.Errorf("failed to create initial build context: %s", err)
+	}
+	defer buildContext.Cleanup()
+
+	// Optionally remove everything before and after build.
+	if cmd.AllowModifyFS {
+		buildContext.MemFS.Remove()
+		defer buildContext.MemFS.Remove()
+	}
+
+	// Create and execute build plan.
+	buildPlan, err := cmd.createBuildPlan(buildContext, imageName)
 	if err != nil {
 		return fmt.Errorf("failed to create build plan: %s", err)
 	}
-
-	// Execute build plan.
 	if _, err = buildPlan.Execute(); err != nil {
 		return fmt.Errorf("failed to execute build plan: %s", err)
 	}
@@ -261,13 +269,14 @@ func (cmd BuildFlags) Build(contextDir string) error {
 		}
 	}
 
+	// Optionally save image as a tar file.
 	if cmd.Destination != "" {
 		if err := cmd.saveImage(imageName); err != nil {
 			return fmt.Errorf("failed to save image: %v", err)
 		}
 	}
 
-	// Load image to local docker daemon.
+	// Optionally load image to local docker daemon.
 	if cmd.DoLoad {
 		if err := cmd.loadImage(imageName); err != nil {
 			return fmt.Errorf("failed to load image: %v", err)
