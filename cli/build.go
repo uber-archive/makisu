@@ -45,7 +45,6 @@ type BuildFlags struct {
 	RegistryConfig string            `commander:"flag=registry-config,Registry configuration file for pulling and pushing images. Default configuration for DockerHub is used if not specified."`
 
 	AllowModifyFS bool   `commander:"flag=modifyfs,Allow makisu to touch files outside of its own storage dir."`
-	DoClean       bool   `commander:"flag=clean,Remove all files before and after each build"`
 	Commit        string `commander:"flag=commit,Set to explicit to only commit at steps with '#!COMMIT' annotations; Set to implicit to commit at every ADD/COPY/RUN step."`
 	Blacklist     string `commander:"flag=blacklist,Comma separated list of files/directories. Makisu will omit all changes to these locations in the resulting docker images."`
 
@@ -109,11 +108,6 @@ func (cmd *BuildFlags) postInit() error {
 	// If modifyfs is true, verify it's not runninng on Mac.
 	if cmd.AllowModifyFS && runtime.GOOS == "darwin" {
 		return fmt.Errorf("modifyfs option could erase fs and is not allowed on Mac")
-	}
-
-	// If clean is true, ensure modifyfs is true too.
-	if cmd.DoClean && !cmd.AllowModifyFS {
-		return fmt.Errorf("clean option requires modifyfs option to be set")
 	}
 
 	// Configure default storage dir.
@@ -250,7 +244,7 @@ func (cmd BuildFlags) Build(contextDir string) error {
 	}
 
 	// Optionally remove everything before and after build.
-	if cmd.DoClean {
+	if cmd.AllowModifyFS {
 		buildContext.MemFS.Remove()
 		defer buildContext.MemFS.Remove()
 	}
