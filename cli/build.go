@@ -199,30 +199,18 @@ func (cmd BuildFlags) getTargetImageName() (image.Name, error) {
 	), nil
 }
 
-func (cmd BuildFlags) createBuildPlan(contextDir string, imageName image.Name) (*builder.BuildPlan, error) {
-	// Convert context dir to absolute path.
-	contextDir, err := filepath.Abs(contextDir)
-	if err != nil {
-		return nil, fmt.Errorf("failed to resolve context dir: %s", err)
-	}
+func (cmd BuildFlags) createBuildPlan(
+	buildContext *context.BuildContext, imageName image.Name) (*builder.BuildPlan, error) {
 
 	// Read in and parse dockerfile.
-	dockerfile, err := cmd.getDockerfile(contextDir)
+	dockerfile, err := cmd.getDockerfile(buildContext.ContextDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get dockerfile: %v", err)
 	}
 
-	// Create BuildContext.
-	buildContext, err := context.NewBuildContext("/", contextDir, cmd.imageStore)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create initial build context: %s", err)
-	}
-	defer buildContext.Cleanup()
-
-	// Optionally remove everything before and after build.
-	if cmd.AllowModifyFS {
-		buildContext.MemFS.Remove()
-		defer buildContext.MemFS.Remove()
+	// Remove image manifest if an image with the same name already exists.
+	if err := cmd.cleanManifest(imageName); err != nil {
+		return nil, fmt.Errorf("failed to clean manifest: %v", err)
 	}
 
 	// Init cache manager.
@@ -244,17 +232,30 @@ func (cmd BuildFlags) Build(contextDir string) error {
 		return fmt.Errorf("failed to get target image name: %v", err)
 	}
 
-	// Remove image manifest if an image with the same name already exists.
-	if err := cmd.cleanManifest(imageName); err != nil {
-		return fmt.Errorf("failed to clean manifest: %v", err)
+	// Convert context dir to absolute path.
+	contextDir, err = filepath.Abs(contextDir)
+	if err != nil {
+		return fmt.Errorf("failed to resolve context dir: %s", err)
+	}
+
+	// Create BuildContext.
+	buildContext, err := context.NewBuildContext("/", contextDir, cmd.imageStore)
+	if err != nil {
+		return fmt.Errorf("failed to create initial build context: %s", err)
+	}
+	defer buildContext.Cleanup()
+
+	// Optionally remove everything before and after build.
+	if cmd.AllowModifyFS {
+		buildContext.MemFS.Remove()
+		defer buildContext.MemFS.Remove()
 	}
 
 	// Create and execute build plan.
-	buildPlan, err := cmd.createBuildPlan(contextDir, imageName)
+	buildPlan, err := cmd.createBuildPlan(buildContext, imageName)
 	if err != nil {
 		return fmt.Errorf("failed to create build plan: %s", err)
 	}
-
 	if _, err = buildPlan.Execute(); err != nil {
 		return fmt.Errorf("failed to execute build plan: %s", err)
 	}
