@@ -28,6 +28,7 @@ type Directive string
 // Set of all valid directives.
 const (
 	Add         = Directive("ADD")
+	Arg         = Directive("ARG")
 	Cmd         = Directive("CMD")
 	Copy        = Directive("COPY")
 	Entrypoint  = Directive("ENTRYPOINT")
