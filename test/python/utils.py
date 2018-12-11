@@ -91,7 +91,7 @@ def makisu_run_cmd(volumes, args):
 
 def makisu_build_image(new_image, registry, context_dir, storage_dir,
                        cache_dir=None, additional_volumes=None,
-                       docker_args=None, load=False):
+                       docker_args=None, load=False, registry_config=None):
     volumes = additional_volumes or {}
     volumes[storage_dir] = storage_dir  # Sandbox and file store
     volumes[context_dir] = '/context'  # Mount context dir
@@ -108,8 +108,11 @@ def makisu_build_image(new_image, registry, context_dir, storage_dir,
         '-push', registry,
         '-build-args', docker_args_str,
         '-modifyfs=true',
-        '-commit=explicit'
+        '-commit=explicit',
     ]
+
+    if registry_config is not None:
+        args.extend(['--registry-config', json.dumps(registry_config)])
 
     if load:
         args.append('-load')

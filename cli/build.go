@@ -15,8 +15,10 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -141,14 +143,22 @@ func (cmd BuildFlags) initRegistryConfig() error {
 		return nil
 	}
 
-	data, err := ioutil.ReadFile(cmd.RegistryConfig)
-	if err != nil {
-		return fmt.Errorf("read registry config: %s", err)
-	}
+	cmd.RegistryConfig = os.ExpandEnv(cmd.RegistryConfig)
 	config := make(registry.Map)
-	if err := yaml.Unmarshal(data, &config); err != nil {
-		return fmt.Errorf("unmarshal registry config: %s", err)
+	if utils.IsValidJSON([]byte(cmd.RegistryConfig)) {
+		if err := json.Unmarshal([]byte(cmd.RegistryConfig), &config); err != nil {
+			return fmt.Errorf("unmarshal registry config: %s", err)
+		}
+	} else {
+		data, err := ioutil.ReadFile(cmd.RegistryConfig)
+		if err != nil {
+			return fmt.Errorf("read registry config: %s", err)
+		}
+		if err := yaml.Unmarshal(data, &config); err != nil {
+			return fmt.Errorf("unmarshal registry config: %s", err)
+		}
 	}
+
 	for reg, repoConfig := range config {
 		if _, ok := registry.ConfigurationMap[reg]; !ok {
 			registry.ConfigurationMap[reg] = make(registry.RepositoryMap)
