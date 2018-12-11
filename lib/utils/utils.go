@@ -15,6 +15,7 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/user"
@@ -184,4 +185,10 @@ func GetUIDGID() (int, int, error) {
 		return 0, 0, err
 	}
 	return currUID, currGID, nil
+}
+
+// IsValidJSON returns true if the blob passed in is a valid json object.
+func IsValidJSON(blob []byte) bool {
+	into := map[string]interface{}{}
+	return json.Unmarshal(blob, &into) == nil
 }

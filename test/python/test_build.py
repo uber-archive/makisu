@@ -15,7 +15,8 @@ def test_build_simple(registry1, storage_dir):
     new_image = new_image_name()
     context_dir = os.path.join(os.getcwd(), 'testdata/build-context/simple')
 
-    utils.makisu_build_image(new_image, registry1.addr, context_dir, storage_dir, load=True)
+    utils.makisu_build_image(new_image, registry1.addr, context_dir, storage_dir, load=True,
+                             registry_config={"*": {"*": {"security": {"tls": {"client": {"disabled": True}}}}}})
     code, err = utils.docker_run_image(registry1.addr, new_image)
     assert code == 0, err
 
