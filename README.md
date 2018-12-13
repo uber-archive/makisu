@@ -273,6 +273,11 @@ Example:
                 <json here>
             }
 ```
+This config can also be passed in as a raw json blob through the `--registry-config` flag:
+```
+--registry-config='{"gcr.io": {"makisu-project/*": {"push_chunk": -1, "security": {"basic": {"username": "_json_key", "password": "<escaped key here>"}}}}}'
+```
+Consider using the great tool [yq](https://github.com/kislyuk/yq) to convert your yaml configuration into the blob that can be passed in.
 
 # Comparison With Similar Tools
 
