@@ -273,6 +273,10 @@ Example:
                 <json here>
             }
 ```
+This config can also be passed in as a raw json blob through the `--registry-config` flag:
+```
+--registry-config='{"gcr.io": {"makisu-project/*": {"push_chunk": -1, "security": {"basic": {"username": "_json_key", "password": "<escaped key here>"}}}}}'
+```
 
 # Comparison With Similar Tools
 
