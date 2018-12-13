@@ -16,6 +16,7 @@ package dockerfile
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -42,7 +43,8 @@ func newEnvDirective(base *baseDirective, state *parsingState) (Directive, error
 
 	idx := strings.Index(base.Args, " ")
 	if idx == -1 || idx == len(base.Args)-1 {
-		return nil, base.err(errMissingSpace)
+		err := fmt.Errorf("%s: '%s'", errMissingSpace, base.Args)
+		return nil, base.err(err)
 	}
 
 	// Split on the 1st space (including whitespace characters).
