@@ -16,7 +16,7 @@ required = [
 
 [[constraint]]
   name = "github.com/apourchet/commander"
-  version = "1.4.9"
+  version = "1.4.10"
 
 [[constraint]]
   name = "github.com/garyburd/redigo"

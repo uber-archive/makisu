@@ -55,8 +55,12 @@ type BuildFlags struct {
 	DockerScheme  string `commander:"flag=docker-scheme,Scheme for api calls to docker daemon."`
 	DoLoad        bool   `commander:"flag=load,Load image into docker daemon after build. Requires access to docker socket at location defined by ${DOCKER_HOST}."`
 
-	RedisCacheAddress   string `commander:"flag=redis-cache-addr,The address of a redis cache server for cacheID to layer sha mapping."`
-	CacheTTL            int    `commander:"flag=cache-ttl,The TTL of cacheID-sha mapping entries in seconds"`
+	RedisCacheAddress string `commander:"flag=redis-cache-addr,The address of a redis server for cacheID to layer sha mapping."`
+	CacheTTL          int    `commander:"flag=cache-ttl,The TTL of cacheID-sha mapping entries in seconds (not supported in http cacheid storage)."`
+
+	HTTPCacheAddress string `commander:"flag=http-cache-addr,The address of the http server for cacheID to layer sha mapping."`
+	HTTPCacheHeaders string `commander:"flag=http-cache-headers,The headers passed into each request to the http server for cacheID to layer sha mapping. Format is <h1>=<v1>,<h2>=<v2>,..."`
+
 	StorageDir          string `commander:"flag=storage,Directory that makisu uses for temp files and cached layers. Mount this path for better caching performance. If modifyfs is set, default to /makisu-storage; Otherwise default to /tmp/makisu-storage."`
 	CompressionLevelStr string `commander:"flag=compression,Image compression level, could be 'no', 'speed', 'size', 'default'."`
 
