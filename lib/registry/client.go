@@ -193,7 +193,7 @@ func (c DockerRegistryClient) PullManifest(tag string) (*image.DistributionManif
 		httputil.SendTimeout(c.config.Timeout),
 		c.config.sendRetry(),
 		httputil.SendAcceptedCodes(http.StatusOK, http.StatusNotFound, http.StatusBadRequest),
-		httputil.SendHeaders(map[string]string{"Accept": image.MediaTypeManifest}))
+		httputil.SendHeaders(map[string]string{"Accept": image.MediaTypeManifest, "Authorization": "Basic "}))
 	if err != nil {
 		return nil, fmt.Errorf("http send error: %s", err)
 	}
@@ -370,6 +370,7 @@ func (c DockerRegistryClient) manifestExists(tag string) (bool, error) {
 		opt,
 		httputil.SendTimeout(c.config.Timeout),
 		c.config.sendRetry(),
+		httputil.SendHeaders(map[string]string{"Authorization": "Basic "}),
 		httputil.SendAcceptedCodes(http.StatusOK, http.StatusNotFound, http.StatusBadRequest))
 	if err != nil {
 		return false, fmt.Errorf("check manifest exists: %s", err)
@@ -397,6 +398,7 @@ func (c DockerRegistryClient) layerExists(digest image.Digest) (bool, error) {
 		opt,
 		httputil.SendTimeout(c.config.Timeout),
 		c.config.sendRetry(),
+		httputil.SendHeaders(map[string]string{"Authorization": "Basic "}),
 		httputil.SendAcceptedCodes(http.StatusOK, http.StatusNotFound))
 	if err != nil {
 		return false, fmt.Errorf("check manifest exists: %s", err)
