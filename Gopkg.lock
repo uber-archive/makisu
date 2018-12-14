@@ -61,15 +61,15 @@
   revision = "9e14626cd129ba01ccb6806bcca9d523e570aaf0"
 
 [[projects]]
-  digest = "1:cfaea6aa94f9ab5bfa3afc8c542e272d23dfc4532567f7556c7db37211e64811"
+  digest = "1:f6b20b9377cb5f08d7c4ce7f3319f96d70292aaf5fc595f253400ab03abcf0f5"
   name = "github.com/apourchet/commander"
   packages = [
     ".",
     "utils",
   ]
   pruneopts = ""
-  revision = "670d0a616b3fc1ceb736513b55876a0cbf744bbc"
-  version = "v1.4.9"
+  revision = "c9557032886500c2d43d91c900432f67d18ce83b"
+  version = "v1.4.10"
 
 [[projects]]
   branch = "master"
