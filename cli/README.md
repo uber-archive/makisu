@@ -40,7 +40,7 @@ Usage of makisu build:
     	Version string for loading images to docker. (type: string, default: "1.21")
   -f	The absolute path to the dockerfile. (type: string, default: "Dockerfile")
   -load
-    	Load image into docker daemon after build. Requires access to docker socket. (type: bool, default: false)
+    	Load image into docker daemon after build. Requires access to docker socket at location defined by ${DOCKER_HOST}. (type: bool, default: false)
   -modifyfs
     	Allow makisu to touch files outside of its own storage dir. (type: bool, default: false)
   -push

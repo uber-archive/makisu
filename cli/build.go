@@ -53,7 +53,7 @@ type BuildFlags struct {
 	DockerHost    string `commander:"flag=docker-host,Docker host to load images to."`
 	DockerVersion string `commander:"flag=docker-version,Version string for loading images to docker."`
 	DockerScheme  string `commander:"flag=docker-scheme,Scheme for api calls to docker daemon."`
-	DoLoad        bool   `commander:"flag=load,Load image into docker daemon after build. Requires access to docker socket."`
+	DoLoad        bool   `commander:"flag=load,Load image into docker daemon after build. Requires access to docker socket at location defined by ${DOCKER_HOST}."`
 
 	RedisCacheAddress   string `commander:"flag=redis-cache-addr,The address of a redis cache server for cacheID to layer sha mapping."`
 	CacheTTL            int    `commander:"flag=cache-ttl,The TTL of cacheID-sha mapping entries in seconds"`
