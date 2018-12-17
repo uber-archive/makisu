@@ -29,7 +29,7 @@ class DockerImage():
         exit_code = subprocess.call(command)
         if exit_code != 0:
             msg = 'Failed to extract docker image to local filesystem: {}'.format(
-                self.image_name, self.image_tar)
+                self.image_name)
             raise Exception(msg)
 
     def _load_manifest(self):
@@ -64,8 +64,10 @@ class DockerLayer():
             yield member
 
     def get_tar_header_count(self):
-        try: return len(list(self.get_tar_headers()))
-        except tarfile.ReadError: return 0
+        try:
+            return len(list(self.get_tar_headers()))
+        except tarfile.ReadError:
+            return 0
 
     def get_tar_header_by_name(self, name):
         for member in self.get_tar_headers():
