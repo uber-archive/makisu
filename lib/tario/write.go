@@ -27,7 +27,7 @@ import (
 // This function doesn't handle parent directories.
 func WriteEntry(w *tar.Writer, src string, h *tar.Header) error {
 	if err := WriteHeader(w, h); err != nil {
-		return fmt.Errorf("write header helper: %v", err)
+		return fmt.Errorf("write header helper: %s", err)
 	}
 
 	switch h.Typeflag {
