@@ -92,13 +92,16 @@ env: test/python/requirements.txt
 
 
 ### Target to build the makisu docker images.
-.PHONY: image publish
-image:
+.PHONY: images publish
+images:
 	docker build -t $(REGISTRY)/makisu:$(PACKAGE_VERSION) -f Dockerfile .
 	docker tag $(REGISTRY)/makisu:$(PACKAGE_VERSION) makisu:$(PACKAGE_VERSION)
+	docker build -t $(REGISTRY)/makisu-alpine:$(PACKAGE_VERSION) -f Dockerfile.alpine .
+	docker tag $(REGISTRY)/makisu-alpine:$(PACKAGE_VERSION) makisu-alpine:$(PACKAGE_VERSION)
 
-publish: image
+publish: images
 	docker push $(REGISTRY)/makisu:$(PACKAGE_VERSION)
+	docker push $(REGISTRY)/makisu-alpine:$(PACKAGE_VERSION)
 
 
 
@@ -117,14 +120,14 @@ cunit-test: $(ALL_SRC)
 		golang:$(GO_VERSION) \
 		-c "make ext-tools unit-test"
 
-integration: env image
+integration: env images
 	PACKAGE_VERSION=$(PACKAGE_VERSION) ./env/bin/py.test --maxfail=1 --durations=6 --timeout=300 -vv test/python
 
 
 
 ### Misc targets
 .PHONY: clean integration-single
-integration-single: env image
+integration-single: env images
 	PACKAGE_VERSION=$(PACKAGE_VERSION) ./env/bin/py.test test/python/test_build.py::$(TEST_NAME)
 
 
