@@ -407,7 +407,7 @@ func (fs *MemFS) commitLayer(l *memLayer, w *tar.Writer) error {
 	if err := l.rangeFiles(func(f memFile) error {
 		return f.commit(w)
 	}); err != nil {
-		return fmt.Errorf("commit layer: %v", err)
+		return fmt.Errorf("commit layer: %s", err)
 	}
 	fs.layers = append(fs.layers, l)
 	return nil

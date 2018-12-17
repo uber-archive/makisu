@@ -267,7 +267,7 @@ func walkLink(path, root string, linksWalked *int) (newpath string, islink bool,
 	}
 	fi, err := os.Lstat(filepath.Join(root, path))
 	if err != nil {
-		return "", false, fmt.Errorf("lstat: %v", err)
+		return "", false, fmt.Errorf("lstat: %s", err)
 	}
 	if fi.Mode()&os.ModeSymlink == 0 {
 		return path, false, nil
@@ -276,7 +276,7 @@ func walkLink(path, root string, linksWalked *int) (newpath string, islink bool,
 	if err != nil {
 		return "", false, err
 	} else if !filepath.HasPrefix(newpath, root) && filepath.IsAbs(newpath) {
-		return "", false, fmt.Errorf("link points outside of root: %v -> %v", filepath.Join(root, path), newpath)
+		return "", false, fmt.Errorf("link points outside of root: %s -> %s", filepath.Join(root, path), newpath)
 	}
 	*linksWalked++
 	newpath = strings.TrimPrefix(newpath, root)
@@ -288,7 +288,7 @@ func walkLinks(path, root string, linksWalked *int) (string, error) {
 	case dir == "":
 		newpath, _, err := walkLink(file, root, linksWalked)
 		if err != nil {
-			return newpath, fmt.Errorf("walk link: %v", err)
+			return newpath, fmt.Errorf("walk link: %s", err)
 		}
 		return newpath, nil
 	case file == "":
@@ -308,7 +308,7 @@ func walkLinks(path, root string, linksWalked *int) (string, error) {
 		}
 		newpath, islink, err := walkLink(filepath.Join(newdir, file), root, linksWalked)
 		if err != nil {
-			return "", fmt.Errorf("walk link: %v", err)
+			return "", fmt.Errorf("walk link: %s", err)
 		}
 		if !islink {
 			return newpath, nil

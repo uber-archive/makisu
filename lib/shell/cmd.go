@@ -37,13 +37,13 @@ func ExecCommand(outStream, errStream func(string, ...interface{}), workingDir, 
 
 	go func() {
 		if err := readerToStream(outReader, outStream); err != nil {
-			outStream("Failed to stream stdout from command: %v\n", err)
+			outStream("Failed to stream stdout from command: %s\n", err)
 		}
 	}()
 
 	go func() {
 		if err := readerToStream(errReader, errStream); err != nil {
-			errStream("Failed to stream stderr from command: %v\n", err)
+			errStream("Failed to stream stderr from command: %s\n", err)
 		}
 	}()
 

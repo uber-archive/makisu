@@ -172,7 +172,7 @@ func (cli *MakisuClient) readLines(body io.ReadCloser) error {
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			return fmt.Errorf("failed to read build body: %v", err)
+			return fmt.Errorf("failed to read build body: %s", err)
 		}
 		cli.WorkerLog(string(line))
 		cli.maybeGetBuildCode(line, &buildCode)

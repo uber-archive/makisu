@@ -36,15 +36,15 @@ func ParseFile(filecontents string, args map[string]string) ([]*Stage, error) {
 	for scanner.Scan() {
 		count++
 		if err := scanner.Err(); err != nil {
-			return nil, fmt.Errorf("file scanning failed (line %d): %v", count, err)
+			return nil, fmt.Errorf("file scanning failed (line %d): %s", count, err)
 		}
 		text := scanner.Text()
 		if directive, err := newDirective(text, state); err != nil {
-			return nil, fmt.Errorf("failed to create new directive (line %d): %v", count, err)
+			return nil, fmt.Errorf("failed to create new directive (line %d): %s", count, err)
 		} else if directive == nil {
 			continue
 		} else if err := directive.update(state); err != nil {
-			return nil, fmt.Errorf("failed to update parser state (line %d): %v", count, err)
+			return nil, fmt.Errorf("failed to update parser state (line %d): %s", count, err)
 		}
 	}
 

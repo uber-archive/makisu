@@ -58,7 +58,7 @@ func (info *mountInfo) initialize() error {
 		log.Debug("Cannot init mountmanager, /proc/mounts does not exist")
 		return nil
 	} else if err != nil {
-		return fmt.Errorf("mountmanager initialize: %v", err)
+		return fmt.Errorf("mountmanager initialize: %s", err)
 	}
 	lines := strings.Split(string(content), "\n")
 	for _, line := range lines {
@@ -86,7 +86,7 @@ func (info *mountInfo) isMountpoint(filename string) (bool, error) {
 	var err error
 	info.init.Do(func() { err = info.initialize() })
 	if err != nil {
-		return false, fmt.Errorf("ismount: %v", err)
+		return false, fmt.Errorf("ismount: %s", err)
 	}
 	_, found := info.data[filename]
 	return found, nil

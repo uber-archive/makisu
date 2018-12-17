@@ -15,12 +15,8 @@
 package dockerfile
 
 import (
-	"errors"
-	"fmt"
 	"strings"
 )
-
-var errMissingSpace = errors.New("Missing space in single value ENV")
 
 // EnvDirective represents the "ENV" dockerfile command.
 type EnvDirective struct {
@@ -41,10 +37,10 @@ func newEnvDirective(base *baseDirective, state *parsingState) (Directive, error
 		return &EnvDirective{base, vars}, nil
 	}
 
+	// Formatted as <key> <value>. Find index of space.
 	idx := strings.Index(base.Args, " ")
 	if idx == -1 || idx == len(base.Args)-1 {
-		err := fmt.Errorf("%s: '%s'", errMissingSpace, base.Args)
-		return nil, base.err(err)
+		return nil, base.err(errMissingSpace)
 	}
 
 	// Split on the 1st space (including whitespace characters).

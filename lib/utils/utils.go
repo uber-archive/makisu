@@ -161,11 +161,12 @@ func IsSpecialFile(fi os.FileInfo) bool {
 	return fi.Mode()&(os.ModeCharDevice|os.ModeDevice|os.ModeNamedPipe|os.ModeSocket) != 0
 }
 
-// FileInfoStat provides a convenience wrapper for casting the generic FileInfo.Sys field.
+// FileInfoStat provides a convenience wrapper for casting the generic
+// FileInfo.Sys field.
 func FileInfoStat(fi os.FileInfo) *syscall.Stat_t {
 	s, ok := fi.Sys().(*syscall.Stat_t)
 	if !ok {
-		panic("failed to cast fileinfo.sys to stat_t")
+		panic("Failed to cast fileinfo.sys to stat_t")
 	}
 	return s
 }

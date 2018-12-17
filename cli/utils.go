@@ -59,7 +59,7 @@ func (cmd BuildFlags) getDockerfile(contextDir string) ([]*dockerfile.Stage, err
 
 	dockerfile, err := dockerfile.ParseFile(string(contents), cmd.Arguments)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse dockerfile: %v", err)
+		return nil, fmt.Errorf("failed to parse dockerfile: %s", err)
 	}
 	return dockerfile, nil
 }
