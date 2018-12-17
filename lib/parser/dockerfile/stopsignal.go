@@ -30,7 +30,7 @@ type StopsignalDirective struct {
 func newStopsignalDirective(base *baseDirective, state *parsingState) (Directive, error) {
 	signal, err := strconv.Atoi(base.Args)
 	if err != nil {
-		return nil, fmt.Errorf("signal must be integer: %v", err)
+		return nil, fmt.Errorf("signal must be integer: %s", err)
 	} else if signal < 0 {
 		return nil, fmt.Errorf("signal must be > 0: %v", signal)
 	}

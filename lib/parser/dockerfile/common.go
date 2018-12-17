@@ -23,12 +23,13 @@ import (
 )
 
 var (
-	errUnsupportedDirective = errors.New("Unsupported directive type")
 	errBeforeFirstFrom      = errors.New("Invalid directive before first build stage (FROM)")
-	errMissingArgs          = errors.New("Missing arguments")
 	errMalformedChown       = errors.New("Malformed chown argument")
 	errMalformedKeyVal      = errors.New("Malformed key/value pairs")
+	errMissingArgs          = errors.New("Missing arguments")
+	errMissingSpace         = errors.New("Missing space in single variable ENV")
 	errNotExactlyOneArg     = errors.New("Expected exactly one argument")
+	errUnsupportedDirective = errors.New("Unsupported directive type")
 )
 
 func parseFlag(s string, name string) (string, bool, error) {
@@ -64,7 +65,7 @@ type parseError struct {
 
 // Error returns a formatted error string.
 func (e *parseError) Error() string {
-	return fmt.Sprintf("failed to parse %s directive with args '%s': %s",
+	return fmt.Sprintf("failed to parse '%s' directive with args '%s': %s",
 		strings.ToUpper(e.t), e.args, e.msg)
 }
 

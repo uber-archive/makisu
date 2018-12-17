@@ -101,12 +101,12 @@ func (s *FromStep) Execute(ctx *context.BuildContext, modifyFS bool) error {
 	// Otherwise, pull image.
 	manifest, err := s.getManifest(ctx.ImageStore)
 	if err != nil {
-		return fmt.Errorf("get manifest: %v", err)
+		return fmt.Errorf("get manifest: %s", err)
 	}
 
 	config, err := s.getConfig(manifest.Config, ctx.ImageStore)
 	if err != nil {
-		return fmt.Errorf("get config: %v", err)
+		return fmt.Errorf("get config: %s", err)
 	}
 
 	if config.RootFS.DiffIDs == nil || manifest.Layers == nil {
@@ -144,12 +144,12 @@ func (s *FromStep) Commit(ctx *context.BuildContext) ([]*image.DigestPair, error
 
 	manifest, err := s.getManifest(ctx.ImageStore)
 	if err != nil {
-		return nil, fmt.Errorf("get manifest: %v", err)
+		return nil, fmt.Errorf("get manifest: %s", err)
 	}
 
 	config, err := s.getConfig(manifest.Config, ctx.ImageStore)
 	if err != nil {
-		return nil, fmt.Errorf("get config: %v", err)
+		return nil, fmt.Errorf("get config: %s", err)
 	}
 
 	if config.RootFS.DiffIDs == nil || manifest.Layers == nil {
@@ -181,12 +181,12 @@ func (s *FromStep) UpdateCtxAndConfig(
 
 	manifest, err := s.getManifest(ctx.ImageStore)
 	if err != nil {
-		return nil, fmt.Errorf("get manifest: %v", err)
+		return nil, fmt.Errorf("get manifest: %s", err)
 	}
 
 	config, err := s.getConfig(manifest.Config, ctx.ImageStore)
 	if err != nil {
-		return nil, fmt.Errorf("get config: %v", err)
+		return nil, fmt.Errorf("get config: %s", err)
 	}
 
 	// Update in-memory map of merged stage vars from ARG and ENV.
