@@ -89,7 +89,7 @@ func newBuildFlags() BuildFlags {
 
 func (cmd *BuildFlags) postInit() error {
 	if err := cmd.maybeBlacklistVarRun(); err != nil {
-		return fmt.Errorf("failed to extend blacklist: %v", err)
+		return fmt.Errorf("failed to extend blacklist: %s", err)
 	}
 
 	if cmd.Blacklist != "" {
@@ -108,7 +108,7 @@ func (cmd *BuildFlags) postInit() error {
 	}
 
 	if err := cmd.initRegistryConfig(); err != nil {
-		return fmt.Errorf("failed to initialize registry configuration: %v", err)
+		return fmt.Errorf("failed to initialize registry configuration: %s", err)
 	}
 
 	// If modifyfs is true, verify it's not runninng on Mac.
@@ -219,12 +219,12 @@ func (cmd BuildFlags) createBuildPlan(
 	// Read in and parse dockerfile.
 	dockerfile, err := cmd.getDockerfile(buildContext.ContextDir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get dockerfile: %v", err)
+		return nil, fmt.Errorf("failed to get dockerfile: %s", err)
 	}
 
 	// Remove image manifest if an image with the same name already exists.
 	if err := cmd.cleanManifest(imageName); err != nil {
-		return nil, fmt.Errorf("failed to clean manifest: %v", err)
+		return nil, fmt.Errorf("failed to clean manifest: %s", err)
 	}
 
 	// Init cache manager.
@@ -243,7 +243,7 @@ func (cmd BuildFlags) Build(contextDir string) error {
 
 	imageName, err := cmd.getTargetImageName()
 	if err != nil {
-		return fmt.Errorf("failed to get target image name: %v", err)
+		return fmt.Errorf("failed to get target image name: %s", err)
 	}
 
 	// Convert context dir to absolute path.
@@ -279,21 +279,21 @@ func (cmd BuildFlags) Build(contextDir string) error {
 	for _, registry := range cmd.GetTargetRegistries() {
 		target := imageName.WithRegistry(registry)
 		if err := cmd.pushImage(target); err != nil {
-			return fmt.Errorf("failed to push image: %v", err)
+			return fmt.Errorf("failed to push image: %s", err)
 		}
 	}
 
 	// Optionally save image as a tar file.
 	if cmd.Destination != "" {
 		if err := cmd.saveImage(imageName); err != nil {
-			return fmt.Errorf("failed to save image: %v", err)
+			return fmt.Errorf("failed to save image: %s", err)
 		}
 	}
 
 	// Optionally load image to local docker daemon.
 	if cmd.DoLoad {
 		if err := cmd.loadImage(imageName); err != nil {
-			return fmt.Errorf("failed to load image: %v", err)
+			return fmt.Errorf("failed to load image: %s", err)
 		}
 	}
 
