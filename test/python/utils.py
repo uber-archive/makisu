@@ -64,6 +64,8 @@ def registry_ensure_image(image, registry):
 
 def get_base_image():
     version = os.getenv("PACKAGE_VERSION", "latest")
+    if os.getenv("MAKISU_ALPINE", "0") != "0":
+        return "makisu-alpine:{}".format(version)
     return "makisu:{}".format(version)
 
 
