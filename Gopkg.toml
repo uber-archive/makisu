@@ -53,3 +53,7 @@ required = [
 [[constraint]]
   name = "github.com/alicebob/miniredis"
   version = "2.4.5"
+
+[[constraint]]
+  name = "github.com/docker/docker-credential-helpers"
+  version = "0.6.1"
