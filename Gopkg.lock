@@ -126,6 +126,17 @@
   version = "v2.6.2"
 
 [[projects]]
+  digest = "1:52cce0aa5ae3ff98cd9fdc5561aa7f896d3f9e1f5c68dc1bbe43ade0540e33c3"
+  name = "github.com/docker/docker-credential-helpers"
+  packages = [
+    "client",
+    "credentials",
+  ]
+  pruneopts = ""
+  revision = "5241b46610f2491efdf9d1c85f1ddf5b02f6d962"
+  version = "v0.6.1"
+
+[[projects]]
   digest = "1:d4089b491ec71d84414ab5cc402df6b18fe1f83174091bfbe7ee3d03dd5c3472"
   name = "github.com/docker/engine-api"
   packages = [
@@ -464,6 +475,7 @@
     "github.com/docker/distribution/registry/client/auth",
     "github.com/docker/distribution/registry/client/auth/challenge",
     "github.com/docker/distribution/registry/client/transport",
+    "github.com/docker/docker-credential-helpers/client",
     "github.com/docker/engine-api/types",
     "github.com/garyburd/redigo/redis",
     "github.com/golang/mock/gomock",
