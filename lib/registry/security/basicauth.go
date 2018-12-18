@@ -61,7 +61,7 @@ func ping(addr string, tr http.RoundTripper) (challenge.Manager, error) {
 	resp, err := httputil.Send(
 		"GET",
 		fmt.Sprintf(basePingQuery, addr),
-		httputil.SendTransport(tr),
+		httputil.SendTLSTransport(tr),
 		httputil.SendAcceptedCodes(http.StatusOK, http.StatusUnauthorized),
 	)
 	if err != nil {
