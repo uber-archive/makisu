@@ -19,11 +19,9 @@ var (
 	// copying directories around and computing filesystem diffs.
 	DefaultBlacklist = append([]string{
 		DefaultInternalDir,
-		// Found through experiments
-		"/dev",
+		// Found through experiments.
 		"/.dockerinit",
-		"/srv",
-		"/mnt",
+		"/dev",
 	}, dockerBlacklist...)
 
 	dockerBlacklist = []string{
