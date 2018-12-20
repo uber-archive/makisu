@@ -22,6 +22,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/uber/makisu/lib/builder"
 	"github.com/uber/makisu/lib/context"
@@ -55,32 +56,37 @@ type BuildFlags struct {
 	DockerScheme  string `commander:"flag=docker-scheme,Scheme for api calls to docker daemon."`
 	DoLoad        bool   `commander:"flag=load,Load image into docker daemon after build. Requires access to docker socket at location defined by ${DOCKER_HOST}."`
 
+	LocalCacheTTL     string `commander:"flag=local-cache-ttl,Time-To-Live for local cache."`
 	RedisCacheAddress string `commander:"flag=redis-cache-addr,The address of a redis server for cacheID to layer sha mapping."`
-	CacheTTL          int    `commander:"flag=cache-ttl,The TTL of cacheID-sha mapping entries in seconds (not supported in http cacheid storage)."`
-
-	HTTPCacheAddress string `commander:"flag=http-cache-addr,The address of the http server for cacheID to layer sha mapping."`
-	HTTPCacheHeaders string `commander:"flag=http-cache-headers,The headers passed into each request to the http server for cacheID to layer sha mapping. Format is <h1>=<v1>,<h2>=<v2>,..."`
+	RedisCacheTTL     string `commander:"flag=redis-cache-ttl,Time-To-Live for redis cache."`
+	HTTPCacheAddress  string `commander:"flag=http-cache-addr,The address of the http server for cacheID to layer sha mapping."`
+	HTTPCacheHeaders  string `commander:"flag=http-cache-headers,The headers passed into each request to the http server for cacheID to layer sha mapping. Format is <h1>=<v1>,<h2>=<v2>,..."`
 
 	StorageDir          string `commander:"flag=storage,Directory that makisu uses for temp files and cached layers. Mount this path for better caching performance. If modifyfs is set, default to /makisu-storage; Otherwise default to /tmp/makisu-storage."`
 	CompressionLevelStr string `commander:"flag=compression,Image compression level, could be 'no', 'speed', 'size', 'default'."`
 
-	imageStore storage.ImageStore
+	localCacheTTLDuration time.Duration
+	redisCacheTTLDuration time.Duration
+	imageStore            storage.ImageStore
 }
 
 func newBuildFlags() BuildFlags {
 	return BuildFlags{
 		DockerfilePath: "Dockerfile",
-		Arguments:      map[string]string{},
+
+		Arguments: map[string]string{},
 
 		AllowModifyFS: false,
-		StorageDir:    "",
 
 		DockerHost:    utils.DefaultEnv("DOCKER_HOST", "unix:///var/run/docker.sock"),
 		DockerVersion: utils.DefaultEnv("DOCKER_VERSION", "1.21"),
 		DockerScheme:  utils.DefaultEnv("DOCKER_SCHEME", "http"),
 
-		RedisCacheAddress:   "",
-		CacheTTL:            7 * 24 * 3600,
+		LocalCacheTTL:     "7d",
+		RedisCacheAddress: "",
+		RedisCacheTTL:     "7d",
+
+		StorageDir:          "",
 		CompressionLevelStr: "default",
 
 		Commit: "implicit",
@@ -123,6 +129,16 @@ func (cmd *BuildFlags) postInit() error {
 		} else {
 			cmd.StorageDir = "/tmp/makisu-storage"
 		}
+	}
+
+	// Configure cache.
+	var err error
+	if cmd.localCacheTTLDuration, err = time.ParseDuration(cmd.LocalCacheTTL); err != nil {
+		return fmt.Errorf("failed to parse local cache ttl: %s", err)
+	}
+
+	if cmd.redisCacheTTLDuration, err = time.ParseDuration(cmd.RedisCacheTTL); err != nil {
+		return fmt.Errorf("failed to parse redis cache ttl: %s", err)
 	}
 
 	// Init the image store.

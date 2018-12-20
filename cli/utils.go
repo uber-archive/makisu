@@ -129,10 +129,9 @@ func (cmd BuildFlags) getCacheManager(imageName image.Name) cache.Manager {
 	var store cache.KVStore
 	var err error
 	if cmd.RedisCacheAddress != "" {
-		// If RedisCacheAddress is provided, init redis cache.
 		log.Infof("Using redis at %s for cacheID storage", cmd.RedisCacheAddress)
 
-		store, err = cache.NewRedisStore(cmd.RedisCacheAddress, cmd.CacheTTL)
+		store, err = cache.NewRedisStore(cmd.RedisCacheAddress, cmd.redisCacheTTLDuration)
 		if err != nil {
 			log.Errorf("Failed to connect to redis store: %s", err)
 		}
@@ -147,13 +146,11 @@ func (cmd BuildFlags) getCacheManager(imageName image.Name) cache.Manager {
 		if err != nil {
 			log.Errorf("Failed to instantiate cache id store: %s", err)
 		}
-	} else if cmd.CacheTTL != 0 {
-		// If redis cache address is not provided, and the cache ttl is not 0,
-		// use the FSStore as a key-value store.
+	} else if cmd.localCacheTTLDuration != 0 {
 		fullpath := path.Join(cmd.imageStore.RootDir, pathutils.CacheKeyValueFileName)
-		log.Infof("Using file at %s for cacheID storage", fullpath)
+		log.Infof("Using local file at %s for cacheID storage", fullpath)
 
-		store, err = cache.NewFSStore(fullpath, cmd.imageStore.SandboxDir, int64(cmd.CacheTTL))
+		store, err = cache.NewFSStore(fullpath, cmd.imageStore.SandboxDir, cmd.localCacheTTLDuration)
 		if err != nil {
 			log.Errorf("Failed to init local cache ID store: %s", err)
 		}

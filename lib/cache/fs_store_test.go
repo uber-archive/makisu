@@ -18,6 +18,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -32,7 +33,9 @@ func TestFSStore(t *testing.T) {
 		tempFile, err := ioutil.TempFile(tempDir, "cache")
 		require.NoError(err)
 
-		store, err := NewFSStore(tempFile.Name(), tempDir, 60)
+		d, err := time.ParseDuration("10s")
+		require.NoError(err)
+		store, err := NewFSStore(tempFile.Name(), tempDir, d)
 		require.NoError(err)
 		defer store.Cleanup()
 
@@ -50,7 +53,9 @@ func TestFSStore(t *testing.T) {
 		tempFile, err := ioutil.TempFile(tempDir, "cache")
 		require.NoError(err)
 
-		store, err := NewFSStore(tempFile.Name(), tempDir, 60)
+		d, err := time.ParseDuration("10s")
+		require.NoError(err)
+		store, err := NewFSStore(tempFile.Name(), tempDir, d)
 		require.NoError(err)
 		defer store.Cleanup()
 
