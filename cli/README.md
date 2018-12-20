@@ -40,7 +40,7 @@ Usage of makisu build:
   -load
     	Load image into docker daemon after build. Requires access to docker socket at location defined by ${DOCKER_HOST}. (type: bool, default: false)
   -local-cache-ttl
-    	Time-To-Live for local cache. (type: string, default: 7d)
+    	Time-To-Live for local cache. (type: string, default: 168h)
   -modifyfs
     	Allow makisu to touch files outside of its own storage dir. (type: bool, default: false)
   -push
@@ -48,7 +48,7 @@ Usage of makisu build:
   -redis-cache-addr
     	The address of a redis cache server for cacheID to layer sha mapping. (type: string, default: "")
   -redis-cache-ttl
-    	Time-To-Live for redis cache. (type: string, default: 7d)
+    	Time-To-Live for redis cache. (type: string, default: 168h)
   -registry-config
     	Registry configuration file for pulling and pushing images. Default configuration for DockerHub is used if not specified. (type: string, default: "")
   -storage

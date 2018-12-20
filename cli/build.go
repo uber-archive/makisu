@@ -82,9 +82,9 @@ func newBuildFlags() BuildFlags {
 		DockerVersion: utils.DefaultEnv("DOCKER_VERSION", "1.21"),
 		DockerScheme:  utils.DefaultEnv("DOCKER_SCHEME", "http"),
 
-		LocalCacheTTL:     "7d",
+		LocalCacheTTL:     "168h",
 		RedisCacheAddress: "",
-		RedisCacheTTL:     "7d",
+		RedisCacheTTL:     "168h",
 
 		StorageDir:          "",
 		CompressionLevelStr: "default",

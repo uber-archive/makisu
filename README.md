@@ -177,7 +177,7 @@ spec:
 ```
 
 Finally, connect Redis as the Makisu layer cache by passing `--redis-cache-addr=redis:6379` argument.
-Cache has a 7 day TTL by default, which can be configured with `--local-cache-ttl=7d` argument.
+Cache has a 7 day TTL by default, which can be configured with `--local-cache-ttl=168h` argument.
 
 ## Explicit commit and cache
 
