@@ -250,6 +250,14 @@
   version = "v1.6.2"
 
 [[projects]]
+  digest = "1:870d441fe217b8e689d7949fef6e43efbc787e50f200cb1e70dbca9204a1d6be"
+  name = "github.com/inconshreveable/mousetrap"
+  packages = ["."]
+  pruneopts = ""
+  revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
+  version = "v1.0"
+
+[[projects]]
   digest = "1:d26c006cbf54ca5c040463d5678013169e2bd91fb62c2f960ae283a1723d4278"
   name = "github.com/juju/ratelimit"
   packages = ["."]
@@ -410,6 +418,22 @@
   revision = "1dc9a6cbc91aacc3e8b2d63db4d2e957a5394ac4"
 
 [[projects]]
+  digest = "1:a1403cc8a94b8d7956ee5e9694badef0e7b051af289caad1cf668331e3ffa4f6"
+  name = "github.com/spf13/cobra"
+  packages = ["."]
+  pruneopts = ""
+  revision = "ef82de70bb3f60c65fb8eebacbb2d122ef517385"
+  version = "v0.0.3"
+
+[[projects]]
+  digest = "1:cbaf13cdbfef0e4734ed8a7504f57fe893d471d62a35b982bf6fb3f036449a66"
+  name = "github.com/spf13/pflag"
+  packages = ["."]
+  pruneopts = ""
+  revision = "298182f68c66c05229eb03ac171abe6e309ee79a"
+  version = "v1.0.3"
+
+[[projects]]
   digest = "1:c587772fb8ad29ad4db67575dad25ba17a51f072ff18a22b4f0257a4d9c24f75"
   name = "github.com/stretchr/testify"
   packages = [
@@ -477,15 +501,15 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:3b4532388bb9dfcc98530527160974cf5ec03120002887777516a98092725ba0"
+  digest = "1:4ab2fc83e3222b69759dfd717e01d0cf38b133aabfacc29a86057021a2f1abd9"
   name = "golang.org/x/net"
   packages = ["context/ctxhttp"]
   pruneopts = ""
-  revision = "e147a9138326bc0e9d4e179541ffd8af41cff8a9"
+  revision = "927f97764cc334a6575f4b7a1584a147864d5723"
 
 [[projects]]
   branch = "master"
-  digest = "1:22cbfd03c3fe2e72d86ab0de10eff9442dc3b5ab31f45e7e1691b7245e687e9c"
+  digest = "1:c05c1570435fd2ae5253026c5a063650acb8ae8fc211c1aeff2a226ee691dc4b"
   name = "golang.org/x/tools"
   packages = [
     "cmd/goimports",
@@ -503,7 +527,7 @@
     "internal/semver",
   ]
   pruneopts = ""
-  revision = "92cdcd90bf52150d9c63b7a8432ab7b10fc92385"
+  revision = "537d06c362073e8c95164d0d4709059603cfdb02"
 
 [[projects]]
   branch = "v3-unstable"
@@ -545,6 +569,7 @@
     "github.com/matm/gocov-html",
     "github.com/pkg/errors",
     "github.com/pressly/chi",
+    "github.com/spf13/cobra",
     "github.com/stretchr/testify/require",
     "go.uber.org/zap",
     "golang.org/x/lint/golint",
