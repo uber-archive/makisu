@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	"context"
+	ctx "context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/uber/makisu/lib/cache"
+	"github.com/uber/makisu/lib/context"
 	"github.com/uber/makisu/lib/docker/cli"
 	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/fileio"
@@ -18,8 +20,44 @@ import (
 	"github.com/uber/makisu/lib/parser/dockerfile"
 	"github.com/uber/makisu/lib/pathutils"
 	"github.com/uber/makisu/lib/registry"
+	"github.com/uber/makisu/lib/utils"
 	"github.com/uber/makisu/lib/utils/stringset"
+	yaml "gopkg.in/yaml.v2"
 )
+
+func initRegistryConfig() error {
+	if RegistryConfig == "" {
+		registry.ConfigurationMap[image.DockerHubRegistry] = make(registry.RepositoryMap)
+		registry.ConfigurationMap[image.DockerHubRegistry][".*"] = registry.DefaultDockerHubConfiguration
+		return nil
+	}
+
+	RegistryConfig = os.ExpandEnv(RegistryConfig)
+	config := make(registry.Map)
+	if utils.IsValidJSON([]byte(RegistryConfig)) {
+		if err := json.Unmarshal([]byte(RegistryConfig), &config); err != nil {
+			return fmt.Errorf("unmarshal registry config: %s", err)
+		}
+	} else {
+		data, err := ioutil.ReadFile(RegistryConfig)
+		if err != nil {
+			return fmt.Errorf("read registry config: %s", err)
+		}
+		if err := yaml.Unmarshal(data, &config); err != nil {
+			return fmt.Errorf("unmarshal registry config: %s", err)
+		}
+	}
+
+	for reg, repoConfig := range config {
+		if _, ok := registry.ConfigurationMap[reg]; !ok {
+			registry.ConfigurationMap[reg] = make(registry.RepositoryMap)
+		}
+		for repo, config := range repoConfig {
+			registry.ConfigurationMap[reg][repo] = config
+		}
+	}
+	return nil
+}
 
 // Finds a way to get the dockerfile.
 // If the context passed in is not a local path, then it will try to clone the
@@ -83,9 +121,9 @@ func getTargetImageName() (image.Name, error) {
 
 // pushImage pushes the specified image to docker registry.
 // Exits with non-0 status code if it encounters an error.
-func pushImage(imageName image.Name) error {
+func pushImage(buildContext *context.BuildContext, imageName image.Name) error {
 	registryClient := registry.New(
-		imageStore, imageName.GetRegistry(), imageName.GetRepository())
+		buildContext.ImageStore, imageName.GetRegistry(), imageName.GetRepository())
 	if err := registryClient.Push(imageName.GetTag()); err != nil {
 		return fmt.Errorf("failed to push image: %s", err)
 	}
@@ -95,15 +133,17 @@ func pushImage(imageName image.Name) error {
 
 // loadImage loads the image into the local docker daemon.
 // This is only used for testing purposes.
-func loadImage(imageName image.Name) error {
+func loadImage(buildContext *context.BuildContext, imageName image.Name) error {
 	log.Infof("Loading image %s", imageName.ShortName())
-	tarer := cli.NewDefaultImageTarer(imageStore)
+	tarer := cli.NewDefaultImageTarer(buildContext.ImageStore)
 	if tar, err := tarer.CreateTarReader(imageName); err != nil {
 		return fmt.Errorf("failed to create tar of image: %s", err)
-	} else if cli, err := cli.NewDockerClient(imageStore.SandboxDir, DockerHost,
+	} else if cli, err := cli.NewDockerClient(
+		buildContext.ImageStore.SandboxDir, DockerHost,
 		DockerScheme, DockerVersion, http.Header{}); err != nil {
+
 		return fmt.Errorf("failed to create new docker client: %s", err)
-	} else if err := cli.ImageTarLoad(context.Background(), tar); err != nil {
+	} else if err := cli.ImageTarLoad(ctx.Background(), tar); err != nil {
 		return fmt.Errorf("failed to load image to local docker daemon: %s", err)
 	}
 	log.Infof("Successfully loaded image %s", imageName)
@@ -112,9 +152,9 @@ func loadImage(imageName image.Name) error {
 
 // saveImage tars the image layers and manifests into a single tar, and saves that tar
 // into <destination>.
-func saveImage(imageName image.Name) error {
+func saveImage(buildContext *context.BuildContext, imageName image.Name) error {
 	log.Infof("Saving image %s at location %s", imageName.ShortName(), Destination)
-	tarer := cli.NewDefaultImageTarer(imageStore)
+	tarer := cli.NewDefaultImageTarer(buildContext.ImageStore)
 	if tar, err := tarer.CreateTarReadCloser(imageName); err != nil {
 		return fmt.Errorf("failed to create a tarball from image layers and manifests: %s", err)
 	} else if err := fileio.ReaderToFile(tar, Destination); err != nil {
@@ -124,9 +164,9 @@ func saveImage(imageName image.Name) error {
 }
 
 // cleanManifest removes specified image manifest from local filesystem.
-func cleanManifest(imageName image.Name) error {
+func cleanManifest(buildContext *context.BuildContext, imageName image.Name) error {
 	repo, tag := imageName.GetRepository(), imageName.GetTag()
-	err := imageStore.Manifests.DeleteStoreFile(repo, tag)
+	err := buildContext.ImageStore.Manifests.DeleteStoreFile(repo, tag)
 	if err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("failed to delete %s from manifest store: %s", imageName, err)
 	}
@@ -134,14 +174,14 @@ func cleanManifest(imageName image.Name) error {
 }
 
 // newCacheManager inits and returns a cache manager object.
-func newCacheManager(imageName image.Name) cache.Manager {
+func newCacheManager(buildContext *context.BuildContext, imageName image.Name) cache.Manager {
 	if len(PushRegistries) == 0 {
 		log.Infof("No registry or cache option provided, not using distributed cache")
 		return cache.NewNoopCacheManager()
 	}
 
 	registryAddr := PushRegistries[0]
-	registryClient := registry.New(imageStore, registryAddr, imageName.GetRepository())
+	registryClient := registry.New(buildContext.ImageStore, registryAddr, imageName.GetRepository())
 
 	var store cache.KVStore
 	var err error
@@ -160,10 +200,10 @@ func newCacheManager(imageName image.Name) cache.Manager {
 			log.Errorf("Failed to instantiate cache id store: %s", err)
 		}
 	} else if LocalCacheTTL != 0 {
-		fullpath := path.Join(imageStore.RootDir, pathutils.CacheKeyValueFileName)
+		fullpath := path.Join(buildContext.ImageStore.RootDir, pathutils.CacheKeyValueFileName)
 		log.Infof("Using local file at %s for cacheID storage", fullpath)
 
-		store, err = cache.NewFSStore(fullpath, imageStore.SandboxDir, LocalCacheTTL)
+		store, err = cache.NewFSStore(fullpath, buildContext.ImageStore.SandboxDir, LocalCacheTTL)
 		if err != nil {
 			log.Errorf("Failed to init local cache ID store: %s", err)
 		}

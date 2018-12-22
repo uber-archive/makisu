@@ -8,7 +8,6 @@ RUN make ext-tools/Linux/dep
 
 ADD Gopkg.toml Gopkg.lock ./
 ADD .git ./.git
-ADD cli ./cli
 ADD bin ./bin
 ADD lib ./lib
 RUN make bins

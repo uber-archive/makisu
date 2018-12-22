@@ -1,10 +1,8 @@
 package cmd
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -15,14 +13,12 @@ import (
 	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/log"
 	"github.com/uber/makisu/lib/pathutils"
-	"github.com/uber/makisu/lib/registry"
 	"github.com/uber/makisu/lib/storage"
 	"github.com/uber/makisu/lib/tario"
 	"github.com/uber/makisu/lib/utils"
 	"github.com/uber/makisu/lib/utils/stringset"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
 
 func init() {
@@ -40,21 +36,23 @@ func init() {
 	buildCmd.PersistentFlags().StringVar(&Commit, "commit", "implicit", "Set to explicit to only commit at steps with '#!COMMIT' annotations; Set to implicit to commit at every ADD/COPY/RUN step")
 	buildCmd.PersistentFlags().StringArrayVar(&Blacklists, "blacklist", nil, "Makisu will ignore all changes to these locations in the resulting docker images")
 
-	buildCmd.PersistentFlags().StringVar(&DockerHost, "docker-host", utils.DefaultEnv("DOCKER_HOST", "unix:///var/run/docker.sock"), "Docker host to load images to")
-	buildCmd.PersistentFlags().StringVar(&DockerVersion, "docker-version", utils.DefaultEnv("DOCKER_VERSION", "1.21"), "Version string for loading images to docker")
-	buildCmd.PersistentFlags().StringVar(&DockerScheme, "docker-scheme", utils.DefaultEnv("DOCKER_SCHEME", "http"), "Scheme for api calls to docker daemon")
-	buildCmd.PersistentFlags().BoolVar(&DoLoad, "load", false, "Load image into docker daemon after build. Requires access to docker socket at location defined by ${DOCKER_HOST}")
-
 	buildCmd.PersistentFlags().DurationVar(&LocalCacheTTL, "local-cache-ttl", time.Hour*168, "Time-To-Live for local cache")
 	buildCmd.PersistentFlags().StringVar(&RedisCacheAddress, "redis-cache-addr", "", "The address of a redis server for cacheID to layer sha mapping")
 	buildCmd.PersistentFlags().DurationVar(&RedisCacheTTL, "redis-cache-ttl", time.Hour*168, "Time-To-Live for redis cache")
 	buildCmd.PersistentFlags().StringVar(&HTTPCacheAddress, "http-cache-addr", "", "The address of the http server for cacheID to layer sha mapping")
 	buildCmd.PersistentFlags().StringArrayVar(&HTTPCacheHeaders, "http-cache-header", nil, "Request header for http cache server")
 
+	buildCmd.PersistentFlags().StringVar(&DockerHost, "docker-host", utils.DefaultEnv("DOCKER_HOST", "unix:///var/run/docker.sock"), "Docker host to load images to")
+	buildCmd.PersistentFlags().StringVar(&DockerVersion, "docker-version", utils.DefaultEnv("DOCKER_VERSION", "1.21"), "Version string for loading images to docker")
+	buildCmd.PersistentFlags().StringVar(&DockerScheme, "docker-scheme", utils.DefaultEnv("DOCKER_SCHEME", "http"), "Scheme for api calls to docker daemon")
+	buildCmd.PersistentFlags().BoolVar(&DoLoad, "load", false, "Load image into docker daemon after build. Requires access to docker socket at location defined by ${DOCKER_HOST}")
+
 	buildCmd.PersistentFlags().StringVar(&StorageDir, "storage", "", "Directory that makisu uses for temp files and cached layers. Mount this path for better caching performance. If modifyfs is set, default to /makisu-storage; Otherwise default to /tmp/makisu-storage")
 	buildCmd.PersistentFlags().StringVar(&CompressionLevel, "compression", "default", "Image compression level, could be 'no', 'speed', 'size', 'default'")
 
 	buildCmd.MarkFlagRequired("tag")
+	buildCmd.Flags().SortFlags = false
+	buildCmd.PersistentFlags().SortFlags = false
 }
 
 var (
@@ -70,24 +68,23 @@ var (
 	Commit        string
 	Blacklists    []string
 
-	DockerHost    string
-	DockerVersion string
-	DockerScheme  string
-	DoLoad        bool
-
 	LocalCacheTTL     time.Duration
 	RedisCacheAddress string
 	RedisCacheTTL     time.Duration
 	HTTPCacheAddress  string
 	HTTPCacheHeaders  []string
 
+	DockerHost    string
+	DockerVersion string
+	DockerScheme  string
+	DoLoad        bool
+
 	StorageDir       string
 	CompressionLevel string
 
-	imageStore storage.ImageStore
-
 	buildCmd = &cobra.Command{
-		Use:   "build -t=<image_tag> <context>",
+		Use: "build -t=<image_tag> [flags] <context_path>",
+		DisableFlagsInUseLine: true,
 		Short: "Build docker image, optionally push to registries and/or load into docker daemon",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
@@ -96,13 +93,6 @@ var (
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			defer storage.CleanupSandbox(StorageDir)
-
-			if err := processFlags(); err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
 			if err := Build(args[0]); err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -148,51 +138,10 @@ func processFlags() error {
 		}
 	}
 
-	// Init the image store.
-	var err error
-	imageStore, err = storage.NewImageStore(StorageDir)
-	if err != nil {
-		return fmt.Errorf("failed to init image store: %s", err)
-	}
-
 	// Verify storage dir is not child of internal dir.
 	if pathutils.IsDescendantOfAny(StorageDir, []string{pathutils.DefaultInternalDir}) {
 		return fmt.Errorf("storage dir cannot be under internal dir %s",
 			pathutils.DefaultInternalDir)
-	}
-	return nil
-}
-
-func initRegistryConfig() error {
-	if RegistryConfig == "" {
-		registry.ConfigurationMap[image.DockerHubRegistry] = make(registry.RepositoryMap)
-		registry.ConfigurationMap[image.DockerHubRegistry][".*"] = registry.DefaultDockerHubConfiguration
-		return nil
-	}
-
-	RegistryConfig = os.ExpandEnv(RegistryConfig)
-	config := make(registry.Map)
-	if utils.IsValidJSON([]byte(RegistryConfig)) {
-		if err := json.Unmarshal([]byte(RegistryConfig), &config); err != nil {
-			return fmt.Errorf("unmarshal registry config: %s", err)
-		}
-	} else {
-		data, err := ioutil.ReadFile(RegistryConfig)
-		if err != nil {
-			return fmt.Errorf("read registry config: %s", err)
-		}
-		if err := yaml.Unmarshal(data, &config); err != nil {
-			return fmt.Errorf("unmarshal registry config: %s", err)
-		}
-	}
-
-	for reg, repoConfig := range config {
-		if _, ok := registry.ConfigurationMap[reg]; !ok {
-			registry.ConfigurationMap[reg] = make(registry.RepositoryMap)
-		}
-		for repo, config := range repoConfig {
-			registry.ConfigurationMap[reg][repo] = config
-		}
 	}
 	return nil
 }
@@ -207,12 +156,12 @@ func newBuildPlan(
 	}
 
 	// Remove image manifest if an image with the same name already exists.
-	if err := cleanManifest(imageName); err != nil {
+	if err := cleanManifest(buildContext, imageName); err != nil {
 		return nil, fmt.Errorf("failed to clean manifest: %s", err)
 	}
 
 	// Init cache manager.
-	cacheMgr := newCacheManager(imageName)
+	cacheMgr := newCacheManager(buildContext, imageName)
 
 	// forceCommit will make every step attempt to commit a layer.
 	// Commit is noop for steps other than ADD/COPY/RUN if they are not after an
@@ -230,31 +179,38 @@ func newBuildPlan(
 func Build(contextDir string) error {
 	log.Infof("Starting Makisu build (version=%s)", utils.BuildHash)
 
-	imageName, err := getTargetImageName()
-	if err != nil {
-		return fmt.Errorf("failed to get target image name: %s", err)
-	}
-
-	// Convert context dir to absolute path.
-	contextDir, err = filepath.Abs(contextDir)
-	if err != nil {
-		return fmt.Errorf("failed to resolve context dir: %s", err)
+	if err := processFlags(); err != nil {
+		return fmt.Errorf("failed to process flags: %s", err)
 	}
 
 	// Create BuildContext.
+	contextDir, err := filepath.Abs(contextDir)
+	if err != nil {
+		return fmt.Errorf("failed to resolve context dir: %s", err)
+	}
+	imageStore, err := storage.NewImageStore(StorageDir)
+	if err != nil {
+		return fmt.Errorf("failed to init image store: %s", err)
+	}
 	buildContext, err := context.NewBuildContext("/", contextDir, imageStore)
 	if err != nil {
 		return fmt.Errorf("failed to create initial build context: %s", err)
 	}
 	defer buildContext.Cleanup()
 
+	// Make sure sandbox is cleaned after build.
 	// Optionally remove everything before and after build.
+	defer storage.CleanupSandbox(StorageDir)
 	if AllowModifyFS {
 		buildContext.MemFS.Remove()
 		defer buildContext.MemFS.Remove()
 	}
 
 	// Create and execute build plan.
+	imageName, err := getTargetImageName()
+	if err != nil {
+		return fmt.Errorf("failed to get target image name: %s", err)
+	}
 	buildPlan, err := newBuildPlan(buildContext, imageName)
 	if err != nil {
 		return fmt.Errorf("failed to create build plan: %s", err)
@@ -267,21 +223,21 @@ func Build(contextDir string) error {
 	// Push image to registries that were specified in the --push flag.
 	for _, registry := range PushRegistries {
 		target := imageName.WithRegistry(registry)
-		if err := pushImage(target); err != nil {
+		if err := pushImage(buildContext, target); err != nil {
 			return fmt.Errorf("failed to push image: %s", err)
 		}
 	}
 
 	// Optionally save image as a tar file.
 	if Destination != "" {
-		if err := saveImage(imageName); err != nil {
+		if err := saveImage(buildContext, imageName); err != nil {
 			return fmt.Errorf("failed to save image: %s", err)
 		}
 	}
 
 	// Optionally load image to local docker daemon.
 	if DoLoad {
-		if err := loadImage(imageName); err != nil {
+		if err := loadImage(buildContext, imageName); err != nil {
 			return fmt.Errorf("failed to load image: %s", err)
 		}
 	}

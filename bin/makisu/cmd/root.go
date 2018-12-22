@@ -16,6 +16,9 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&LogOutput, "log-output", "stdout", "The output file path for the logs. Set to \"stdout\" to output to stdout")
 	rootCmd.PersistentFlags().StringVar(&LogFormat, "log-fmt", "json", "The format of the logs. Valid values are \"json\" and \"console\"")
 	rootCmd.PersistentFlags().BoolVar(&CpuProfile, "cpu-profile", false, "Profile the application")
+
+	rootCmd.Flags().SortFlags = false
+	rootCmd.PersistentFlags().SortFlags = false
 }
 
 var (
@@ -27,9 +30,9 @@ var (
 	rootCmd = &cobra.Command{
 		Use:   "makisu",
 		Short: "makisu is a fast Fast and flexible Docker image building tool",
-		Long: `makisu is a fast Fast and flexible Docker image building tool.
-			It's designed for unprivileged containerized environments like Mesos and Kubernetes.
-			More information is available at https://github.com/uber/makisu`,
+		Long: "makisu is a fast Fast and flexible Docker image building tool " +
+			"designed for unprivileged containerized environments like Mesos and Kubernetes. " +
+			"More information is available at https://github.com/uber/makisu`.",
 
 		Run: func(ccmd *cobra.Command, args []string) {
 			ccmd.HelpFunc()(ccmd, args)
