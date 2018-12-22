@@ -49,7 +49,7 @@ makisu build -t ${TAG} -dest ${TAR_PATH} ${CONTEXT}
 
 # Running Makisu
 
-For a full list of flags, run `makisu --help`, `makisu build --help` or refer to the README [here](cli/README.md).
+For a full list of flags, run `makisu build --help` or refer to the README [here](bin/makisu/README.md).
 
 ## Makisu anywhere
 

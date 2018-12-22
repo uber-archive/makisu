@@ -53,17 +53,6 @@
   revision = "9e14626cd129ba01ccb6806bcca9d523e570aaf0"
 
 [[projects]]
-  digest = "1:f6b20b9377cb5f08d7c4ce7f3319f96d70292aaf5fc595f253400ab03abcf0f5"
-  name = "github.com/apourchet/commander"
-  packages = [
-    ".",
-    "utils",
-  ]
-  pruneopts = ""
-  revision = "c9557032886500c2d43d91c900432f67d18ce83b"
-  version = "v1.4.10"
-
-[[projects]]
   branch = "master"
   digest = "1:9058597b266993ad136b22ffd05a53a47afc5c19ce3e4d5a2ed6da19406eead6"
   name = "github.com/axw/gocov"
@@ -509,7 +498,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c05c1570435fd2ae5253026c5a063650acb8ae8fc211c1aeff2a226ee691dc4b"
+  digest = "1:b11632fd65e4bcc4223d500ab2726d5d4ea94745440795820c61b7f5a1c30a0d"
   name = "golang.org/x/tools"
   packages = [
     "cmd/goimports",
@@ -527,7 +516,7 @@
     "internal/semver",
   ]
   pruneopts = ""
-  revision = "537d06c362073e8c95164d0d4709059603cfdb02"
+  revision = "d00ac6d27372a4273825635281f2dc360d4be563"
 
 [[projects]]
   branch = "v3-unstable"
@@ -553,7 +542,6 @@
     "github.com/alecthomas/gometalinter",
     "github.com/alicebob/miniredis",
     "github.com/andres-erbsen/clock",
-    "github.com/apourchet/commander",
     "github.com/axw/gocov/gocov",
     "github.com/client9/misspell/cmd/misspell",
     "github.com/docker/distribution/registry/client/auth",

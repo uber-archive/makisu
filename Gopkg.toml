@@ -15,10 +15,6 @@ required = [
   name = "github.com/andres-erbsen/clock"
 
 [[constraint]]
-  name = "github.com/apourchet/commander"
-  version = "1.4.10"
-
-[[constraint]]
   name = "github.com/go-redis/redis"
   version = "6.14.2"
 
