@@ -188,8 +188,8 @@ func newBuildPlan(
 }
 
 // Build image from the specified dockerfile.
-// If -push is specified, will also push the image to those registries.
-// If -load is specified, will load the image into the local docker daemon.
+// If --push is specified, will also push the image to those registries.
+// If --load is specified, will load the image into the local docker daemon.
 func Build(contextDir string) error {
 	log.Infof("Starting Makisu build (version=%s)", utils.BuildHash)
 
