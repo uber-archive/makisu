@@ -95,7 +95,7 @@ func getDockerfile(contextDir string) ([]*dockerfile.Stage, error) {
 		return nil, fmt.Errorf("failed to generate/find dockerfile in context: %s", err)
 	}
 
-	var buildArgMap map[string]string
+	buildArgMap := make(map[string]string)
 	for _, pair := range BuildArgs {
 		parts := strings.Split(pair, "=")
 		if len(parts) != 2 {
