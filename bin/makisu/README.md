@@ -6,7 +6,7 @@ $ makisu build --help
 Build docker image, optionally push to registries and/or load into docker daemon
 
 Usage:
-  makisu build -t=<image_tag> [flags] <context>
+  makisu build -t=<image_tag> [flags] <context_path>
 
 Flags:
   -f, --file string                     The absolute path to the dockerfile (default "Dockerfile")
@@ -14,7 +14,7 @@ Flags:
       --push stringArray                Registry to push image to
       --registry-config string          Set build-time variables
       --dest string                     Destination of the image tar
-      --build-arg stringArray           Argument to the dockerfile as per the spec of ARG
+      --build-arg stringArray           Argument to the dockerfile as per the spec of ARG. Format is "--build-arg <arg>=<value>"
       --modifyfs                        Allow makisu to modify files outside of its internal storage dir
       --commit string                   Set to explicit to only commit at steps with '#!COMMIT' annotations; Set to implicit to commit at every ADD/COPY/RUN step (default "implicit")
       --blacklist stringArray           Makisu will ignore all changes to these locations in the resulting docker images
@@ -22,7 +22,7 @@ Flags:
       --redis-cache-addr string         The address of a redis server for cacheID to layer sha mapping
       --redis-cache-ttl duration        Time-To-Live for redis cache (default 168h0m0s)
       --http-cache-addr string          The address of the http server for cacheID to layer sha mapping
-      --http-cache-header stringArray   Request header for http cache server
+      --http-cache-header stringArray   Request header for http cache server. Format is "--http-cache-header <header>:<value>"
       --docker-host string              Docker host to load images to (default "unix:///var/run/docker.sock")
       --docker-version string           Version string for loading images to docker (default "1.21")
       --docker-scheme string            Scheme for api calls to docker daemon (default "http")

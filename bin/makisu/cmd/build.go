@@ -54,7 +54,7 @@ func init() {
 	buildCmd.PersistentFlags().StringVar(&RedisCacheAddress, "redis-cache-addr", "", "The address of a redis server for cacheID to layer sha mapping")
 	buildCmd.PersistentFlags().DurationVar(&RedisCacheTTL, "redis-cache-ttl", time.Hour*168, "Time-To-Live for redis cache")
 	buildCmd.PersistentFlags().StringVar(&HTTPCacheAddress, "http-cache-addr", "", "The address of the http server for cacheID to layer sha mapping")
-	buildCmd.PersistentFlags().StringArrayVar(&HTTPCacheHeaders, "http-cache-header", nil, "Request header for http cache server. Format is \"--http-cache-header <header>=<value>\"")
+	buildCmd.PersistentFlags().StringArrayVar(&HTTPCacheHeaders, "http-cache-header", nil, "Request header for http cache server. Format is \"--http-cache-header <header>:<value>\"")
 
 	buildCmd.PersistentFlags().StringVar(&DockerHost, "docker-host", utils.DefaultEnv("DOCKER_HOST", "unix:///var/run/docker.sock"), "Docker host to load images to")
 	buildCmd.PersistentFlags().StringVar(&DockerVersion, "docker-version", utils.DefaultEnv("DOCKER_VERSION", "1.21"), "Version string for loading images to docker")
