@@ -3,8 +3,7 @@ ext-tools
 mocks
 
 bin/makisu/makisu
-bin/makisu-worker/makisu-worker
-bin/makisu-client/makisu-client
+bin/makisu/makisu.linux
 
 env
 .cache

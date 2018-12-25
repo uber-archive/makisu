@@ -174,9 +174,9 @@ def test_build_go_with_debian_package(registry1, storage_dir):
     new_image = new_image_name()
     context_dir = os.path.join(os.getcwd(), 'testdata/build-context/go-with-debian-package')
 
-    docker_build_args = {
-        "BASE_IMAGE": "127.0.0.1:5002/golang:latest",
-    }
+    docker_build_args = [
+        "BASE_IMAGE=127.0.0.1:5002/golang:latest",
+    ]
     utils.makisu_build_image(new_image, registry1.addr, context_dir, storage_dir, docker_args=docker_build_args)
     utils.docker_pull_image('{}/{}'.format(registry1.addr, new_image))
 
@@ -207,11 +207,13 @@ def test_build_arg_and_env(registry1, storage_dir):
     new_image = new_image_name()
     context_dir = os.path.join(os.getcwd(), 'testdata/build-context/arg-and-env')
 
-    docker_build_args = {
-        "BASE_IMAGE": "127.0.0.1:5002/golang:latest",
-        "RUNTIME_BASE_IMAGE": "127.0.0.1:5002/alpine:latest",
-    }
-    utils.makisu_build_image(new_image, registry1.addr, context_dir, storage_dir, docker_args=docker_build_args)
+    docker_build_args = [
+        "BASE_IMAGE=127.0.0.1:5002/golang:latest",
+        "RUNTIME_BASE_IMAGE=127.0.0.1:5002/alpine:latest",
+    ]
+    utils.makisu_build_image(
+        new_image, registry1.addr, context_dir, storage_dir,
+        docker_args=docker_build_args)
     utils.docker_pull_image('{}/{}'.format(registry1.addr, new_image))
 
     code, err = utils.docker_run_image(registry1.addr, new_image)
