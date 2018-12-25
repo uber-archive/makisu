@@ -99,14 +99,18 @@ func UnmarshalDistributionManifest(ctHeader string, p []byte) (DistributionManif
 	return manifest, Descriptor{Digest: digest, Size: int64(len(p)), MediaType: MediaTypeManifest}, nil
 }
 
-// GetDigests returns the list of layer digests of the image.
-func (manifest DistributionManifest) GetDigests() []Digest {
+// GetLayerDigests returns the list of layer digests of the image.
+func (manifest DistributionManifest) GetLayerDigests() []Digest {
 	digests := []Digest{}
 	for _, descriptor := range manifest.Layers {
 		digests = append(digests, descriptor.Digest)
 	}
-	digests = append(digests, manifest.Config.Digest)
 	return digests
+}
+
+// GetConfigDigest returns digest of the image config
+func (manifest DistributionManifest) GetConfigDigest() Digest {
+	return manifest.Config.Digest
 }
 
 // NewEmptyDescriptor returns a 0 value descriptor.

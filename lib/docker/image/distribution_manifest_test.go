@@ -40,5 +40,5 @@ const testManifest = `{
 func TestUnmarshalDistributionManifest(t *testing.T) {
 	manifest, _, err := UnmarshalDistributionManifest(MediaTypeManifest, []byte(testManifest))
 	require.NoError(t, err)
-	require.Equal(t, 2, len(manifest.GetDigests()))
+	require.Equal(t, 1, len(manifest.GetLayerDigests()))
 }

@@ -273,7 +273,6 @@ func (stage *buildStage) GetDistributionManifest(store storage.ImageStore) (*ima
 }
 
 // saveImage saves the image produced at the end of this stage.
-// TODO: handle existing layer or manifest.
 func (stage *buildStage) saveImage(store storage.ImageStore, repo, tag string) (*image.DistributionManifest, error) {
 	manifest, err := stage.GetDistributionManifest(store)
 	if err != nil {

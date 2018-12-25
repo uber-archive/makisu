@@ -51,6 +51,8 @@ type Client interface {
 	PushManifest(tag string, manifest *image.DistributionManifest) error
 	PullLayer(layerDigest image.Digest) (os.FileInfo, error)
 	PushLayer(layerDigest image.Digest) error
+	PullImageConfig(layerDigest image.Digest) (os.FileInfo, error)
+	PushImageConfig(layerDigest image.Digest) error
 }
 
 var _ Client = (*DockerRegistryClient)(nil)
@@ -114,7 +116,7 @@ func (c DockerRegistryClient) Pull(tag string) (*image.DistributionManifest, err
 
 	multiError := utils.NewMultiErrors()
 	workers := concurrency.NewWorkerPool(c.config.Concurrency)
-	for _, layer := range manifest.GetDigests() {
+	for _, layer := range manifest.GetLayerDigests() {
 		l := layer
 		workers.Do(func() {
 			if _, err := c.PullLayer(l); err != nil {
@@ -124,6 +126,14 @@ func (c DockerRegistryClient) Pull(tag string) (*image.DistributionManifest, err
 			}
 		})
 	}
+	l := manifest.GetConfigDigest()
+	workers.Do(func() {
+		if _, err := c.PullLayer(l); err != nil {
+			multiError.Add(fmt.Errorf("pull image config %s: %s", l, err))
+			workers.Stop()
+			return
+		}
+	})
 	workers.Wait()
 	if err := multiError.Collect(); err != nil {
 		return nil, err
@@ -154,7 +164,7 @@ func (c DockerRegistryClient) Push(tag string) error {
 
 	multiError := utils.NewMultiErrors()
 	workers := concurrency.NewWorkerPool(c.config.Concurrency)
-	for _, layer := range manifest.GetDigests() {
+	for _, layer := range manifest.GetLayerDigests() {
 		l := layer
 		workers.Do(func() {
 			if err := c.PushLayer(l); err != nil {
@@ -164,6 +174,14 @@ func (c DockerRegistryClient) Push(tag string) error {
 			}
 		})
 	}
+	l := manifest.GetConfigDigest()
+	workers.Do(func() {
+		if err := c.PushImageConfig(l); err != nil {
+			multiError.Add(fmt.Errorf("push image config %s: %s", l, err))
+			workers.Stop()
+			return
+		}
+	})
 	workers.Wait()
 	if err := multiError.Collect(); err != nil {
 		return err
@@ -250,12 +268,28 @@ func (c DockerRegistryClient) PushManifest(tag string, manifest *image.Distribut
 	return nil
 }
 
-// PullLayer pulls the layer of the docker image from the registry, and verifies that the contents of that layer
-// match the digest of the manifest.
-// If the layer is already in the imagestore of the client, the download is skipped.
+// PullLayer pulls image layer from the registry, and verifies that the contents
+// of that layer match the digest of the manifest.
+// If the layer already exists in the imagestore, the download is skipped.
 func (c DockerRegistryClient) PullLayer(layerDigest image.Digest) (os.FileInfo, error) {
+	return c.pullLayerHelper(layerDigest, false)
+}
+
+// PullImageConfig pulls image config blob from the registry.
+// Same as PullLayer, with slightly different log message.
+func (c DockerRegistryClient) PullImageConfig(layerDigest image.Digest) (os.FileInfo, error) {
+	return c.pullLayerHelper(layerDigest, true)
+}
+
+func (c DockerRegistryClient) pullLayerHelper(
+	layerDigest image.Digest, isConfig bool) (os.FileInfo, error) {
+
 	if info, err := c.store.Layers.GetDownloadOrCacheFileStat(layerDigest.Hex()); err == nil {
-		log.Infof("* Skipped pulling existing layer %s:%s", c.repository, layerDigest)
+		if isConfig {
+			log.Infof("* Skipped pulling existing image config %s:%s", c.repository, layerDigest)
+		} else {
+			log.Infof("* Skipped pulling existing layer %s:%s", c.repository, layerDigest)
+		}
 		return info, nil
 	}
 	opt, err := c.config.Security.GetHTTPOption(c.registry, c.repository)
@@ -263,7 +297,11 @@ func (c DockerRegistryClient) PullLayer(layerDigest image.Digest) (os.FileInfo, 
 		return nil, fmt.Errorf("get security opt: %s", err)
 	}
 
-	log.Infof("* Started pulling layer %s/%s:%s", c.registry, c.repository, layerDigest)
+	if isConfig {
+		log.Infof("* Started pulling image config %s/%s:%s", c.registry, c.repository, layerDigest)
+	} else {
+		log.Infof("* Started pulling layer %s/%s:%s", c.registry, c.repository, layerDigest)
+	}
 
 	URL := fmt.Sprintf(baseLayerQuery, c.registry, c.repository, string(layerDigest))
 	resp, err := httputil.Send(
@@ -299,16 +337,34 @@ func (c DockerRegistryClient) PullLayer(layerDigest image.Digest) (os.FileInfo, 
 	if err != nil {
 		return nil, fmt.Errorf("get layer stat: %s", err)
 	}
-	log.Infof("* Finished pulling layer %s:%s", c.repository, layerDigest.Hex())
+	if isConfig {
+		log.Infof("* Finished pulling image config %s:%s", c.repository, layerDigest.Hex())
+	} else {
+		log.Infof("* Finished pulling layer %s:%s", c.repository, layerDigest.Hex())
+	}
 	return info, nil
 }
 
-// PushLayer pushes the layer from the ImageStore of the client to the registry specified.
+// PushLayer pushes the image layer to the registry.
 func (c DockerRegistryClient) PushLayer(layerDigest image.Digest) error {
+	return c.pushLayerHelper(layerDigest, false)
+}
+
+// PushImageConfig pushes image config blob to the registry.
+// Same as PushLayer, with slightly different log message.
+func (c DockerRegistryClient) PushImageConfig(layerDigest image.Digest) error {
+	return c.pushLayerHelper(layerDigest, true)
+}
+
+func (c DockerRegistryClient) pushLayerHelper(layerDigest image.Digest, isConfig bool) error {
 	if found, err := c.layerExists(layerDigest); err != nil {
 		return fmt.Errorf("check layer exists: %s/%s (%s): %s", c.registry, c.repository, layerDigest, err)
 	} else if found {
-		log.Infof("* Skipped pushing existing layer %s:%s", c.repository, layerDigest)
+		if isConfig {
+			log.Infof("* Skipped pushing existing image config %s:%s", c.repository, layerDigest)
+		} else {
+			log.Infof("* Skipped pushing existing layer %s:%s", c.repository, layerDigest)
+		}
 		return nil
 	}
 	opt, err := c.config.Security.GetHTTPOption(c.registry, c.repository)
@@ -335,7 +391,11 @@ func (c DockerRegistryClient) PushLayer(layerDigest image.Digest) error {
 		return fmt.Errorf("empty layer upload URL")
 	}
 
-	log.Infof("* Started pushing layer %s", layerDigest)
+	if isConfig {
+		log.Infof("* Started pushing image config %s", layerDigest)
+	} else {
+		log.Infof("* Started pushing layer %s", layerDigest)
+	}
 	URL, err = c.pushLayerContent(layerDigest, URL)
 	if err != nil {
 		return fmt.Errorf("push layer content %s: %s", layerDigest, err)
@@ -351,7 +411,11 @@ func (c DockerRegistryClient) PushLayer(layerDigest image.Digest) error {
 	if err := c.commitLayer(parsed.String()); err != nil {
 		return fmt.Errorf("commit layer push %s: %s", layerDigest, err)
 	}
-	log.Infof("* Finished pushing layer %s", layerDigest)
+	if isConfig {
+		log.Infof("* Finished pushing image config %s", layerDigest)
+	} else {
+		log.Infof("* Finished pushing layer %s", layerDigest)
+	}
 	return nil
 }
 
