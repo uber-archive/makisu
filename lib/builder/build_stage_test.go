@@ -126,7 +126,7 @@ func TestPullCacheLayers(t *testing.T) {
 			require.NoError(err)
 
 			kvstore := cache.MemKVStore{}
-			cacheMgr := cache.New(kvstore, registry.NoopClientFixture())
+			cacheMgr := cache.New(kvstore, registry.NewNoopClient())
 
 			for i, node := range stage.nodes {
 				if tc.cacheExistsFlags[i] {

@@ -189,14 +189,6 @@ func cleanManifest(buildContext *context.BuildContext, imageName image.Name) err
 
 // newCacheManager inits and returns a cache manager object.
 func newCacheManager(buildContext *context.BuildContext, imageName image.Name) cache.Manager {
-	if len(PushRegistries) == 0 {
-		log.Infof("No registry or cache option provided, not using distributed cache")
-		return cache.NewNoopCacheManager()
-	}
-
-	registryAddr := PushRegistries[0]
-	registryClient := registry.New(buildContext.ImageStore, registryAddr, imageName.GetRepository())
-
 	var store cache.KVStore
 	var err error
 	if RedisCacheAddress != "" {
@@ -221,10 +213,18 @@ func newCacheManager(buildContext *context.BuildContext, imageName image.Name) c
 		if err != nil {
 			log.Errorf("Failed to init local cache ID store: %s", err)
 		}
+	} else {
+		log.Infof("No cache option provided, not using cache")
+		return cache.NewNoopCacheManager()
 	}
 
-	if err != nil {
-		return cache.New(nil, registryClient)
+	var registryClient registry.Client
+	if len(PushRegistries) == 0 {
+		log.Infof("No registry information provided, using local cache")
+		registryClient = registry.NewNoopClient()
+	} else {
+		registryAddr := PushRegistries[0]
+		registryClient = registry.New(buildContext.ImageStore, registryAddr, imageName.GetRepository())
 	}
 	return cache.New(store, registryClient)
 }
