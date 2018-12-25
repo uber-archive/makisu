@@ -114,7 +114,7 @@ func (c DockerRegistryClient) Pull(tag string) (*image.DistributionManifest, err
 
 	multiError := utils.NewMultiErrors()
 	workers := concurrency.NewWorkerPool(c.config.Concurrency)
-	for _, layer := range manifest.GetDigests() {
+	for _, layer := range manifest.GetLayerDigests() {
 		l := layer
 		workers.Do(func() {
 			if _, err := c.PullLayer(l); err != nil {
@@ -124,6 +124,14 @@ func (c DockerRegistryClient) Pull(tag string) (*image.DistributionManifest, err
 			}
 		})
 	}
+	l := manifest.GetConfigDigest()
+	workers.Do(func() {
+		if _, err := c.PullLayer(l); err != nil {
+			multiError.Add(fmt.Errorf("pull config %s: %s", l, err))
+			workers.Stop()
+			return
+		}
+	})
 	workers.Wait()
 	if err := multiError.Collect(); err != nil {
 		return nil, err
@@ -154,7 +162,7 @@ func (c DockerRegistryClient) Push(tag string) error {
 
 	multiError := utils.NewMultiErrors()
 	workers := concurrency.NewWorkerPool(c.config.Concurrency)
-	for _, layer := range manifest.GetDigests() {
+	for _, layer := range manifest.GetLayerDigests() {
 		l := layer
 		workers.Do(func() {
 			if err := c.PushLayer(l); err != nil {
@@ -164,6 +172,14 @@ func (c DockerRegistryClient) Push(tag string) error {
 			}
 		})
 	}
+	l := manifest.GetConfigDigest()
+	workers.Do(func() {
+		if err := c.PushLayer(l); err != nil {
+			multiError.Add(fmt.Errorf("push config %s: %s", l, err))
+			workers.Stop()
+			return
+		}
+	})
 	workers.Wait()
 	if err := multiError.Collect(); err != nil {
 		return err
