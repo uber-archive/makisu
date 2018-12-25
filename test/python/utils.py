@@ -6,7 +6,9 @@ import subprocess
 
 
 def docker_image_exists(image):
-    output = subprocess.check_output(['docker', 'images', image, '--format', '"{{.Repository}}:{{.Tag}}"'])
+    output = subprocess.check_output([
+        'docker', 'images', image, '--format', '"{{.Repository}}:{{.Tag}}"'
+    ])
     return image in output
 
 
@@ -75,7 +77,10 @@ def makisu_run_cmd(volumes, args):
     # Add volumes to docker command.
     volumes['/var/run/docker.sock'] = '/docker.sock'  # Mount docker socket
     for k, v in volumes.iteritems():
-        cmd.extend(['-v', '{path_outside}:{path_inside}'.format(path_outside=k, path_inside=v)])
+        cmd.extend([
+            '-v',
+            '{p_outside}:{p_inside}'.format(p_outside=k, p_inside=v),
+        ])
 
     cmd.extend([
         '-e', 'DOCKER_HOST=unix:///docker.sock',
@@ -101,26 +106,26 @@ def makisu_build_image(new_image, registry, context_dir, storage_dir,
         volumes[cache_dir] = cache_dir  # Cache key-value store
 
     docker_args = docker_args or {}
-    docker_args_str = json.dumps(docker_args)
 
     args = [
         'build',
         '-t', '{}'.format(new_image),
-        '-storage', storage_dir,
-        '-push', registry,
-        '-build-args', docker_args_str,
-        '-modifyfs=true',
-        '-commit=explicit',
+        '--storage', storage_dir,
+        '--push', registry,
+        '--modifyfs=true',
+        '--commit=explicit',
     ]
+    for docker_arg in docker_args:
+        args.extend(['--build-arg', docker_arg])
 
     if registry_config is not None:
         args.extend(['--registry-config', json.dumps(registry_config)])
 
     if load:
-        args.append('-load')
+        args.append('--load')
 
     if not cache_dir:
-        args.extend(['-cache-ttl', '0'])
+        args.extend(['--local-cache-ttl', '0s'])
 
     args.append('/context')
 

@@ -49,7 +49,7 @@ makisu build -t ${TAG} -dest ${TAR_PATH} ${CONTEXT}
 
 # Running Makisu
 
-For a full list of flags, run `makisu --help`, `makisu build --help` or refer to the README [here](cli/README.md).
+For a full list of flags, run `makisu build --help` or refer to the README [here](bin/makisu/README.md).
 
 ## Makisu anywhere
 
@@ -74,18 +74,18 @@ Now you can use `makisu_build` like you would use `docker build`:
 ```shell
 $ makisu_build -t myimage .
 ```
-Note: Docker socket mount is optional. It's used together with `--load` for loading images back into Docker daemon for convenience of local development. Neither does the mount to /makisu-storage, which is used for local cache. 
+Note: Docker socket mount is optional. It's used together with `--load` for loading images back into Docker daemon for convenience of local development. Neither does the mount to /makisu-storage, which is used for local cache.
 
 ## Makisu on Kubernetes
 
 Makisu makes it easy to build images from a GitHub repository inside Kubernetes. A single pod (or job) is
-created with an init container, which will fetch the build context through git or other means, and place 
+created with an init container, which will fetch the build context through git or other means, and place
 that context in a designated volume. Once it completes, the Makisu container will be created and executes
 the build, using that volume as its build context.
 
 ### Creating registry configuration
 
-Makisu needs registry configuration mounted to push to a secure registry. The config format is described [here](#configuring-docker-registry). After creating configuration file on local filesystem, run the following 
+Makisu needs registry configuration mounted to push to a secure registry. The config format is described [here](#configuring-docker-registry). After creating configuration file on local filesystem, run the following
 command to create the k8s secret:
 ```shell
 $ kubectl create secret generic docker-registry-config --from-file=./registry.yaml
@@ -177,7 +177,7 @@ spec:
 ```
 
 Finally, connect Redis as the Makisu layer cache by passing `--redis-cache-addr=redis:6379` argument.
-Cache has a 7 day TTL by default, which can be configured with `--cache-ttl=604800` argument.
+Cache has a 7 day TTL by default, which can be configured with `--local-cache-ttl=7d` argument.
 
 ## Explicit commit and cache
 
@@ -208,7 +208,7 @@ ENTRYPOINT ["/bin/bash"]
 
 # Configuring Docker Registry
 
-Makisu supports TLS and Basic Auth with Docker registry (Docker Hub, GCR, and private registries). By default, TLS is enabled and makisu uses a list of common root CA certs to authenticate registry. 
+Makisu supports TLS and Basic Auth with Docker registry (Docker Hub, GCR, and private registries). By default, TLS is enabled and makisu uses a list of common root CA certs to authenticate registry.
 ```go
 // Config contains Docker registry client configuration.
 type Config struct {
@@ -283,7 +283,7 @@ Consider using the great tool [yq](https://github.com/kislyuk/yq) to convert you
 
 ### Bazel
 
-We were inspired by the Bazel project in early 2017. It is one of the first few tools that could build Docker compatible images without using Docker or any form of containerizer. 
+We were inspired by the Bazel project in early 2017. It is one of the first few tools that could build Docker compatible images without using Docker or any form of containerizer.
 It works very well with a subset of Docker build scenarios given a Bazel build file. However, it does not support `RUN`, making it hard to replace most docker build workflows.
 
 ### Kaniko

@@ -12,12 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package cmd
 
 import (
-	"github.com/uber/makisu/bin/makisu/cmd"
+	"fmt"
+
+	"github.com/uber/makisu/lib/utils"
+
+	"github.com/spf13/cobra"
 )
 
-func main() {
-	cmd.Execute()
+func init() {
+	rootCmd.AddCommand(versionCmd)
+}
+
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print version number",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(utils.BuildHash)
+	},
 }

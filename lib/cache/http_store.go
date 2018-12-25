@@ -18,15 +18,15 @@ type httpStore struct {
 // implements the following API:
 // GET <address>/key => http.StatusOK with value in body
 // PUT <address>/key => 200 <= code < 300
-// The <headers> parameters are of the form: <key>=<value>.
+// The "headers" entries are of the form <header>:<value>.
 func NewHTTPStore(address string, headers ...string) (KVStore, error) {
 	headerMap := map[string]string{}
 	for _, tuple := range headers {
-		split := strings.SplitN(tuple, "=", 2)
+		split := strings.SplitN(tuple, ":", 2)
 		if len(split) != 2 {
-			return nil, fmt.Errorf("Malformed http header: %s, format is <header>=<value>", tuple)
+			return nil, fmt.Errorf("Malformed http header: %s, format is <header>:<value>", tuple)
 		}
-		headerMap[split[0]] = split[1]
+		headerMap[strings.TrimSpace(split[0])] = strings.TrimSpace(split[1])
 	}
 	store := &httpStore{
 		address: address,

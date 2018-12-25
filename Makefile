@@ -38,10 +38,15 @@ REGISTRY ?= gcr.io/makisu-project
 
 
 ### Targets to compile the makisu binaries.
-.PHONY: cbins bins
+.PHONY: bins lbins cbins
 bins: bin/makisu/makisu
 
 bin/makisu/makisu: $(ALL_SRC) vendor
+	go build -tags bins $(GO_FLAGS) -o $@ bin/makisu/*.go
+
+lbins: bin/makisu/makisu.linux
+
+bin/makisu/makisu.linux: $(ALL_SRC) vendor
 	CGO_ENABLED=0 GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ bin/makisu/*.go
 
 cbins:
@@ -50,7 +55,7 @@ cbins:
 		--entrypoint=bash \
 		-w /go/src/$(PACKAGE_NAME) \
 		golang:$(GO_VERSION) \
-		-c "make bins"
+		-c "make lbins"
 
 $(ALL_SRC): ;
 

@@ -33,7 +33,7 @@ type fsStore struct {
 
 	fullpath   string
 	sandboxDir string
-	ttlsec     int64
+	ttl        time.Duration
 
 	entries map[string]*cacheEntry
 }
@@ -41,11 +41,11 @@ type fsStore struct {
 // NewFSStore returns a KVStore backed by the local filesystem.
 // Entries are stored in json format.
 // TODO: enforce capacity.
-func NewFSStore(fullpath string, sandboxDir string, ttlsec int64) (KVStore, error) {
+func NewFSStore(fullpath string, sandboxDir string, ttl time.Duration) (KVStore, error) {
 	s := &fsStore{
 		fullpath:   fullpath,
 		sandboxDir: sandboxDir,
-		ttlsec:     ttlsec,
+		ttl:        ttl,
 		entries:    make(map[string]*cacheEntry),
 	}
 
@@ -63,8 +63,9 @@ func NewFSStore(fullpath string, sandboxDir string, ttlsec int64) (KVStore, erro
 	}
 
 	// Remove entries that's older than TTL.
+
 	for key, entry := range s.entries {
-		if time.Now().Unix()-entry.Timestamp > s.ttlsec {
+		if time.Since(time.Unix(entry.Timestamp, 0)) > s.ttl {
 			// Cache expired.
 			delete(s.entries, key)
 		}

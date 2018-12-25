@@ -16,6 +16,7 @@ package cache
 
 import (
 	"testing"
+	"time"
 
 	"github.com/alicebob/miniredis"
 	"github.com/stretchr/testify/require"
@@ -23,34 +24,38 @@ import (
 
 func TestRedisStore(t *testing.T) {
 	t.Run("get_no_exist", func(t *testing.T) {
+		require := require.New(t)
+
 		s, err := miniredis.Run()
-		if err != nil {
-			panic(err)
-		}
+		require.NoError(err)
 		defer s.Close()
 
-		store, err := NewRedisStore(s.Addr(), 10)
-		require.NoError(t, err)
+		d, err := time.ParseDuration("10s")
+		require.NoError(err)
+		store, err := NewRedisStore(s.Addr(), d)
+		require.NoError(err)
 
 		loc, err := store.Get("a")
-		require.NoError(t, err)
-		require.Equal(t, "", loc)
+		require.NoError(err)
+		require.Equal("", loc)
 	})
 	t.Run("set_then_get", func(t *testing.T) {
+		require := require.New(t)
+
 		s, err := miniredis.Run()
-		if err != nil {
-			panic(err)
-		}
+		require.NoError(err)
 		defer s.Close()
 
-		store, err := NewRedisStore(s.Addr(), 10)
-		require.NoError(t, err)
+		d, err := time.ParseDuration("10s")
+		require.NoError(err)
+		store, err := NewRedisStore(s.Addr(), d)
+		require.NoError(err)
 
 		defer store.Cleanup()
 		err = store.Put("a", "b")
-		require.NoError(t, err)
+		require.NoError(err)
 		loc, err := store.Get("a")
-		require.NoError(t, err)
-		require.Equal(t, "b", loc)
+		require.NoError(err)
+		require.Equal("b", loc)
 	})
 }
