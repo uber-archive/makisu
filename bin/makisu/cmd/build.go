@@ -202,6 +202,9 @@ func Build(contextDir string) error {
 	if err != nil {
 		return fmt.Errorf("failed to resolve context dir: %s", err)
 	}
+	if contextDir == "/" {
+		return fmt.Errorf("cannot use / as context directory")
+	}
 	imageStore, err := storage.NewImageStore(StorageDir)
 	if err != nil {
 		return fmt.Errorf("failed to init image store: %s", err)
