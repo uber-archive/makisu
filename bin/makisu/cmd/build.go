@@ -198,18 +198,18 @@ func Build(contextDir string) error {
 	}
 
 	// Create BuildContext.
-	contextDir, err := filepath.Abs(contextDir)
+	contextDirAbs, err := filepath.Abs(contextDir)
 	if err != nil {
 		return fmt.Errorf("failed to resolve context dir: %s", err)
 	}
-	if contextDir == "/" {
-		return fmt.Errorf("cannot use / as context directory")
+	if contextDirAbs == "/" {
+		return fmt.Errorf("the absolute path for context directory %s is /. Cannot use root as context", contextDir)
 	}
 	imageStore, err := storage.NewImageStore(StorageDir)
 	if err != nil {
 		return fmt.Errorf("failed to init image store: %s", err)
 	}
-	buildContext, err := context.NewBuildContext("/", contextDir, imageStore)
+	buildContext, err := context.NewBuildContext("/", contextDirAbs, imageStore)
 	if err != nil {
 		return fmt.Errorf("failed to create initial build context: %s", err)
 	}
