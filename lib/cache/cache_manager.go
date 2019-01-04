@@ -63,7 +63,7 @@ func (manager noopCacheManager) WaitForPush() error {
 // It implements CacheManager interface.
 type registryCacheManager struct {
 	cacheIDStore   KVStore
-	registryClient registry.Client
+	registryClient registry.LayerClient
 
 	sync.Mutex
 	wg         sync.WaitGroup
@@ -79,7 +79,7 @@ var (
 // New returns a new cache manager that interacts with the registry
 // passed in as well as the local filesystem through the image store.
 // By default the registry field is left blank.
-func New(cacheIDStore KVStore, registryClient registry.Client) Manager {
+func New(cacheIDStore KVStore, registryClient registry.LayerClient) Manager {
 	if cacheIDStore == nil {
 		log.Infof("No registry or KV store provided, using noop cache manager")
 		return noopCacheManager{}

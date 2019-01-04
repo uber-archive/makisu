@@ -45,12 +45,12 @@ const (
 // Client is the interface through which we can interact with a docker registry. It is used when
 // pulling and pushing images to that registry.
 type Client interface {
+	LayerClient
+
 	Pull(tag string) (*image.DistributionManifest, error)
 	Push(tag string) error
 	PullManifest(tag string) (*image.DistributionManifest, error)
 	PushManifest(tag string, manifest *image.DistributionManifest) error
-	PullLayer(layerDigest image.Digest) (os.FileInfo, error)
-	PushLayer(layerDigest image.Digest) error
 	PullImageConfig(layerDigest image.Digest) (os.FileInfo, error)
 	PushImageConfig(layerDigest image.Digest) error
 }
