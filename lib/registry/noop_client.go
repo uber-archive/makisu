@@ -58,3 +58,13 @@ func (NoopClient) PullLayer(layerDigest image.Digest) (os.FileInfo, error) {
 func (NoopClient) PushLayer(layerDigest image.Digest) error {
 	return nil
 }
+
+// PullImageConfig implements registry.Client.PullImageConfig.
+func (NoopClient) PullImageConfig(layerDigest image.Digest) (os.FileInfo, error) {
+	return nil, nil
+}
+
+// PushImageConfig implements registry.Client.PushImageConfig.
+func (NoopClient) PushImageConfig(layerDigest image.Digest) error {
+	return nil
+}
