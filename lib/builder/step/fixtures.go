@@ -18,35 +18,16 @@ package step
 
 import (
 	"fmt"
-	"os/user"
-	"strconv"
+	"os"
 )
 
-var currUser string
 var currUID int
-var currGroup string
 var currGID int
 var validChown string
 
 func init() {
-	u, err := user.Current()
-	if err != nil {
-		panic(err)
-	}
-	currUID, err = strconv.Atoi(u.Uid)
-	if err != nil {
-		panic(err)
-	}
-	currUser = u.Name
-	g, err := user.LookupGroupId(u.Gid)
-	if err != nil {
-		panic(err)
-	}
-	currGID, err = strconv.Atoi(u.Gid)
-	if err != nil {
-		panic(err)
-	}
-	currGroup = g.Name
+	currUID = os.Geteuid()
+	currGID = os.Getegid()
 	validChown = fmt.Sprintf("%d:%d", currUID, currGID)
 }
 
