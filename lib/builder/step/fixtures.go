@@ -19,7 +19,6 @@ package step
 import (
 	"fmt"
 	"os"
-	"strconv"
 )
 
 var currUID int
