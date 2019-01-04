@@ -18,9 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/user"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -173,19 +171,7 @@ func FileInfoStat(fi os.FileInfo) *syscall.Stat_t {
 
 // GetUIDGID returns the uid/gid pair for the current user.
 func GetUIDGID() (int, int, error) {
-	currUser, err := user.Current()
-	if err != nil {
-		return 0, 0, err
-	}
-	currUID, err := strconv.Atoi(currUser.Uid)
-	if err != nil {
-		return 0, 0, err
-	}
-	currGID, err := strconv.Atoi(currUser.Gid)
-	if err != nil {
-		return 0, 0, err
-	}
-	return currUID, currGID, nil
+	return os.Geteuid(), os.Getegid(), nil
 }
 
 // IsValidJSON returns true if the blob passed in is a valid json object.
