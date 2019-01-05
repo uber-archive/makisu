@@ -20,6 +20,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"github.com/uber/makisu/lib/cache"
+	"github.com/uber/makisu/lib/cache/keyvalue"
+	"github.com/uber/makisu/lib/context"
 	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/registry"
 )
@@ -27,7 +29,10 @@ import (
 func TestNoopCache(t *testing.T) {
 	require := require.New(t)
 
-	cacheMgr := cache.New(nil, registry.NoopClientFixture())
+	ctx, cleanup := context.BuildContextFixture()
+	defer cleanup()
+
+	cacheMgr := cache.New(ctx.ImageStore, nil, registry.NoopClientFixture())
 
 	_, err := cacheMgr.PullCache("cacheid1")
 	require.Equal(cache.ErrorLayerNotFound, errors.Cause(err))
@@ -44,12 +49,14 @@ func TestNoopCache(t *testing.T) {
 	require.NoError(err)
 }
 
-func TestMemKVStore(t *testing.T) {
+func TestMemStore(t *testing.T) {
 	require := require.New(t)
 
-	kvstore := cache.MemKVStore{}
+	ctx, cleanup := context.BuildContextFixture()
+	defer cleanup()
 
-	cacheMgr := cache.New(kvstore, registry.NoopClientFixture())
+	kvStore := keyvalue.MemStore{}
+	cacheMgr := cache.New(ctx.ImageStore, kvStore, registry.NoopClientFixture())
 
 	_, err := cacheMgr.PullCache("cacheid1")
 	require.Equal(cache.ErrorLayerNotFound, errors.Cause(err))

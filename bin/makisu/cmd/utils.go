@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/uber/makisu/lib/cache"
+	"github.com/uber/makisu/lib/cache/keyvalue"
 	"github.com/uber/makisu/lib/context"
 	"github.com/uber/makisu/lib/docker/cli"
 	"github.com/uber/makisu/lib/docker/image"
@@ -189,27 +190,19 @@ func cleanManifest(buildContext *context.BuildContext, imageName image.Name) err
 
 // newCacheManager inits and returns a cache manager object.
 func newCacheManager(buildContext *context.BuildContext, imageName image.Name) cache.Manager {
-	if len(PushRegistries) == 0 {
-		log.Infof("No registry or cache option provided, not using distributed cache")
-		return cache.NewNoopCacheManager()
-	}
-
-	registryAddr := PushRegistries[0]
-	registryClient := registry.New(buildContext.ImageStore, registryAddr, imageName.GetRepository())
-
-	var store cache.KVStore
+	var kvStore keyvalue.Store
 	var err error
 	if RedisCacheAddress != "" {
 		log.Infof("Using redis at %s for cacheID storage", RedisCacheAddress)
 
-		store, err = cache.NewRedisStore(RedisCacheAddress, RedisCacheTTL)
+		kvStore, err = keyvalue.NewRedisStore(RedisCacheAddress, RedisCacheTTL)
 		if err != nil {
 			log.Errorf("Failed to connect to redis store: %s", err)
 		}
 	} else if HTTPCacheAddress != "" {
 		log.Infof("Using http server at %s for cacheID storage", HTTPCacheAddress)
 
-		store, err = cache.NewHTTPStore(HTTPCacheAddress, HTTPCacheHeaders...)
+		kvStore, err = keyvalue.NewHTTPStore(HTTPCacheAddress, HTTPCacheHeaders...)
 		if err != nil {
 			log.Errorf("Failed to instantiate cache id store: %s", err)
 		}
@@ -217,25 +210,36 @@ func newCacheManager(buildContext *context.BuildContext, imageName image.Name) c
 		fullpath := path.Join(buildContext.ImageStore.RootDir, pathutils.CacheKeyValueFileName)
 		log.Infof("Using local file at %s for cacheID storage", fullpath)
 
-		store, err = cache.NewFSStore(fullpath, buildContext.ImageStore.SandboxDir, LocalCacheTTL)
+		kvStore, err = keyvalue.NewFSStore(
+			fullpath, buildContext.ImageStore.SandboxDir, LocalCacheTTL)
 		if err != nil {
 			log.Errorf("Failed to init local cache ID store: %s", err)
 		}
+	} else {
+		log.Infof("No cache option provided, not using cache")
+		return cache.NewNoopCacheManager()
 	}
 
-	if err != nil {
-		return cache.New(nil, registryClient)
+	var registryClient registry.Client
+	if len(PushRegistries) == 0 {
+		log.Infof("No registry information provided, using cached layers")
+		registryClient = nil
+	} else {
+		registryAddr := PushRegistries[0]
+		registryClient = registry.New(
+			buildContext.ImageStore, registryAddr, imageName.GetRepository())
 	}
-	return cache.New(store, registryClient)
+	return cache.New(buildContext.ImageStore, kvStore, registryClient)
 }
 
 func maybeBlacklistVarRun() error {
 	if found, err := mountutils.ContainsMountpoint("/var/run"); err != nil {
 		return err
 	} else if found {
-		pathutils.DefaultBlacklist = stringset.FromSlice(append(pathutils.DefaultBlacklist, "/var/run")).ToSlice()
-		log.Warnf("Blacklisted /var/run because it contains a mountpoint inside. No changes of that directory " +
-			"will be reflected in the final image.")
+		pathutils.DefaultBlacklist = stringset.FromSlice(
+			append(pathutils.DefaultBlacklist, "/var/run")).ToSlice()
+		log.Warnf("Blacklisted /var/run because it contains a mountpoint inside. " +
+			"No changes of that directory will be reflected in the final image.")
 	}
 	return nil
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cache
+package keyvalue
 
 import (
 	"fmt"
@@ -33,10 +33,10 @@ type redisStore struct {
 	ttl time.Duration
 }
 
-// NewRedisStore returns a new instance of KVStore backed by a redis server.
+// NewRedisStore returns a new instance of Store backed by a redis server.
 // In this constructor we try to open a connection to redis. If that attempt fails
 // we return an error. If it succeeds we just close that connection.
-func NewRedisStore(addr string, ttl time.Duration) (KVStore, error) {
+func NewRedisStore(addr string, ttl time.Duration) (Store, error) {
 	cli := redis.NewClient(&redis.Options{
 		Addr:         addr,
 		MaxRetries:   MaxRetires,

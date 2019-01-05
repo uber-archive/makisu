@@ -62,7 +62,7 @@ var _ Client = (*DockerRegistryClient)(nil)
 // It implements the Client interface.
 type DockerRegistryClient struct {
 	config     Config
-	store      storage.ImageStore
+	store      *storage.ImageStore
 	registry   string
 	repository string
 
@@ -71,16 +71,16 @@ type DockerRegistryClient struct {
 }
 
 // New returns a new default Client.
-func New(store storage.ImageStore, registry, repository string) *DockerRegistryClient {
+func New(store *storage.ImageStore, registry, repository string) *DockerRegistryClient {
 	return newClient(store, registry, repository, nil)
 }
 
 // NewWithClient returns a new Client with a customized http.Client.
-func NewWithClient(store storage.ImageStore, registry, repository string, client *http.Client) *DockerRegistryClient {
+func NewWithClient(store *storage.ImageStore, registry, repository string, client *http.Client) *DockerRegistryClient {
 	return newClient(store, registry, repository, client)
 }
 
-func newClient(store storage.ImageStore, registry, repository string, client *http.Client) *DockerRegistryClient {
+func newClient(store *storage.ImageStore, registry, repository string, client *http.Client) *DockerRegistryClient {
 	config := Config{}
 	repoConfig, ok := ConfigurationMap[registry]
 	if ok {

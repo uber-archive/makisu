@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/uber/makisu/lib/cache"
+	"github.com/uber/makisu/lib/cache/keyvalue"
 	"github.com/uber/makisu/lib/context"
 	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/parser/dockerfile"
@@ -125,8 +126,8 @@ func TestPullCacheLayers(t *testing.T) {
 			stage, err := newBuildStage(ctx, alias, tc.stage, image.DigestPairMap{}, opts)
 			require.NoError(err)
 
-			kvstore := cache.MemKVStore{}
-			cacheMgr := cache.New(kvstore, registry.NoopClientFixture())
+			kvStore := keyvalue.MemStore{}
+			cacheMgr := cache.New(ctx.ImageStore, kvStore, registry.NoopClientFixture())
 
 			for i, node := range stage.nodes {
 				if tc.cacheExistsFlags[i] {

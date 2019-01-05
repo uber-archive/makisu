@@ -228,7 +228,9 @@ func (stage *buildStage) build(cacheMgr cache.Manager, lastStage, copiedFrom boo
 }
 
 // GetDistributionManifest returns the distribution manifest produced at the end of the stage.
-func (stage *buildStage) GetDistributionManifest(store storage.ImageStore) (*image.DistributionManifest, error) {
+func (stage *buildStage) GetDistributionManifest(
+	store *storage.ImageStore) (*image.DistributionManifest, error) {
+
 	imageConfigJSON, err := json.Marshal(stage.lastImageConfig)
 	if err != nil {
 		return nil, fmt.Errorf("marshal image config: %s", err)
@@ -273,7 +275,9 @@ func (stage *buildStage) GetDistributionManifest(store storage.ImageStore) (*ima
 }
 
 // saveImage saves the image produced at the end of this stage.
-func (stage *buildStage) saveImage(store storage.ImageStore, repo, tag string) (*image.DistributionManifest, error) {
+func (stage *buildStage) saveImage(
+	store *storage.ImageStore, repo, tag string) (*image.DistributionManifest, error) {
+
 	manifest, err := stage.GetDistributionManifest(store)
 	if err != nil {
 		return nil, fmt.Errorf("get distribution manifest: %s", err)
