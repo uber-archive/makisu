@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cache
+package keyvalue
 
 import (
 	"encoding/json"
@@ -38,10 +38,10 @@ type fsStore struct {
 	entries map[string]*cacheEntry
 }
 
-// NewFSStore returns a KVStore backed by the local filesystem.
+// NewFSStore returns a Store backed by the local filesystem.
 // Entries are stored in json format.
 // TODO: enforce capacity.
-func NewFSStore(fullpath string, sandboxDir string, ttl time.Duration) (KVStore, error) {
+func NewFSStore(fullpath string, sandboxDir string, ttl time.Duration) (Store, error) {
 	s := &fsStore{
 		fullpath:   fullpath,
 		sandboxDir: sandboxDir,

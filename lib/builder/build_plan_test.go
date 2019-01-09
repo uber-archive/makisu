@@ -38,7 +38,7 @@ func TestBuildPlanExecution(t *testing.T) {
 	envImage, err := image.ParseName("scratch")
 	require.NoError(err)
 
-	cacheMgr := cache.New(nil, registry.NoopClientFixture())
+	cacheMgr := cache.New(ctx.ImageStore, nil, registry.NoopClientFixture())
 
 	from := dockerfile.FromDirectiveFixture("", envImage.String(), "")
 	directives := []dockerfile.Directive{
@@ -76,7 +76,7 @@ func TestBuildPlanContextDirs(t *testing.T) {
 	envImage, err := image.ParseName("scratch")
 	require.NoError(err)
 
-	cacheMgr := cache.New(nil, registry.NoopClientFixture())
+	cacheMgr := cache.New(ctx.ImageStore, nil, registry.NoopClientFixture())
 
 	// Valid copies from previous stage.
 	from1 := dockerfile.FromDirectiveFixture("", envImage.String(), "stage1")
@@ -133,7 +133,7 @@ func TestBuildPlanBadRun(t *testing.T) {
 	envImage, err := image.ParseName("scratch")
 	require.NoError(err)
 
-	cacheMgr := cache.New(nil, registry.NoopClientFixture())
+	cacheMgr := cache.New(ctx.ImageStore, nil, registry.NoopClientFixture())
 
 	from := dockerfile.FromDirectiveFixture("", envImage.String(), "")
 	directives := []dockerfile.Directive{
@@ -159,7 +159,7 @@ func TestDuplicateStageAlias(t *testing.T) {
 	envImage, err := image.ParseName("scratch")
 	require.NoError(err)
 
-	cacheMgr := cache.New(nil, registry.NoopClientFixture())
+	cacheMgr := cache.New(ctx.ImageStore, nil, registry.NoopClientFixture())
 
 	// Same image same alias.
 	from1 := dockerfile.FromDirectiveFixture("", envImage.String(), "alias")

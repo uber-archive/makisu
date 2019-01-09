@@ -44,8 +44,8 @@ type BuildContext struct {
 	StageVars map[string]string
 
 	// MemFS and ImageStore can be shared across all copies of the BuildContext.
-	MemFS      *snapshot.MemFS    // Merged view of base layers. Layers should be merged in order.
-	ImageStore storage.ImageStore // Stores image layers and manifests.
+	MemFS      *snapshot.MemFS     // Merged view of base layers. Layers should be merged in order.
+	ImageStore *storage.ImageStore // Stores image layers and manifests.
 
 	CopyOps   []*snapshot.CopyOperation
 	MustScan  bool
@@ -54,7 +54,7 @@ type BuildContext struct {
 
 // NewBuildContext inits a new BuildContext object.
 func NewBuildContext(
-	rootDir, contextDir string, imageStore storage.ImageStore) (*BuildContext, error) {
+	rootDir, contextDir string, imageStore *storage.ImageStore) (*BuildContext, error) {
 
 	stagesDir := filepath.Join(imageStore.SandboxDir, _stagesDir)
 	if err := os.MkdirAll(stagesDir, os.ModePerm); err != nil {
