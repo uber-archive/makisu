@@ -206,7 +206,7 @@ def test_build_go_with_debian_package(registry1, storage_dir):
     assert output.find("/usr/bin/hello") != -1
 
     image_name = '{}/{}'.format(registry1.addr, new_image)
-    base_layers = image.DockerImage("127.0.0.1:5002/golang:latest").get_layer_locations()
+    base_layers = image.DockerImage("golang:latest").get_layer_locations()
 
     img = image.DockerImage(image_name)
     assert len(img.get_layer_locations()) == len(base_layers) + 2
