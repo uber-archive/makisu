@@ -17,6 +17,12 @@ class DockerImage():
         self._load_manifest()
 
     def _do_save(self):
+        command = ['docker', 'pull', self.image_name]
+        exit_code = subprocess.call(command)
+        if exit_code != 0:
+            msg = 'Failed to pull docker image: {}'.format(self.image_name)
+            raise Exception(msg)
+
         command = ['docker', 'save', '-o', self.image_tar, self.image_name]
         exit_code = subprocess.call(command)
         if exit_code != 0:

@@ -110,7 +110,7 @@ var (
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := Build(args[0]); err != nil {
-				fmt.Println(err)
+				log.Error(err)
 				os.Exit(1)
 			}
 		},

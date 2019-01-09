@@ -13,10 +13,7 @@ RUN apt-get install -y --allow-unauthenticated \
 RUN apt-get install -y --allow-unauthenticated \
 
     # tree
-    tree \
-
-    # other
-    jq
+    tree
 
 # Perform build
 COPY . /home/udocker/simple-debian-package
