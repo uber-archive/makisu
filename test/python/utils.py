@@ -59,11 +59,6 @@ def registry_image_exists(image, registry):
     return r.status_code == 200
 
 
-def registry_ensure_image(image, registry):
-    docker_pull_image(image)
-    docker_push_image(image, registry)
-
-
 def get_base_image():
     version = os.getenv("PACKAGE_VERSION", "latest")
     if os.getenv("MAKISU_ALPINE", "0") != "0":
@@ -96,10 +91,11 @@ def makisu_run_cmd(volumes, args):
     return exit_code
 
 
-def makisu_build_image(new_image, registry, context_dir, storage_dir,
-                       cache_dir=None, additional_volumes=None,
-                       docker_args=None, load=False, registry_config=None):
-    volumes = additional_volumes or {}
+def makisu_build_image(
+    new_image, context_dir, storage_dir, cache_dir=None, volumes=None,
+    docker_args=None, load=False, registry=None, registry_cfg=None):
+
+    volumes = volumes or {}
     volumes[storage_dir] = storage_dir  # Sandbox and file store
     volumes[context_dir] = '/context'  # Mount context dir
     if cache_dir:
@@ -120,8 +116,8 @@ def makisu_build_image(new_image, registry, context_dir, storage_dir,
     if registry:
        args.extend([ '--push', registry])
 
-    if registry_config is not None:
-        args.extend(['--registry-config', json.dumps(registry_config)])
+    if registry_cfg is not None:
+        args.extend(['--registry-config', json.dumps(registry_cfg)])
 
     if load:
         args.append('--load')
