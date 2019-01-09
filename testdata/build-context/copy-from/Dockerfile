@@ -3,7 +3,7 @@ RUN echo "OK" > /test1.txt
 
 FROM busybox:latest
 # Copy from default numbered alias.
-COPY --from=0 /test.txt1 /test2.txt
+COPY --from=0 /test1.txt /test2.txt
 RUN cat /test2.txt
 
 FROM busybox
