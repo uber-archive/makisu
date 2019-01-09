@@ -139,9 +139,10 @@ def makisu_build_image(new_image, registry, context_dir, storage_dir,
 
 
 def docker_run_image(registry, image):
-    proc = subprocess.Popen([
-        "docker", "run", "-i", "--rm",
-        '{}/{}'.format(registry, image),
-    ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if registry:
+        image = '{}/{}'.format(registry, image)
+    proc = subprocess.Popen(
+        ["docker", "run", "-i", "--rm", image],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     _, err = proc.communicate()
     return proc.returncode, err

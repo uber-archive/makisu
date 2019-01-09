@@ -186,16 +186,9 @@ def test_build_with_local_cache(registry1, storage_dir, cache_dir, tmpdir):
 
     # Second build, without test file and without registry config.
     # It would fail if local cache doesn't work.
-    utils.makisu_build_image(new_image2, None, context_dir, storage_dir, cache_dir)
-    code, err = utils.docker_run_image(registry1.addr, new_image2)
+    utils.makisu_build_image(new_image2, None, context_dir, storage_dir, cache_dir, load=True)
+    code, err = utils.docker_run_image(None, new_image2)
     assert code == 0, err
-
-    proc = subprocess.Popen([
-        "docker", "run", "-i", "--rm",
-        '{}/{}'.format(registry1.addr, new_image2),
-    ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    _, err = proc.communicate()
-    assert proc.returncode == 0, err
 
 
 def test_build_go_with_debian_package(registry1, storage_dir):
