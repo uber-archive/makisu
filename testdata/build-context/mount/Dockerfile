@@ -16,5 +16,5 @@ RUN mkdir /test #!COMMIT
 WORKDIR /test #!COMMIT
 RUN ls /test #!COMMIT
 
-COPY --from=phase1 /done.txt /test/done.txt
-ENTRYPOINT ["/bin/sh", "-c", "cat /test/done.txt"]
+COPY --from=phase1 /done.txt /done.txt
+ENTRYPOINT ["/bin/sh", "-c", "cat /done.txt"]
