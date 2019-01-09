@@ -21,20 +21,11 @@ def test_build_simple(registry1, storage_dir):
     assert code == 0, err
 
 
-def test_build_numbered_alias(registry1, storage_dir):
+def test_build_copy_from(registry1, storage_dir):
     new_image = new_image_name()
-    context_dir = os.path.join(os.getcwd(), 'testdata/build-context/numbered-alias')
+    context_dir = os.path.join(os.getcwd(), 'testdata/build-context/copy-from')
 
-    utils.makisu_build_image(new_image, registry1.addr, context_dir, storage_dir, load=True)
-    code, err = utils.docker_run_image(registry1.addr, new_image)
-    assert code == 0, err
-
-
-def test_build_copy_from_image(registry1, storage_dir):
-    new_image = new_image_name()
-    context_dir = os.path.join(os.getcwd(), 'testdata/build-context/copy-from-image')
-
-    utils.makisu_build_image(new_image, registry1.addr, context_dir, storage_dir, load=True)
+    utils.makisu_build_image(new_image, registry1.addr, context_dir, storage_dir)
     code, err = utils.docker_run_image(registry1.addr, new_image)
     assert code == 0, err
 
