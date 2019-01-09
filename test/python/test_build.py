@@ -145,7 +145,7 @@ def test_build_with_distributed_cache(registry1, storage_dir, cache_dir, tmpdir)
     assert err != ""
 
     image_name = '{}/{}'.format(registry1.addr, new_image2)
-    base_layers = image.DockerImage("127.0.0.1:5002/debian:8").get_layer_locations()
+    base_layers = image.DockerImage("debian:8").get_layer_locations()
 
     img = image.DockerImage(image_name)
     assert len(img.get_layer_locations()) == len(base_layers) + 3
