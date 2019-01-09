@@ -138,7 +138,7 @@ func (manager *registryCacheManager) PullCache(cacheID string) (*image.DigestPai
 		return nil, fmt.Errorf("stat layer %s: %s", entry, err)
 	} else if os.IsNotExist(err) {
 		if manager.registryClient == nil {
-			return nil, fmt.Errorf("registry client not setup to pull %s: %s", entry, err)
+			return nil, fmt.Errorf("registry client not configured to pull cache")
 		}
 		// Pull layer from docker registry.
 		info, err = manager.registryClient.PullLayer(gzipDigest)
@@ -164,6 +164,11 @@ func (manager *registryCacheManager) PullCache(cacheID string) (*image.DigestPai
 
 // PushCache tries to push an image layer asynchronously.
 func (manager *registryCacheManager) PushCache(cacheID string, digestPair *image.DigestPair) error {
+	if manager.registryClient == nil {
+		manager.pushErrors.Add(fmt.Errorf("registry client not configured to push cache"))
+		return nil
+	}
+
 	manager.wg.Add(1)
 
 	go func() {

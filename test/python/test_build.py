@@ -127,7 +127,7 @@ def test_build_commit_empty_pair(registry1, storage_dir, cache_dir, tmpdir):
     assert code == 0, err
 
 
-def test_build_with_cache(registry1, storage_dir, cache_dir, tmpdir):
+def test_build_with_distributed_cache(registry1, storage_dir, cache_dir, tmpdir):
     utils.registry_ensure_image('debian:8', registry1.addr)
     new_image1 = new_image_name()
     new_image2 = new_image_name()
@@ -141,7 +141,8 @@ def test_build_with_cache(registry1, storage_dir, cache_dir, tmpdir):
     additional_volumes = {test_file: '/tmp/test.txt', test_file2: '/root/mounted.txt'}
     utils.makisu_build_image(new_image1, registry1.addr, context_dir, storage_dir, cache_dir, additional_volumes)
 
-    # Second build, without test file. It would fail if distributed cache doesn't work.
+    # Second build, without test file.
+    # It would fail if distributed cache doesn't work.
     utils.makisu_build_image(new_image2, registry1.addr, context_dir, storage_dir, cache_dir)
     code, err = utils.docker_run_image(registry1.addr, new_image2)
     assert code == 0, err
@@ -167,6 +168,34 @@ def test_build_with_cache(registry1, storage_dir, cache_dir, tmpdir):
     assert list(l1.get_tar_headers())[0].gname != "root"
 
     img.cleanup()
+
+
+def test_build_with_local_cache(registry1, storage_dir, cache_dir, tmpdir):
+    utils.registry_ensure_image('debian:8', registry1.addr)
+    new_image1 = new_image_name()
+    new_image2 = new_image_name()
+    context_dir = os.path.join(os.getcwd(), 'testdata/build-context/mount')
+    test_file = tmpdir.join("f1")
+    test_file.write("")
+    test_file2 = tmpdir.join("f2")
+    test_file2.write("")
+
+    # First build, mount in test file.
+    additional_volumes = {test_file: '/tmp/test.txt', test_file2: '/root/mounted.txt'}
+    utils.makisu_build_image(new_image1, registry1.addr, context_dir, storage_dir, cache_dir, additional_volumes)
+
+    # Second build, without test file and without registry config.
+    # It would fail if local cache doesn't work.
+    utils.makisu_build_image(new_image2, None, context_dir, storage_dir, cache_dir)
+    code, err = utils.docker_run_image(registry1.addr, new_image2)
+    assert code == 0, err
+
+    proc = subprocess.Popen([
+        "docker", "run", "-i", "--rm",
+        '{}/{}'.format(registry1.addr, new_image2),
+    ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    _, err = proc.communicate()
+    assert proc.returncode == 0, err
 
 
 def test_build_go_with_debian_package(registry1, storage_dir):

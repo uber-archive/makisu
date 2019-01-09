@@ -111,12 +111,14 @@ def makisu_build_image(new_image, registry, context_dir, storage_dir,
         'build',
         '-t', '{}'.format(new_image),
         '--storage', storage_dir,
-        '--push', registry,
         '--modifyfs=true',
         '--commit=explicit',
     ]
     for docker_arg in docker_args:
         args.extend(['--build-arg', docker_arg])
+
+    if registry:
+       args.extend([ '--push', registry])
 
     if registry_config is not None:
         args.extend(['--registry-config', json.dumps(registry_config)])
@@ -131,7 +133,9 @@ def makisu_build_image(new_image, registry, context_dir, storage_dir,
 
     exit_code = makisu_run_cmd(volumes, args)
     assert exit_code == 0
-    assert registry_image_exists(new_image, registry)
+
+    if registry:
+        assert registry_image_exists(new_image, registry)
 
 
 def docker_run_image(registry, image):
