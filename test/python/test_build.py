@@ -178,7 +178,7 @@ def test_build_with_local_cache(registry1, storage_dir, cache_dir, tmpdir):
     # Second build, without test file and without registry config.
     # It would fail if local cache doesn't work.
     utils.makisu_build_image(
-        new_image, context_dir, storage_dir, cache_dir=cache_dir,
+        new_image2, context_dir, storage_dir, cache_dir=cache_dir,
         volumes=volumes, load=True)
 
     code, err = utils.docker_run_image(None, new_image2)
