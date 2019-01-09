@@ -23,7 +23,7 @@ import (
 )
 
 // StoreFixture returns test store.
-func StoreFixture() (ImageStore, func()) {
+func StoreFixture() (*ImageStore, func()) {
 	root, err := ioutil.TempDir("/tmp", "makisu-test")
 	if err != nil {
 		log.Fatal(err)
@@ -45,7 +45,7 @@ func StoreFixture() (ImageStore, func()) {
 }
 
 // StoreFixtureWithSampleImage returns test store with sample image.
-func StoreFixtureWithSampleImage() (ImageStore, func()) {
+func StoreFixtureWithSampleImage() (*ImageStore, func()) {
 	store, c := StoreFixture()
 
 	manifestData, err := ioutil.ReadFile("../../testdata/files/test_distribution_manifest")

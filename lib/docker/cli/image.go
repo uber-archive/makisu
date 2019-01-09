@@ -37,12 +37,12 @@ type ImageTarer interface {
 
 // DefaultImageTarer is the default implementation of the ImageTarer interface.
 type DefaultImageTarer struct {
-	store storage.ImageStore
+	store *storage.ImageStore
 }
 
 // NewDefaultImageTarer creates a new DefaultImageTarer with the given
 // manifests, layers, and rootdir.
-func NewDefaultImageTarer(store storage.ImageStore) DefaultImageTarer {
+func NewDefaultImageTarer(store *storage.ImageStore) DefaultImageTarer {
 	return DefaultImageTarer{
 		store: store,
 	}

@@ -16,13 +16,16 @@ package cache
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/uber/makisu/lib/cache/keyvalue"
 	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/log"
 	"github.com/uber/makisu/lib/registry"
+	"github.com/uber/makisu/lib/storage"
 	"github.com/uber/makisu/lib/utils"
 
 	"github.com/pkg/errors"
@@ -62,7 +65,8 @@ func (manager noopCacheManager) WaitForPush() error {
 // It needs an additional key-value store for cache key/layer name lookup.
 // It implements CacheManager interface.
 type registryCacheManager struct {
-	cacheIDStore   KVStore
+	imageStore     *storage.ImageStore
+	kvStore        keyvalue.Store
 	registryClient registry.Client
 
 	sync.Mutex
@@ -79,13 +83,17 @@ var (
 // New returns a new cache manager that interacts with the registry
 // passed in as well as the local filesystem through the image store.
 // By default the registry field is left blank.
-func New(cacheIDStore KVStore, registryClient registry.Client) Manager {
-	if cacheIDStore == nil {
-		log.Infof("No registry or KV store provided, using noop cache manager")
+func New(
+	imageStore *storage.ImageStore, kvStore keyvalue.Store,
+	registryClient registry.Client) Manager {
+
+	if imageStore == nil || kvStore == nil {
+		log.Infof("No image store or KV store provided, using noop cache manager")
 		return noopCacheManager{}
 	}
 	return &registryCacheManager{
-		cacheIDStore:   cacheIDStore,
+		imageStore:     imageStore,
+		kvStore:        kvStore,
 		registryClient: registryClient,
 	}
 }
@@ -100,7 +108,7 @@ func (manager *registryCacheManager) PullCache(cacheID string) (*image.DigestPai
 	var entry string
 	var err error
 	for i := 0; ; i++ {
-		entry, err = manager.cacheIDStore.Get(_cachePrefix + cacheID)
+		entry, err = manager.kvStore.Get(_cachePrefix + cacheID)
 		if err == nil && entry != "" {
 			break
 		} else if entry == "" {
@@ -124,11 +132,21 @@ func (manager *registryCacheManager) PullCache(cacheID string) (*image.DigestPai
 		return nil, errors.Wrapf(ErrorLayerNotFound, "parse entry %s", entry)
 	}
 
-	// Pull layer from docker registry.
-	info, err := manager.registryClient.PullLayer(gzipDigest)
-	if err != nil {
-		return nil, fmt.Errorf("pull layer %s: %s", entry, err)
+	// Check if layer is already on disk.
+	info, err := manager.imageStore.Layers.GetStoreFileStat(gzipDigest.Hex())
+	if err != nil && !os.IsNotExist(err) {
+		return nil, fmt.Errorf("stat layer %s: %s", entry, err)
+	} else if os.IsNotExist(err) {
+		if manager.registryClient == nil {
+			return nil, fmt.Errorf("registry client not configured to pull cache")
+		}
+		// Pull layer from docker registry.
+		info, err = manager.registryClient.PullLayer(gzipDigest)
+		if err != nil {
+			return nil, fmt.Errorf("pull layer %s: %s", entry, err)
+		}
 	}
+
 	// Info might be nil if the registry client is a test fixture.
 	var size int64
 	if info != nil {
@@ -146,6 +164,11 @@ func (manager *registryCacheManager) PullCache(cacheID string) (*image.DigestPai
 
 // PushCache tries to push an image layer asynchronously.
 func (manager *registryCacheManager) PushCache(cacheID string, digestPair *image.DigestPair) error {
+	if manager.registryClient == nil {
+		manager.pushErrors.Add(fmt.Errorf("registry client not configured to push cache"))
+		return nil
+	}
+
 	manager.wg.Add(1)
 
 	go func() {
@@ -162,7 +185,7 @@ func (manager *registryCacheManager) PushCache(cacheID string, digestPair *image
 		}
 
 		entry := createEntry(digestPair)
-		if err := manager.cacheIDStore.Put(_cachePrefix+cacheID, entry); err != nil {
+		if err := manager.kvStore.Put(_cachePrefix+cacheID, entry); err != nil {
 			manager.pushErrors.Add(fmt.Errorf("store tag mapping (%s,%s): %s", cacheID, entry, err))
 			return
 		}

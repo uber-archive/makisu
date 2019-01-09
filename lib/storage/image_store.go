@@ -30,26 +30,26 @@ type ImageStore struct {
 }
 
 // NewImageStore creates a new ImageStore.
-func NewImageStore(rootDir string) (ImageStore, error) {
+func NewImageStore(rootDir string) (*ImageStore, error) {
 	sandboxParent := filepath.Join(rootDir, "sandbox")
 	if err := os.MkdirAll(sandboxParent, 0755); err != nil {
-		return ImageStore{}, fmt.Errorf("init sandbox parent dir: %s", err)
+		return nil, fmt.Errorf("init sandbox parent dir: %s", err)
 	}
 	sandboxDir, err := ioutil.TempDir(sandboxParent, "sandbox")
 	if err != nil {
-		return ImageStore{}, fmt.Errorf("init sandbox dir: %s", err)
+		return nil, fmt.Errorf("init sandbox dir: %s", err)
 	}
 
 	m, err := NewManifestStore(rootDir)
 	if err != nil {
-		return ImageStore{}, fmt.Errorf("init manifest store: %s", err)
+		return nil, fmt.Errorf("init manifest store: %s", err)
 	}
 	l, err := NewLayerTarStore(rootDir)
 	if err != nil {
-		return ImageStore{}, fmt.Errorf("init layer store: %s", err)
+		return nil, fmt.Errorf("init layer store: %s", err)
 	}
 
-	return ImageStore{
+	return &ImageStore{
 		RootDir:    rootDir,
 		SandboxDir: sandboxDir,
 		Manifests:  m,

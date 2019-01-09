@@ -1,4 +1,4 @@
-package cache
+package keyvalue
 
 import (
 	"encoding/base64"
@@ -14,12 +14,12 @@ type httpStore struct {
 	client  *http.Client
 }
 
-// NewHTTPStore returns a new instance of KVStore backed by a server that
+// NewHTTPStore returns a new instance of Store backed by a server that
 // implements the following API:
 // GET <address>/key => http.StatusOK with value in body
 // PUT <address>/key => 200 <= code < 300
 // The "headers" entries are of the form <header>:<value>.
-func NewHTTPStore(address string, headers ...string) (KVStore, error) {
+func NewHTTPStore(address string, headers ...string) (Store, error) {
 	headerMap := map[string]string{}
 	for _, tuple := range headers {
 		split := strings.SplitN(tuple, ":", 2)

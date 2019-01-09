@@ -198,7 +198,7 @@ func (s *FromStep) UpdateCtxAndConfig(
 	return config, nil
 }
 
-func (s *FromStep) getManifest(store storage.ImageStore) (*image.DistributionManifest, error) {
+func (s *FromStep) getManifest(store *storage.ImageStore) (*image.DistributionManifest, error) {
 	if s.manifest != nil {
 		return s.manifest, nil
 	}
@@ -217,7 +217,9 @@ func (s *FromStep) getManifest(store storage.ImageStore) (*image.DistributionMan
 	return manifest, nil
 }
 
-func (s *FromStep) getConfig(configDigest image.Descriptor, imageStore storage.ImageStore) (*image.Config, error) {
+func (s *FromStep) getConfig(
+	configDigest image.Descriptor, imageStore *storage.ImageStore) (*image.Config, error) {
+
 	r, err := imageStore.Layers.GetStoreFileReader(configDigest.Digest.Hex())
 	if err != nil {
 		return nil, fmt.Errorf("get config file reader %s: %s", configDigest.Digest.Hex(), err)
