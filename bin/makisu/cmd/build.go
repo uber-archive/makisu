@@ -100,6 +100,8 @@ var (
 		Use: "build -t=<image_tag> [flags] <context_path>",
 		DisableFlagsInUseLine: true,
 		Short: "Build docker image, optionally push to registries and/or load into docker daemon",
+
+		TraverseChildren: true,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				return errors.New("Requires build context as argument")
