@@ -21,50 +21,11 @@ def test_build_simple(registry1, storage_dir):
     assert code == 0, err
 
 
-def test_build_copy_from(registry1, storage_dir):
-    new_image = new_image_name()
-    context_dir = os.path.join(os.getcwd(), 'testdata/build-context/copy-from')
-
-    utils.makisu_build_image(new_image, registry1.addr, context_dir, storage_dir)
-    code, err = utils.docker_run_image(registry1.addr, new_image)
-    assert code == 0, err
-
-
-def test_build_delete_intermediate(registry1, storage_dir):
-    new_image = new_image_name()
-    context_dir = os.path.join(os.getcwd(), 'testdata/build-context/delete-intermediate')
-
-    utils.makisu_build_image(new_image, registry1.addr, context_dir, storage_dir)
-    code, err = utils.docker_run_image(registry1.addr, new_image)
-    assert code == 0, err
-
-
 def test_build_symlink(registry1, storage_dir):
     new_image = new_image_name()
     context_dir = os.path.join(os.getcwd(), 'testdata/build-context/symlink')
 
     utils.makisu_build_image(new_image, registry1.addr, context_dir, storage_dir)
-    code, err = utils.docker_run_image(registry1.addr, new_image)
-    assert code == 0, err
-
-
-def test_build_with_readonly_mnt(registry1, storage_dir, cache_dir):
-    new_image = new_image_name()
-    context_dir = os.path.join(os.getcwd(), 'testdata/build-context/simple')
-
-    _, test_file = tempfile.mkstemp(dir='/tmp')  # TODO: prevent leaking if test failed
-    additional_volumes = {test_file: '/var/run/makisu/builder/test'}
-
-    utils.makisu_build_image(new_image, registry1.addr, context_dir, storage_dir, cache_dir, additional_volumes)
-    code, err = utils.docker_run_image(registry1.addr, new_image)
-    assert code == 0, err
-
-
-def test_build_copyroot(registry1, storage_dir, cache_dir):
-    new_image = new_image_name()
-    context_dir = os.path.join(os.getcwd(), 'testdata/build-context/copyroot')
-
-    utils.makisu_build_image(new_image, registry1.addr, context_dir, storage_dir, cache_dir)
     code, err = utils.docker_run_image(registry1.addr, new_image)
     assert code == 0, err
 
@@ -78,15 +39,49 @@ def test_build_copy_glob(registry1, storage_dir, cache_dir):
     assert code == 0, err
 
 
-def test_build_cache_copyfrom(registry1, storage_dir, cache_dir):
+def test_build_copy_from(registry1, storage_dir):
     new_image = new_image_name()
-    context_dir = os.path.join(os.getcwd(), 'testdata/build-context/cache-copy-from')
+    context_dir = os.path.join(os.getcwd(), 'testdata/build-context/copy-from')
 
-    utils.makisu_build_image(new_image, registry1.addr, context_dir, storage_dir, cache_dir)
+    utils.makisu_build_image(new_image, registry1.addr, context_dir, storage_dir)
     code, err = utils.docker_run_image(registry1.addr, new_image)
     assert code == 0, err
 
-    utils.makisu_build_image(new_image, registry1.addr, context_dir, storage_dir, cache_dir)
+
+def test_build_arg_and_env(registry1, storage_dir):
+    utils.registry_ensure_image('golang:latest', registry1.addr)
+    utils.registry_ensure_image('alpine:latest', registry1.addr)
+    new_image = new_image_name()
+    context_dir = os.path.join(os.getcwd(), 'testdata/build-context/arg-and-env')
+
+    docker_build_args = [
+        "BASE_IMAGE=127.0.0.1:5002/golang:latest",
+        "RUNTIME_BASE_IMAGE=127.0.0.1:5002/alpine:latest",
+    ]
+    utils.makisu_build_image(
+        new_image, registry1.addr, context_dir, storage_dir,
+        docker_args=docker_build_args)
+    utils.docker_pull_image('{}/{}'.format(registry1.addr, new_image))
+
+    code, err = utils.docker_run_image(registry1.addr, new_image)
+    assert code == 0, err
+
+
+# When we run makisu build, some mountpoints and their parent directories are already created. As
+# such, when we unpack `/var/run -> /run` symlink in `debian:9` for instance, we get an error
+# because we think we should delete everything under `/var/run`, but the mountpoint might be
+# read-only, thus returning an error.
+# We fix that by checking if `/var/run` is present and contains a mountpoint right before a build.
+# If that is the case then we choose to ignore all file changes under that directory.
+# This is necessary in the k8s environment, because the default token is mounted under `/var/run/secrets/kubernetes/serviceaccount`.
+def test_build_with_readonly_mnt(registry1, storage_dir, cache_dir):
+    new_image = new_image_name()
+    context_dir = os.path.join(os.getcwd(), 'testdata/build-context/simple')
+
+    _, test_file = tempfile.mkstemp(dir='/tmp')  # TODO: prevent leaking if test failed
+    additional_volumes = {test_file: '/var/run/makisu/builder/test'}
+
+    utils.makisu_build_image(new_image, registry1.addr, context_dir, storage_dir, cache_dir, additional_volumes)
     code, err = utils.docker_run_image(registry1.addr, new_image)
     assert code == 0, err
 
@@ -212,22 +207,3 @@ def test_build_go_with_debian_package(registry1, storage_dir):
     assert list(l2.get_tar_headers())[0].gname != "root"
 
     img.cleanup()
-
-
-def test_build_arg_and_env(registry1, storage_dir):
-    utils.registry_ensure_image('golang:latest', registry1.addr)
-    utils.registry_ensure_image('alpine:latest', registry1.addr)
-    new_image = new_image_name()
-    context_dir = os.path.join(os.getcwd(), 'testdata/build-context/arg-and-env')
-
-    docker_build_args = [
-        "BASE_IMAGE=127.0.0.1:5002/golang:latest",
-        "RUNTIME_BASE_IMAGE=127.0.0.1:5002/alpine:latest",
-    ]
-    utils.makisu_build_image(
-        new_image, registry1.addr, context_dir, storage_dir,
-        docker_args=docker_build_args)
-    utils.docker_pull_image('{}/{}'.format(registry1.addr, new_image))
-
-    code, err = utils.docker_run_image(registry1.addr, new_image)
-    assert code == 0, err

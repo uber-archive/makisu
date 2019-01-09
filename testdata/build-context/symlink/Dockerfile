@@ -1,9 +1,9 @@
-FROM debian:8 AS phase1
+FROM alpine:latest AS phase1
 RUN mkdir /tmp/dst1 && ln -s /tmp/dst1 /tmp/link1 && touch /tmp/dst1/test.txt
 RUN mkdir /tmp/dst2 && ln -s /tmp/dst2 /tmp/link2
-RUN mkdir -p /var/run/udocker/test1 && chmod -R 777 /var/run/udocker 
+RUN mkdir -p /var/run/udocker/test1 && chmod -R 777 /var/run/udocker
 
-FROM debian:8
+FROM alpine:latest
 RUN mkdir /mine
 # Setup.
 COPY --from=phase1 /tmp/link2 /mine/link2
