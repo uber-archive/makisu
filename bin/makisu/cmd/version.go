@@ -29,6 +29,8 @@ func init() {
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print version number",
+
+	TraverseChildren: true,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println(utils.BuildHash)
 	},
