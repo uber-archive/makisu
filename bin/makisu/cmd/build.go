@@ -109,6 +109,18 @@ var (
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
+			if cleanup, err := processGlobalFlags(); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			} else {
+				defer cleanup()
+			}
+
+			if err := processFlags(); err != nil {
+				log.Errorf("failed to process flags: %s", err)
+				os.Exit(1)
+			}
+
 			if err := Build(args[0]); err != nil {
 				log.Error(err)
 				os.Exit(1)
@@ -194,10 +206,6 @@ func newBuildPlan(
 // If --load is specified, will load the image into the local docker daemon.
 func Build(contextDir string) error {
 	log.Infof("Starting Makisu build (version=%s)", utils.BuildHash)
-
-	if err := processFlags(); err != nil {
-		return fmt.Errorf("failed to process flags: %s", err)
-	}
 
 	// Create BuildContext.
 	contextDirAbs, err := filepath.Abs(contextDir)
