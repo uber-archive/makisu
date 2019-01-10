@@ -100,4 +100,4 @@ Example GCR config:
       credsStore: gcr
 ```
 
-Note: for ECR, environment variable SSL_CERT_DIR is required. Makisu image set that to /makisu-internal/certs by default.
+Note: for GCR, environment variable SSL_CERT_DIR is required. Makisu image set that to /makisu-internal/certs by default.
