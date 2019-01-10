@@ -3,6 +3,7 @@
 Makisu supports distributed cache, which can significantly reduce build time, by up to 90% for some of Uber's code repos.
 Makisu caches docker image layers both locally and in docker registry (if --push parameter is provided).
 It uses a separate key-value store to map lines of a Dockerfile to names of the layers.
+
 For cache key-value store, Makisu supports 3 choices:
 local file cache, redis based distributed cache, and generic HTTP based distributed cache.
 
