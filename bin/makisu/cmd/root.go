@@ -17,19 +17,17 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"runtime/pprof"
 
 	"github.com/uber/makisu/lib/log"
 
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 )
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&LogLevel, "log-level", "info", "Verbose level of logs. Valid values are \"trace\", \"debug\", \"info\", \"warn\", \"error\", \"fatal\"")
 	rootCmd.PersistentFlags().StringVar(&LogOutput, "log-output", "stdout", "The output file path for the logs. Set to \"stdout\" to output to stdout")
 	rootCmd.PersistentFlags().StringVar(&LogFormat, "log-fmt", "json", "The format of the logs. Valid values are \"json\" and \"console\"")
-	rootCmd.PersistentFlags().BoolVar(&CpuProfile, "cpu-profile", false, "Profile the application")
+	rootCmd.PersistentFlags().BoolVar(&CPUProfile, "cpu-profile", false, "Profile the application")
 
 	rootCmd.Flags().SortFlags = false
 	rootCmd.PersistentFlags().SortFlags = false
@@ -39,7 +37,7 @@ var (
 	LogLevel   string
 	LogOutput  string
 	LogFormat  string
-	CpuProfile bool
+	CPUProfile bool
 
 	rootCmd = &cobra.Command{
 		Use:   "makisu",
@@ -49,58 +47,21 @@ var (
 			"More information is available at https://github.com/uber/makisu`.",
 
 		Run: func(ccmd *cobra.Command, args []string) {
+			if cleanup, err := processGlobalFlags(); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			} else {
+				defer cleanup()
+			}
+
 			ccmd.HelpFunc()(ccmd, args)
 		},
 	}
 )
 
 func Execute() {
-	// Initializes logger.
-	logger, err := getLogger()
-	if err != nil {
-		fmt.Println("Configure logger: ", err)
-		os.Exit(1)
-	}
-	log.SetLogger(logger.Sugar())
-
-	if CpuProfile {
-		// Set up profiling.
-		if err := setupProfiler(); err != nil {
-			fmt.Println("Setup profiler: ", err)
-			os.Exit(1)
-		}
-
-		defer pprof.StopCPUProfile()
-	}
-
 	if err := rootCmd.Execute(); err != nil {
 		log.Error(err)
 		os.Exit(1)
 	}
-}
-
-func getLogger() (*zap.Logger, error) {
-	config := zap.NewProductionConfig()
-	if LogOutput != "stdout" {
-		config.OutputPaths = []string{LogOutput}
-	}
-
-	if err := config.Level.UnmarshalText([]byte(LogLevel)); err != nil {
-		return nil, fmt.Errorf("parse log level: %s", err)
-	}
-
-	config.Encoding = LogFormat
-	config.DisableStacktrace = true
-	config.DisableCaller = true
-	return config.Build()
-}
-
-func setupProfiler() error {
-	f, err := os.Create("/tmp/makisu.prof")
-	if err != nil {
-		return fmt.Errorf("create profile file: %s", err)
-	}
-	pprof.StartCPUProfile(f)
-
-	return nil
 }
