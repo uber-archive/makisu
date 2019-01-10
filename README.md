@@ -25,6 +25,8 @@ different languages. The motivation and mechanism behind it are explained in htt
   - [Explicit Commit and Cache](#explicit-commit-and-cache)
 - [Configuring Docker Registry](#configuring-docker-registry)
 - [Comparison With Similar Tools](#comparison-with-similar-tools)
+- [Contributing](#contributing)
+- [Contact](#contact)
 
 
 # Building Makisu
@@ -141,14 +143,17 @@ With this job spec, a simple `kubectl create -f job.yaml` will start the build. 
 
 ## Configuring distributed cache
 
-Makisu supports distributed layer cache, which can significantly reduce build time, by up to 90% for some of Uber's code repos.
-It uses target registry for layer storage, and needs to connect to a separate key-value store to map lines of a Dockerfile to a tentative layer SHA stored in Docker registry. For example, Redis can be used as a cache key-value store with this [Kubernetes job spec](examples/k8s/redis.yaml).
-Finally, connect Redis as the Makisu layer cache by passing `--redis-cache-addr=redis:6379` argument.
+Makisu supports distributed cache, which can significantly reduce build time, by up to 90% for some of Uber's code repos.
+Makisu caches docker image layers both locally and in docker registry (if --push parameter is provided), and uses a separate key-value store to map lines of a Dockerfile to names of the layers.
+For example, Redis can be setup as a distributed cache key-value store with this [Kubernetes job spec](examples/k8s/redis.yaml).
+Then connect Makisu to redis cache by passing `--redis-cache-addr=redis:6379` argument.
 Cache has a 7 day TTL by default, which can be configured with `--local-cache-ttl=7d` argument.
+For more options on cache, please see [documentation](docs/CACHE.md).
 
 ## Explicit commit and cache
 
-By default, Makisu will cache each directive in a Dockerfile. To avoid committing and caching everything, the layer cache can be further optimized via explicit caching with the `--commit=explicit` flag. Dockerfile directives may then be manually cached using the `#!COMMIT` annotation:
+By default, Makisu will cache each directive in a Dockerfile. To avoid committing and caching everything, the layer cache can be further optimized via explicit caching with the `--commit=explicit` flag.
+Dockerfile directives may then be manually cached using the `#!COMMIT` annotation:
 
 ```Dockerfile
 FROM node:8.1.3
@@ -170,8 +175,8 @@ RUN npm install #!COMMIT
 
 # The last step of the last stage always commit by default, generating and caching another layer.
 ENTRYPOINT ["/bin/bash"]
-
 ```
+In this example, only 2 additional layers on top of base image will be generated and cached.
 
 # Configuring Docker Registry
 
@@ -210,3 +215,11 @@ On the other hand, Makisu has some performance tweaks for large images (especial
 
 BuildKit depends on runc/containerd and supports parallel stage executions, whereas Makisu and most other tools execute Dockefile in order.
 However, BuildKit still needs access to /proc to launch nested containers, which is not ideal and may not be doable in some production environments.
+
+## Contributing
+
+Please check out our [guide](docs/CONTRIBUTING.md).
+
+## Contact
+
+To contact us, please join our [slack channel](uber-container-tools.slack.com).
