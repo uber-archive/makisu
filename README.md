@@ -85,7 +85,7 @@ the build, using that volume as its build context.
 
 ### Creating registry configuration
 
-Makisu needs registry configuration mounted to push to a secure registry. The config format is described [here](#configuring-docker-registry). After creating configuration file on local filesystem, run the following
+Makisu needs registry configuration mounted in to push to a secure registry. The config format is described in [documentation](docs/REGISTRY.md). After creating configuration file on local filesystem, run the following
 command to create the k8s secret:
 ```shell
 $ kubectl create secret generic docker-registry-config --from-file=./registry.yaml
@@ -138,44 +138,11 @@ spec:
 With this job spec, a simple `kubectl create -f job.yaml` will start the build. The job status will reflect whether the build succeeded or failed (see out of the box example [here](examples/k8s/github-job.yaml).
 
 # Using cache
+
 ## Configuring distributed cache
 
 Makisu supports distributed layer cache, which can significantly reduce build time, by up to 90% for some of Uber's code repos.
-It uses target registry for layer storage, and needs to connect to a separate key-value store to map lines of a Dockerfile to a tentative layer SHA stored in Docker registry. For example, Redis can be used as a cache key-value store with the following Kubernetes job spec:
-
-```yaml
-# redis.yaml
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: redis
-  labels:
-    redis: "true"
-spec:
-  containers:
-  - name: main
-    image: kubernetes/redis:v1
-    env:
-    - name: MASTER
-      value: "true"
-    ports:
-    - containerPort: 6379
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: redis
-spec:
-  selector:
-    redis: "true"
-  ports:
-  - protocol: TCP
-    port: 6379
-    targetPort: 6379
----
-```
-
+It uses target registry for layer storage, and needs to connect to a separate key-value store to map lines of a Dockerfile to a tentative layer SHA stored in Docker registry. For example, Redis can be used as a cache key-value store with this [Kubernetes job spec](examples/k8s/redis.yaml).
 Finally, connect Redis as the Makisu layer cache by passing `--redis-cache-addr=redis:6379` argument.
 Cache has a 7 day TTL by default, which can be configured with `--local-cache-ttl=7d` argument.
 
@@ -208,24 +175,6 @@ ENTRYPOINT ["/bin/bash"]
 
 # Configuring Docker Registry
 
-Makisu supports TLS and Basic Auth with Docker registry (Docker Hub, GCR, and private registries). By default, TLS is enabled and makisu uses a list of common root CA certs to authenticate registry.
-```go
-// Config contains Docker registry client configuration.
-type Config struct {
-  Concurrency int           `yaml:"concurrency"`
-  Timeout     time.Duration `yaml:"timeout"`
-  Retries     int           `yaml:"retries"`
-  PushRate    float64       `yaml:"push_rate"`
-  // If not specify, a default chunk size will be used.
-  // Set it to -1 to turn off chunk upload.
-  // NOTE: gcr does not support chunked upload.
-  PushChunk int64           `yaml:"push_chunk"`
-  Security  security.Config{
-    TLS       *httputil.TLSConfig `yaml:"tls"`
-    BasicAuth *types.AuthConfig   `yaml:"basic"`
-  }`yaml:"security"`
-}
-```
 For the convenience to work with any public Docker Hub repositories including library/.*, a default config is provided:
 ```
 index.docker.io:
@@ -239,45 +188,11 @@ index.docker.io:
         username: ""
         password: ""
 ```
-To configure your own registry endpoint, pass a custom configuration file to Makisu with `--registry-config=${PATH_TO_CONFIG}`.:
-```yaml
-[registry]:
-  [repo]:
-    security:
-      tls:
-        client:
-          disabled: false
-          cert:
-            path: <path to cert>
-          key:
-            path: <path to key>
-          passphrase
-            path: <path to passphrase>
-        ca:
-          cert:
-            path: <path to ca certs, appends to system certs. A list of common ca certs are used if empty>
-      basic:
-        username: <username>
-        password: <password>
-```
-Example:
-```yaml
-"gcr.io":
-  "makisu-project/*":
-    push_chunk: -1
-    security:
-      basic:
-        username: _json_key
-        password: |-
-            {
-                <json here>
-            }
-```
-This config can also be passed in as a raw json blob through the `--registry-config` flag:
+Registry configs can be passed in through the `--registry-config` flag, either as a file path of as a raw json blob (converted to json using [yq](https://github.com/kislyuk/yq)):
 ```
 --registry-config='{"gcr.io": {"makisu-project/*": {"push_chunk": -1, "security": {"basic": {"username": "_json_key", "password": "<escaped key here>"}}}}}'
 ```
-Consider using the great tool [yq](https://github.com/kislyuk/yq) to convert your yaml configuration into the blob that can be passed in.
+For more details on configuring Makisu to work with your registry client, see the [documentation](docs/REGISTRY.md).
 
 # Comparison With Similar Tools
 
