@@ -17,6 +17,10 @@ Please follow standard fork-and-pull workflow.
 ## Setup
 
 Most tests and scripts assumes the developer to have Docker installed locally.
+To install dependencies:
+```
+$ make vendor
+```
 To run unit tests:
 ```
 $ make unit-test
@@ -25,6 +29,3 @@ To run integration tests:
 ```
 $ make integration
 ```
-
-## Contact us
-Please join our [slack channel](uber-container-tools.slack.com).
