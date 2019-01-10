@@ -87,57 +87,20 @@ the build, using that volume as its build context.
 
 ### Creating registry configuration
 
-Makisu needs registry configuration mounted in to push to a secure registry. The config format is described in [documentation](docs/REGISTRY.md). After creating configuration file on local filesystem, run the following
-command to create the k8s secret:
+Makisu needs registry configuration mounted in to push to a secure registry.
+The config format is described in [documentation](docs/REGISTRY.md).
+After creating configuration file on local filesystem, run the following command to create the k8s secret:
 ```shell
 $ kubectl create secret generic docker-registry-config --from-file=./registry.yaml
 secret/docker-registry-config created
 ```
 
-Below is a template to build a GitHub repository and push to a secure registry:
-```yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: imagebuilder-github
-spec:
-  template:
-    spec:
-      restartPolicy: Never
-      initContainers:
-      - name: provisioner
-        image: alpine/git
-        args:
-        - clone
-        - https://github.com/<your repo>
-        - /makisu-context
-        volumeMounts:
-        - name: context
-          mountPath: /makisu-context
-      containers:
-      - name: makisu
-        image: gcr.io/makisu-project/makisu:v0.1.4
-        imagePullPolicy: IfNotPresent
-        args:
-        - build
-        - --push=gcr.io
-        - --modifyfs=true
-        - -t=<your image tag>
-        - --registry-config=/registry-config/registry.yaml
-        - /makisu-context
-        volumeMounts:
-        - name: context
-          mountPath: /makisu-context
-        - name: registry-config
-          mountPath: /registry-config
-      volumes:
-      - name: context
-        emptyDir: {}
-      - name: registry-config
-        secret:
-          secretName: docker-registry-config
-```
-With this job spec, a simple `kubectl create -f job.yaml` will start the build. The job status will reflect whether the build succeeded or failed (see out of the box example [here](examples/k8s/github-job.yaml).
+### Creating Kubernetes job spec
+
+We have an Kubernetes job spec [template](examples/k8s/github-job-template.yaml) (and out of the box [example](examples/k8s/github-job.yaml) to build a GitHub repository and push to a secure registry.
+
+With such a job spec, a simple `kubectl create -f job.yaml` will start the build.
+The job status will reflect whether the build succeeded or failed
 
 # Using cache
 
@@ -145,9 +108,11 @@ With this job spec, a simple `kubectl create -f job.yaml` will start the build. 
 
 Makisu supports distributed cache, which can significantly reduce build time, by up to 90% for some of Uber's code repos.
 Makisu caches docker image layers both locally and in docker registry (if --push parameter is provided), and uses a separate key-value store to map lines of a Dockerfile to names of the layers.
+
 For example, Redis can be setup as a distributed cache key-value store with this [Kubernetes job spec](examples/k8s/redis.yaml).
 Then connect Makisu to redis cache by passing `--redis-cache-addr=redis:6379` argument.
 Cache has a 7 day TTL by default, which can be configured with `--local-cache-ttl=7d` argument.
+
 For more options on cache, please see [documentation](docs/CACHE.md).
 
 ## Explicit commit and cache
@@ -216,10 +181,10 @@ On the other hand, Makisu has some performance tweaks for large images (especial
 BuildKit depends on runc/containerd and supports parallel stage executions, whereas Makisu and most other tools execute Dockefile in order.
 However, BuildKit still needs access to /proc to launch nested containers, which is not ideal and may not be doable in some production environments.
 
-## Contributing
+# Contributing
 
 Please check out our [guide](docs/CONTRIBUTING.md).
 
-## Contact
+# Contact
 
 To contact us, please join our [slack channel](uber-container-tools.slack.com).
