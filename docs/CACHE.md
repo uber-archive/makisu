@@ -19,14 +19,18 @@ To disable it, set ttl to 0s.
 ## Redis cache
 
 To configure redis cache, use the following options:
+```
 --redis-cache-addr string         The address of a redis server for cacheID to layer sha mapping
 --redis-cache-ttl duration        Time-To-Live for redis cache (default 168h0m0s)
+```
 
 ## HTTP cache
 
 To configure HTTP cache, use the following options:
+```
 --http-cache-addr string          The address of the http server for cacheID to layer sha mapping
 --http-cache-header stringArray   Request header for http cache server. Format is "--http-cache-header <header>:<value>"
+```
 
 ## Explicit commit and cache
 
