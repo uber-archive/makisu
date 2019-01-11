@@ -38,5 +38,5 @@ Global Flags:
       --log-output string   The output file path for the logs. Set to "stdout" to output to stdout (default "stdout")
 
 $ makisu version
-v0.1.2
+v0.1.8
 ```
