@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/uber/makisu/lib/tario"
 
@@ -69,6 +70,16 @@ func requireEqualLayers(require *require.Assertions, l1 *memLayer, l2 *memLayer)
 func addDirectoryToLayer(l *memLayer, srcRoot, dst string, perm os.FileMode) error {
 	src := filepath.Join(srcRoot, dst)
 
+	// Make sure parent dir modtime is not impacted.
+	var parentModTime time.Time
+	parentDir := filepath.Dir(src)
+	parentFi, err := os.Lstat(parentDir)
+	if err != nil {
+		return fmt.Errorf("stat parent dir of %s: %s", src, err)
+	}
+	parentModTime = parentFi.ModTime()
+	defer os.Chtimes(parentDir, parentModTime, parentModTime)
+
 	if err := os.MkdirAll(src, perm); err != nil {
 		return fmt.Errorf("mkdir %s: %s", src, err)
 	}
@@ -92,6 +103,16 @@ func addDirectoryToLayer(l *memLayer, srcRoot, dst string, perm os.FileMode) err
 
 func addRegularFileToLayer(l *memLayer, srcRoot, dst, content string, perm os.FileMode) error {
 	src := filepath.Join(srcRoot, dst)
+
+	// Make sure parent dir modtime is not impacted.
+	var parentModTime time.Time
+	parentDir := filepath.Dir(src)
+	parentFi, err := os.Lstat(parentDir)
+	if err != nil {
+		return fmt.Errorf("stat parent dir of %s: %s", src, err)
+	}
+	parentModTime = parentFi.ModTime()
+	defer os.Chtimes(parentDir, parentModTime, parentModTime)
 
 	if err := os.Remove(src); err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("remove file %s: %s", src, err)
@@ -127,6 +148,16 @@ func addSymlinkToLayer(l *memLayer, srcRoot, dst, target string) error {
 	src := filepath.Join(srcRoot, dst)
 	target = filepath.Join(srcRoot, target)
 
+	// Make sure parent dir modtime is not impacted.
+	var parentModTime time.Time
+	parentDir := filepath.Dir(src)
+	parentFi, err := os.Lstat(parentDir)
+	if err != nil {
+		return fmt.Errorf("stat parent dir of %s: %s", src, err)
+	}
+	parentModTime = parentFi.ModTime()
+	defer os.Chtimes(parentDir, parentModTime, parentModTime)
+
 	if err := os.Symlink(target, src); err != nil {
 		return fmt.Errorf("create symlink %s targeting %s: %s", src, target, err)
 	}
@@ -147,6 +178,16 @@ func addSymlinkToLayer(l *memLayer, srcRoot, dst, target string) error {
 func addHardLinkToLayer(l *memLayer, srcRoot, dst, target string) error {
 	src := filepath.Join(srcRoot, dst)
 	target = filepath.Join(srcRoot, target)
+
+	// Make sure parent dir modtime is not impacted.
+	var parentModTime time.Time
+	parentDir := filepath.Dir(src)
+	parentFi, err := os.Lstat(parentDir)
+	if err != nil {
+		return fmt.Errorf("stat parent dir of %s: %s", src, err)
+	}
+	parentModTime = parentFi.ModTime()
+	defer os.Chtimes(parentDir, parentModTime, parentModTime)
 
 	if err := os.Link(filepath.Join(srcRoot, target), src); err != nil {
 		return fmt.Errorf("create hard link %s targeting %s: %s", src, target, err)
