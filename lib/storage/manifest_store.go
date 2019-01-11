@@ -23,9 +23,10 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/andres-erbsen/clock"
+	"github.com/uber/makisu/lib/log"
 	"github.com/uber/makisu/lib/storage/base"
-	"github.com/uber/makisu/lib/utils"
+
+	"github.com/andres-erbsen/clock"
 )
 
 // manifestState implements FileState interface, which is needed by FileStore.
@@ -54,13 +55,15 @@ func NewManifestStore(rootdir string) (*ManifestStore, error) {
 
 	// Remove and recreate download dir.
 	os.RemoveAll(downloadDir)
-	err := os.MkdirAll(downloadDir, 0755)
-	utils.Must(err == nil, "Failed to create manifest download dir %s: %s", downloadDir, err)
+	if err := os.MkdirAll(downloadDir, 0755); err != nil {
+		log.Fatalf("Failed to create manifest download dir %s: %s", downloadDir, err)
+	}
 
 	// We do not want to remove existing files in store directory during restart.
 	// TODO: we could have dangling manifests
-	err = os.MkdirAll(cacheDir, 0755)
-	utils.Must(err == nil, "Failed to create manifest storage dir %s: %s", cacheDir, err)
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+		log.Fatalf("Failed to create manifest cache dir %s: %s", cacheDir, err)
+	}
 
 	backend := base.NewLRUFileStore(manifestLRUSize, clock.New())
 	downloadState := base.NewFileState(downloadDir)
@@ -68,10 +71,17 @@ func NewManifestStore(rootdir string) (*ManifestStore, error) {
 
 	// Reload all existing data
 	files, err := ioutil.ReadDir(cacheDir)
-	utils.Must(err == nil, "Failed to scan manifest storage dir %s: %s", cacheDir, err)
+	if err != nil {
+		log.Fatalf("Failed to scan manifest cache dir %s: %s", cacheDir, err)
+	}
 	for _, f := range files {
-		_, err := backend.NewFileOp().AcceptState(cacheState).GetFileStat(f.Name())
-		utils.Must(err == nil, "Failed to load manifest storage dir %s: %s", cacheDir, err)
+		if _, err := backend.NewFileOp().AcceptState(cacheState).GetFileStat(f.Name()); err != nil {
+			// Probably caused by an empty directory. Try detele.
+			log.Warnf("Failed to load cached manifest: %s", err)
+			if err := backend.NewFileOp().AcceptState(cacheState).DeleteFile(f.Name()); err != nil {
+				log.Warnf("Failed to cleanup cached manifest: %s", err)
+			}
+		}
 	}
 
 	return &ManifestStore{
