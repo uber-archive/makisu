@@ -19,9 +19,10 @@ import (
 	"os"
 	"path"
 
-	"github.com/andres-erbsen/clock"
 	"github.com/uber/makisu/lib/log"
 	"github.com/uber/makisu/lib/storage/base"
+
+	"github.com/andres-erbsen/clock"
 )
 
 // layerTarState implements FileState interface, which is needed by FileStore.
