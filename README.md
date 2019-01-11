@@ -97,7 +97,7 @@ secret/docker-registry-config created
 
 ### Creating Kubernetes job spec
 
-We have an Kubernetes job spec [template](examples/k8s/github-job-template.yaml) (and out of the box [example](examples/k8s/github-job.yaml)) to build a GitHub repository and push to a secure registry.
+To setup a Kubernetes job to build a GitHub repository and push to a secure registry, you can refer to our Kubernetes job spec [template](examples/k8s/github-job-template.yaml) (and out of the box [example](examples/k8s/github-job.yaml)) .
 
 With such a job spec, a simple `kubectl create -f job.yaml` will start the build.
 The job status will reflect whether the build succeeded or failed
