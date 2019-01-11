@@ -1,0 +1,41 @@
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: imagebuilder-github
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      initContainers:
+      - name: provisioner
+        image: alpine/git
+        args:
+        - clone
+        - https://github.com/<your repo>
+        - /makisu-context
+        volumeMounts:
+        - name: context
+          mountPath: /makisu-context
+      containers:
+      - name: makisu
+        image: gcr.io/makisu-project/makisu:v0.1.4
+        imagePullPolicy: IfNotPresent
+        args:
+        - build
+        - --push=gcr.io
+        - --modifyfs=true
+        - -t=<your image tag>
+        - --registry-config=/registry-config/registry.yaml
+        - /makisu-context
+        volumeMounts:
+        - name: context
+          mountPath: /makisu-context
+        - name: registry-config
+          mountPath: /registry-config
+      volumes:
+      - name: context
+        emptyDir: {}
+      - name: registry-config
+        secret:
+          secretName: docker-registry-config
