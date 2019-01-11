@@ -59,7 +59,7 @@ To build Dockerfiles that contain RUN, Makisu still needs to run in a container.
 To try it locally, the following snippet can be placed inside your `~/.bashrc` or `~/.zshrc`:
 ```shell
 function makisu_build() {
-    makisu_version=${MAKISU_VERSION:-v0.1.4}
+    makisu_version=${MAKISU_VERSION:-v0.1.8}
     cd ${@: -1}
     docker run -i --rm --net host \
         -v /var/run/docker.sock:/docker.sock \
@@ -187,4 +187,4 @@ Please check out our [guide](docs/CONTRIBUTING.md).
 
 # Contact
 
-To contact us, please join our [slack channel](uber-container-tools.slack.com).
+To contact us, please join our [Slack channel](https://join.slack.com/t/uber-container-tools/shared_invite/enQtNTIxODAwMDEzNjM1LWIyNzUyMTk3NTAzZGY0MDkzMzQ1YTlmMTUwZmIwNDk3YTA0ZjZjZGRhMTM2NzI0OGM3OGNjMDZiZTI2ZTY5NWY).
