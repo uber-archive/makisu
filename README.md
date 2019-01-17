@@ -35,7 +35,7 @@ different languages. The motivation and mechanism behind it are explained in htt
 
 To build a Docker image that can perform builds inside a container:
 ```
-make image
+make images
 ```
 
 ## Building Makisu binary and build simple images
@@ -46,7 +46,7 @@ go get github.com/uber/makisu/bin/makisu
 ```
 For a Dockerfile that doesn't have RUN, makisu can build it without Docker daemon, containerd or runc:
 ```
-makisu build -t ${TAG} -dest ${TAR_PATH} ${CONTEXT}
+makisu build -t ${TAG} --dest ${TAR_PATH} ${CONTEXT}
 ```
 
 # Running Makisu
