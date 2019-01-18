@@ -78,6 +78,8 @@ To configure your own registry endpoint, pass a custom configuration file to Mak
         username: <username>
         password: <password>
 ```
+Note: For the cert path, you can point to a directory containing your certificates. Makisu will then use all of the certs in that
+directory for TLS verification.
 
 ## Cred helper
 
