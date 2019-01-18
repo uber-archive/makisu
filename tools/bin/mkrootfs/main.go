@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	"github.com/andres-erbsen/clock"
 	"github.com/spf13/cobra"
 	"github.com/uber/makisu/lib/docker/image"
-	"github.com/uber/makisu/lib/log"
 	"github.com/uber/makisu/lib/registry"
 	"github.com/uber/makisu/lib/snapshot"
 	"github.com/uber/makisu/lib/storage"
@@ -42,7 +42,7 @@ func main() {
 	cmd.PersistentFlags().StringVar(&registryURL, "registry", "index.docker.io", "The registry to pull the image from.")
 	cmd.PersistentFlags().StringVar(&tag, "tag", "latest", "The tag of the image to pull.")
 	cmd.PersistentFlags().StringVar(&destination, "dest", "rootfs", "The destination of the rootfs that we will untar the image to.")
-	cmd.PersistentFlags().StringVar(&cacerts, "cacerts", "/registry-ca-certs.pem", "The location of the CA certs to use for TLS authentication with the registry.")
+	cmd.PersistentFlags().StringVar(&cacerts, "cacerts", "/etc/ssl/certs", "The location of the CA certs to use for TLS authentication with the registry.")
 
 	if err := cmd.Execute(); err != nil {
 		panic(err)
@@ -75,6 +75,12 @@ func pullAndExtract(registryURL, repository, tag, destination string) {
 		panic(err)
 	}
 
+	if _, err := os.Lstat(destination); err == nil || !os.IsNotExist(err) {
+		panic(fmt.Errorf("destination rootfs directory should not exist"))
+	} else if err := os.MkdirAll(destination, os.ModePerm); err != nil {
+		panic(fmt.Errorf("failed to create destination rootfs directory: %s", err))
+	}
+
 	memfs, err := snapshot.NewMemFS(clock.New(), destination, nil)
 	if err != nil {
 		panic(err)
@@ -89,7 +95,6 @@ func pullAndExtract(registryURL, repository, tag, destination string) {
 		if err != nil {
 			panic(fmt.Errorf("create gzip reader for layer: %s", err))
 		}
-		log.Infof("* Processing FROM layer %s", descriptor.Digest.Hex())
 		if err = memfs.UpdateFromTarReader(tar.NewReader(gzipReader), true); err != nil {
 			panic(fmt.Errorf("untar reader: %s", err))
 		}
