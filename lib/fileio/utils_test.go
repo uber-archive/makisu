@@ -13,6 +13,7 @@ func TestConcatDirectoryContents(t *testing.T) {
 	t.Run("no files", func(t *testing.T) {
 		dir, err := ioutil.TempDir("", "makisu-test")
 		require.NoError(t, err)
+		defer os.RemoveAll(dir)
 
 		contents, err := ConcatDirectoryContents(dir)
 		require.NoError(t, err)
@@ -22,6 +23,7 @@ func TestConcatDirectoryContents(t *testing.T) {
 	t.Run("some files", func(t *testing.T) {
 		dir, err := ioutil.TempDir("", "makisu-test")
 		require.NoError(t, err)
+		defer os.RemoveAll(dir)
 
 		f1 := filepath.Join(dir, "f1")
 		err = ioutil.WriteFile(f1, []byte("TEST1"), os.ModePerm)
