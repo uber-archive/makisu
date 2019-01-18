@@ -131,7 +131,7 @@ func parseCert(path string) ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("concat cert dir contents: %s", err)
 		}
-		return certBytes, err
+		return certBytes, nil
 	}
 
 	certBytes, err := ioutil.ReadFile(path)
