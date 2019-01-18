@@ -15,8 +15,10 @@
 package fileio
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -34,4 +36,25 @@ func ReaderToFile(r io.Reader, dst string) error {
 		return fmt.Errorf("copy to file %s: %s", dst, err)
 	}
 	return nil
+}
+
+// ConcatDirectoryContents concatenates all regular files inside the source
+// directory and returns their concatenated contents.
+func ConcatDirectoryContents(sourceDir string) ([]byte, error) {
+	files, err := ioutil.ReadDir(sourceDir)
+	if err != nil {
+		return nil, fmt.Errorf("read dir: %s", err)
+	}
+
+	output := bytes.Buffer{}
+	for _, fi := range files {
+		path := filepath.Join(sourceDir, fi.Name())
+		content, err := ioutil.ReadFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("read %s: %s", path, err)
+		} else if _, err := output.Write(content); err != nil {
+			return nil, fmt.Errorf("write to buffer: %s", err)
+		}
+	}
+	return output.Bytes(), nil
 }

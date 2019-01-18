@@ -22,7 +22,9 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 
+	"github.com/uber/makisu/lib/fileio"
 	"github.com/uber/makisu/lib/log"
 )
 
@@ -119,6 +121,19 @@ func createCertPool(paths ...string) (*x509.CertPool, error) {
 }
 
 func parseCert(path string) ([]byte, error) {
+	fi, err := os.Lstat(path)
+	if err != nil {
+		return nil, fmt.Errorf("lstat path: %s", err)
+	}
+
+	if fi.IsDir() {
+		certBytes, err := fileio.ConcatDirectoryContents(path)
+		if err != nil {
+			return nil, fmt.Errorf("concat cert dir contents: %s", err)
+		}
+		return certBytes, err
+	}
+
 	certBytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("read file: %s", err)
