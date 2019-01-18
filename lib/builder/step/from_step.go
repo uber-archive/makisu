@@ -117,8 +117,7 @@ func (s *FromStep) Execute(ctx *context.BuildContext, modifyFS bool) error {
 
 	// Apply each layer to the memFS.
 	// If modifyFS is true, writes it to the local file system.
-	for i := range config.RootFS.DiffIDs {
-		descriptor := manifest.Layers[i]
+	for _, descriptor := range manifest.Layers {
 		reader, err := ctx.ImageStore.Layers.GetStoreFileReader(descriptor.Digest.Hex())
 		if err != nil {
 			return fmt.Errorf("get reader from layer: %s", err)
