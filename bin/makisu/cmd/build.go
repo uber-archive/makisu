@@ -35,8 +35,65 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	rootCmd.AddCommand(buildCmd)
+var (
+	DockerfilePath string
+	Tag            string
+
+	PushRegistries []string
+	RegistryConfig string
+	Destination    string
+
+	BuildArgs     []string
+	AllowModifyFS bool
+	Commit        string
+	Blacklists    []string
+
+	LocalCacheTTL     time.Duration
+	RedisCacheAddress string
+	RedisCacheTTL     time.Duration
+	HTTPCacheAddress  string
+	HTTPCacheHeaders  []string
+
+	DockerHost    string
+	DockerVersion string
+	DockerScheme  string
+	DoLoad        bool
+
+	StorageDir       string
+	CompressionLevel string
+)
+
+func getBuildCmd() *cobra.Command {
+	buildCmd := &cobra.Command{
+		Use:                   "build -t=<image_tag> [flags] <context_path>",
+		DisableFlagsInUseLine: true,
+		Short:                 "Build docker image, optionally push to registries and/or load into docker daemon",
+
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) != 1 {
+				return errors.New("Requires build context as argument")
+			}
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			if cleanup, err := processGlobalFlags(); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			} else {
+				defer cleanup()
+			}
+
+			if err := processFlags(); err != nil {
+				log.Errorf("failed to process flags: %s", err)
+				os.Exit(1)
+			}
+
+			if err := Build(args[0]); err != nil {
+				log.Error(err)
+				os.Exit(1)
+			}
+		},
+	}
 
 	buildCmd.PersistentFlags().StringVarP(&DockerfilePath, "file", "f", "Dockerfile", "The absolute path to the dockerfile")
 	buildCmd.PersistentFlags().StringVarP(&Tag, "tag", "t", "", "Image tag (required)")
@@ -67,66 +124,9 @@ func init() {
 	buildCmd.MarkFlagRequired("tag")
 	buildCmd.Flags().SortFlags = false
 	buildCmd.PersistentFlags().SortFlags = false
+
+	return buildCmd
 }
-
-var (
-	DockerfilePath string
-	Tag            string
-
-	PushRegistries []string
-	RegistryConfig string
-	Destination    string
-
-	BuildArgs     []string
-	AllowModifyFS bool
-	Commit        string
-	Blacklists    []string
-
-	LocalCacheTTL     time.Duration
-	RedisCacheAddress string
-	RedisCacheTTL     time.Duration
-	HTTPCacheAddress  string
-	HTTPCacheHeaders  []string
-
-	DockerHost    string
-	DockerVersion string
-	DockerScheme  string
-	DoLoad        bool
-
-	StorageDir       string
-	CompressionLevel string
-
-	buildCmd = &cobra.Command{
-		Use: "build -t=<image_tag> [flags] <context_path>",
-		DisableFlagsInUseLine: true,
-		Short: "Build docker image, optionally push to registries and/or load into docker daemon",
-
-		Args: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 1 {
-				return errors.New("Requires build context as argument")
-			}
-			return nil
-		},
-		Run: func(cmd *cobra.Command, args []string) {
-			if cleanup, err := processGlobalFlags(); err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			} else {
-				defer cleanup()
-			}
-
-			if err := processFlags(); err != nil {
-				log.Errorf("failed to process flags: %s", err)
-				os.Exit(1)
-			}
-
-			if err := Build(args[0]); err != nil {
-				log.Error(err)
-				os.Exit(1)
-			}
-		},
-	}
-)
 
 func processFlags() error {
 	if err := maybeBlacklistVarRun(); err != nil {
