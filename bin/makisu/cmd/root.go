@@ -23,23 +23,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	rootCmd.PersistentFlags().StringVar(&LogLevel, "log-level", "info", "Verbose level of logs. Valid values are \"trace\", \"debug\", \"info\", \"warn\", \"error\", \"fatal\"")
-	rootCmd.PersistentFlags().StringVar(&LogOutput, "log-output", "stdout", "The output file path for the logs. Set to \"stdout\" to output to stdout")
-	rootCmd.PersistentFlags().StringVar(&LogFormat, "log-fmt", "json", "The format of the logs. Valid values are \"json\" and \"console\"")
-	rootCmd.PersistentFlags().BoolVar(&CPUProfile, "cpu-profile", false, "Profile the application")
-
-	rootCmd.Flags().SortFlags = false
-	rootCmd.PersistentFlags().SortFlags = false
-}
-
 var (
 	LogLevel   string
 	LogOutput  string
 	LogFormat  string
 	CPUProfile bool
+)
 
-	rootCmd = &cobra.Command{
+func getRootCmd() *cobra.Command {
+	rootCmd := &cobra.Command{
 		Use:   "makisu",
 		Short: "makisu is a fast Fast and flexible Docker image building tool",
 		Long: "makisu is a fast Fast and flexible Docker image building tool " +
@@ -57,9 +49,21 @@ var (
 			ccmd.HelpFunc()(ccmd, args)
 		},
 	}
-)
+
+	rootCmd.PersistentFlags().StringVar(&LogLevel, "log-level", "info", "Verbose level of logs. Valid values are \"trace\", \"debug\", \"info\", \"warn\", \"error\", \"fatal\"")
+	rootCmd.PersistentFlags().StringVar(&LogOutput, "log-output", "stdout", "The output file path for the logs. Set to \"stdout\" to output to stdout")
+	rootCmd.PersistentFlags().StringVar(&LogFormat, "log-fmt", "json", "The format of the logs. Valid values are \"json\" and \"console\"")
+	rootCmd.PersistentFlags().BoolVar(&CPUProfile, "cpu-profile", false, "Profile the application")
+
+	rootCmd.Flags().SortFlags = false
+	rootCmd.PersistentFlags().SortFlags = false
+	return rootCmd
+}
 
 func Execute() {
+	rootCmd := getRootCmd()
+	rootCmd.AddCommand(getBuildCmd())
+	rootCmd.AddCommand(getVersionCmd())
 	if err := rootCmd.Execute(); err != nil {
 		log.Error(err)
 		os.Exit(1)
