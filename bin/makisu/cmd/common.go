@@ -23,38 +23,36 @@ import (
 	"go.uber.org/zap"
 )
 
-func processGlobalFlags() (func(), error) {
+func (cmd *rootCmd) processGlobalFlags() error {
 	// Initializes logger.
-	logger, err := getLogger()
+	logger, err := cmd.getLogger()
 	if err != nil {
-		return nil, fmt.Errorf("configure logger: %s", err)
+		return fmt.Errorf("configure logger: %s", err)
 	}
 	log.SetLogger(logger.Sugar())
 
-	if CPUProfile {
+	if cmd.cpuProfile {
 		// Set up profiling.
 		if err := setupProfiler(); err != nil {
-			return nil, fmt.Errorf("setup profiler: %s", err)
+			return fmt.Errorf("setup profiler: %s", err)
 		}
-
-		return func() {
-			pprof.StopCPUProfile()
-		}, nil
+		cmd.cleanup = func() { pprof.StopCPUProfile() }
+		return nil
 	}
-	return func() {}, nil
+	return nil
 }
 
-func getLogger() (*zap.Logger, error) {
+func (cmd *rootCmd) getLogger() (*zap.Logger, error) {
 	config := zap.NewProductionConfig()
-	if LogOutput != "stdout" {
-		config.OutputPaths = []string{LogOutput}
+	if cmd.logOutput != "stdout" {
+		config.OutputPaths = []string{cmd.logOutput}
 	}
 
-	if err := config.Level.UnmarshalText([]byte(LogLevel)); err != nil {
+	if err := config.Level.UnmarshalText([]byte(cmd.logLevel)); err != nil {
 		return nil, fmt.Errorf("parse log level: %s", err)
 	}
 
-	config.Encoding = LogFormat
+	config.Encoding = cmd.logFormat
 	config.DisableStacktrace = true
 	config.DisableCaller = true
 	return config.Build()
