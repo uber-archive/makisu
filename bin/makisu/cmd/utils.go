@@ -40,21 +40,21 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-func initRegistryConfig() error {
-	if RegistryConfig == "" {
+func (cmd *buildCmd) initRegistryConfig() error {
+	if cmd.registryConfig == "" {
 		registry.ConfigurationMap[image.DockerHubRegistry] = make(registry.RepositoryMap)
 		registry.ConfigurationMap[image.DockerHubRegistry][".*"] = registry.DefaultDockerHubConfiguration
 		return nil
 	}
 
-	RegistryConfig = os.ExpandEnv(RegistryConfig)
+	cmd.registryConfig = os.ExpandEnv(cmd.registryConfig)
 	config := make(registry.Map)
-	if utils.IsValidJSON([]byte(RegistryConfig)) {
-		if err := json.Unmarshal([]byte(RegistryConfig), &config); err != nil {
+	if utils.IsValidJSON([]byte(cmd.registryConfig)) {
+		if err := json.Unmarshal([]byte(cmd.registryConfig), &config); err != nil {
 			return fmt.Errorf("unmarshal registry config: %s", err)
 		}
 	} else {
-		data, err := ioutil.ReadFile(RegistryConfig)
+		data, err := ioutil.ReadFile(cmd.registryConfig)
 		if err != nil {
 			return fmt.Errorf("read registry config: %s", err)
 		}
@@ -77,7 +77,7 @@ func initRegistryConfig() error {
 // Finds a way to get the dockerfile.
 // If the context passed in is not a local path, then it will try to clone the
 // git repo.
-func getDockerfile(contextDir string) ([]*dockerfile.Stage, error) {
+func (cmd *buildCmd) getDockerfile(contextDir string) ([]*dockerfile.Stage, error) {
 	fi, err := os.Lstat(contextDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to lstat build context %s: %s", contextDir, err)
@@ -85,7 +85,7 @@ func getDockerfile(contextDir string) ([]*dockerfile.Stage, error) {
 		return nil, fmt.Errorf("build context provided is not a directory: %s", contextDir)
 	}
 
-	dockerfilePath := DockerfilePath
+	dockerfilePath := cmd.dockerfilePath
 	if !path.IsAbs(dockerfilePath) {
 		dockerfilePath = path.Join(contextDir, dockerfilePath)
 	}
@@ -97,7 +97,7 @@ func getDockerfile(contextDir string) ([]*dockerfile.Stage, error) {
 	}
 
 	buildArgMap := make(map[string]string)
-	for _, pair := range BuildArgs {
+	for _, pair := range cmd.buildArgs {
 		parts := strings.Split(pair, "=")
 		if len(parts) != 2 {
 			return nil, fmt.Errorf("failed to parse build-arg %s: %s", pair, err)
@@ -112,15 +112,15 @@ func getDockerfile(contextDir string) ([]*dockerfile.Stage, error) {
 	return dockerfile, nil
 }
 
-func getTargetImageName() (image.Name, error) {
-	if Tag == "" {
+func (cmd *buildCmd) getTargetImageName() (image.Name, error) {
+	if cmd.tag == "" {
 		msg := "please specify a target image name: makisu build -t=(<registry:port>/)<repo>:<tag> ./"
 		return image.Name{}, fmt.Errorf(msg)
 	}
 
 	// Parse the target's image name into its components.
-	targetImageName := image.MustParseName(Tag)
-	if len(PushRegistries) == 0 {
+	targetImageName := image.MustParseName(cmd.tag)
+	if len(cmd.pushRegistries) == 0 {
 		return targetImageName, nil
 	}
 
@@ -128,7 +128,7 @@ func getTargetImageName() (image.Name, error) {
 	// and replace it with the first registry in the --push value. This will cause
 	// all of the cache layers to go to that registry.
 	return image.NewImageName(
-		PushRegistries[0],
+		cmd.pushRegistries[0],
 		targetImageName.GetRepository(),
 		targetImageName.GetTag(),
 	), nil
@@ -148,14 +148,14 @@ func pushImage(buildContext *context.BuildContext, imageName image.Name) error {
 
 // loadImage loads the image into the local docker daemon.
 // This is only used for testing purposes.
-func loadImage(buildContext *context.BuildContext, imageName image.Name) error {
+func (cmd *buildCmd) loadImage(buildContext *context.BuildContext, imageName image.Name) error {
 	log.Infof("Loading image %s", imageName.ShortName())
 	tarer := cli.NewDefaultImageTarer(buildContext.ImageStore)
 	if tar, err := tarer.CreateTarReader(imageName); err != nil {
 		return fmt.Errorf("failed to create tar of image: %s", err)
 	} else if cli, err := cli.NewDockerClient(
-		buildContext.ImageStore.SandboxDir, DockerHost,
-		DockerScheme, DockerVersion, http.Header{}); err != nil {
+		buildContext.ImageStore.SandboxDir, cmd.dockerHost,
+		cmd.dockerScheme, cmd.dockerVersion, http.Header{}); err != nil {
 
 		return fmt.Errorf("failed to create new docker client: %s", err)
 	} else if err := cli.ImageTarLoad(ctx.Background(), tar); err != nil {
@@ -167,13 +167,13 @@ func loadImage(buildContext *context.BuildContext, imageName image.Name) error {
 
 // saveImage tars the image layers and manifests into a single tar, and saves that tar
 // into <destination>.
-func saveImage(buildContext *context.BuildContext, imageName image.Name) error {
-	log.Infof("Saving image %s at location %s", imageName.ShortName(), Destination)
+func (cmd *buildCmd) saveImage(buildContext *context.BuildContext, imageName image.Name) error {
+	log.Infof("Saving image %s at location %s", imageName.ShortName(), cmd.destination)
 	tarer := cli.NewDefaultImageTarer(buildContext.ImageStore)
 	if tar, err := tarer.CreateTarReadCloser(imageName); err != nil {
 		return fmt.Errorf("failed to create a tarball from image layers and manifests: %s", err)
-	} else if err := fileio.ReaderToFile(tar, Destination); err != nil {
-		return fmt.Errorf("failed to write image tarball to destination %s: %s", Destination, err)
+	} else if err := fileio.ReaderToFile(tar, cmd.destination); err != nil {
+		return fmt.Errorf("failed to write image tarball to destination %s: %s", cmd.destination, err)
 	}
 	return nil
 }
@@ -189,29 +189,29 @@ func cleanManifest(buildContext *context.BuildContext, imageName image.Name) err
 }
 
 // newCacheManager inits and returns a cache manager object.
-func newCacheManager(buildContext *context.BuildContext, imageName image.Name) cache.Manager {
+func (cmd *buildCmd) newCacheManager(buildContext *context.BuildContext, imageName image.Name) cache.Manager {
 	var kvStore keyvalue.Store
 	var err error
-	if RedisCacheAddress != "" {
-		log.Infof("Using redis at %s for cacheID storage", RedisCacheAddress)
+	if cmd.redisCacheAddress != "" {
+		log.Infof("Using redis at %s for cacheID storage", cmd.redisCacheAddress)
 
-		kvStore, err = keyvalue.NewRedisStore(RedisCacheAddress, RedisCacheTTL)
+		kvStore, err = keyvalue.NewRedisStore(cmd.redisCacheAddress, cmd.redisCacheTTL)
 		if err != nil {
 			log.Errorf("Failed to connect to redis store: %s", err)
 		}
-	} else if HTTPCacheAddress != "" {
-		log.Infof("Using http server at %s for cacheID storage", HTTPCacheAddress)
+	} else if cmd.httpCacheAddress != "" {
+		log.Infof("Using http server at %s for cacheID storage", cmd.httpCacheAddress)
 
-		kvStore, err = keyvalue.NewHTTPStore(HTTPCacheAddress, HTTPCacheHeaders...)
+		kvStore, err = keyvalue.NewHTTPStore(cmd.httpCacheAddress, cmd.httpCacheHeaders...)
 		if err != nil {
 			log.Errorf("Failed to instantiate cache id store: %s", err)
 		}
-	} else if LocalCacheTTL != 0 {
+	} else if cmd.localCacheTTL != 0 {
 		fullpath := path.Join(buildContext.ImageStore.RootDir, pathutils.CacheKeyValueFileName)
 		log.Infof("Using local file at %s for cacheID storage", fullpath)
 
 		kvStore, err = keyvalue.NewFSStore(
-			fullpath, buildContext.ImageStore.SandboxDir, LocalCacheTTL)
+			fullpath, buildContext.ImageStore.SandboxDir, cmd.localCacheTTL)
 		if err != nil {
 			log.Errorf("Failed to init local cache ID store: %s", err)
 		}
@@ -221,11 +221,11 @@ func newCacheManager(buildContext *context.BuildContext, imageName image.Name) c
 	}
 
 	var registryClient registry.Client
-	if len(PushRegistries) == 0 {
+	if len(cmd.pushRegistries) == 0 {
 		log.Infof("No registry information provided, using cached layers")
 		registryClient = nil
 	} else {
-		registryAddr := PushRegistries[0]
+		registryAddr := cmd.pushRegistries[0]
 		registryClient = registry.New(
 			buildContext.ImageStore, registryAddr, imageName.GetRepository())
 	}
