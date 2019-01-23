@@ -23,46 +23,56 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	LogLevel   string
-	LogOutput  string
-	LogFormat  string
-	CPUProfile bool
-)
+type rootCmd struct {
+	*cobra.Command
 
-func getRootCmd() *cobra.Command {
-	rootCmd := &cobra.Command{
-		Use:   "makisu",
-		Short: "makisu is a fast Fast and flexible Docker image building tool",
-		Long: "makisu is a fast Fast and flexible Docker image building tool " +
-			"designed for unprivileged containerized environments like Mesos and Kubernetes. " +
-			"More information is available at https://github.com/uber/makisu`.",
+	logLevel   string
+	logOutput  string
+	logFormat  string
+	cpuProfile bool
 
-		Run: func(ccmd *cobra.Command, args []string) {
-			if cleanup, err := processGlobalFlags(); err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			} else {
-				defer cleanup()
-			}
+	cleanup func()
+}
 
-			ccmd.HelpFunc()(ccmd, args)
+func getRootCmd() *rootCmd {
+	rootCmd := &rootCmd{
+		Command: &cobra.Command{
+			Use:   "makisu",
+			Short: "makisu is a fast Fast and flexible Docker image building tool",
+			Long: "makisu is a fast Fast and flexible Docker image building tool " +
+				"designed for unprivileged containerized environments like Mesos and Kubernetes. " +
+				"More information is available at https://github.com/uber/makisu`.",
 		},
 	}
 
-	rootCmd.PersistentFlags().StringVar(&LogLevel, "log-level", "info", "Verbose level of logs. Valid values are \"trace\", \"debug\", \"info\", \"warn\", \"error\", \"fatal\"")
-	rootCmd.PersistentFlags().StringVar(&LogOutput, "log-output", "stdout", "The output file path for the logs. Set to \"stdout\" to output to stdout")
-	rootCmd.PersistentFlags().StringVar(&LogFormat, "log-fmt", "json", "The format of the logs. Valid values are \"json\" and \"console\"")
-	rootCmd.PersistentFlags().BoolVar(&CPUProfile, "cpu-profile", false, "Profile the application")
+	rootCmd.PersistentFlags().StringVar(&rootCmd.logLevel, "log-level", "info", "Verbose level of logs. Valid values are \"trace\", \"debug\", \"info\", \"warn\", \"error\", \"fatal\"")
+	rootCmd.PersistentFlags().StringVar(&rootCmd.logOutput, "log-output", "stdout", "The output file path for the logs. Set to \"stdout\" to output to stdout")
+	rootCmd.PersistentFlags().StringVar(&rootCmd.logFormat, "log-fmt", "json", "The format of the logs. Valid values are \"json\" and \"console\"")
+	rootCmd.PersistentFlags().BoolVar(&rootCmd.cpuProfile, "cpu-profile", false, "Profile the application")
 
 	rootCmd.Flags().SortFlags = false
 	rootCmd.PersistentFlags().SortFlags = false
+
+	rootCmd.PersistentPreRun = func(ccmd *cobra.Command, args []string) {
+		if err := rootCmd.processGlobalFlags(); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	}
+	rootCmd.Run = func(ccmd *cobra.Command, args []string) {
+		ccmd.HelpFunc()(ccmd, args)
+	}
+	rootCmd.PersistentPostRun = func(ccmd *cobra.Command, args []string) {
+		if rootCmd.cleanup != nil {
+			rootCmd.cleanup()
+		}
+	}
 	return rootCmd
 }
 
 func Execute() {
 	rootCmd := getRootCmd()
-	rootCmd.AddCommand(getBuildCmd())
+	rootCmd.AddCommand(getBuildCmd().Command)
 	rootCmd.AddCommand(getVersionCmd())
 	if err := rootCmd.Execute(); err != nil {
 		log.Error(err)
