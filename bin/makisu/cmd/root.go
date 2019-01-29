@@ -74,6 +74,7 @@ func Execute() {
 	rootCmd := getRootCmd()
 	rootCmd.AddCommand(getBuildCmd().Command)
 	rootCmd.AddCommand(getVersionCmd())
+	rootCmd.AddCommand(getPullCmd().Command)
 	if err := rootCmd.Execute(); err != nil {
 		log.Error(err)
 		os.Exit(1)
