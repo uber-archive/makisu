@@ -48,8 +48,8 @@ func (c *BasicAuthConfig) Get() (types.AuthConfig, error) {
 		if err != nil {
 			return types.AuthConfig{}, fmt.Errorf("Read password file: %s", err)
 		}
+		c.AuthConfig.Password = string(password)
 	}
-	c.AuthConfig.Password = string(password)
 	return c.AuthConfig, nil
 }
 
