@@ -42,6 +42,7 @@ type buildCmd struct {
 	tag            string
 
 	pushRegistries []string
+	replicas       []string
 	registryConfig string
 	destination    string
 
@@ -68,9 +69,9 @@ type buildCmd struct {
 func getBuildCmd() *buildCmd {
 	buildCmd := &buildCmd{
 		Command: &cobra.Command{
-			Use:                   "build -t=<image_tag> [flags] <context_path>",
+			Use: "build -t=<image_tag> [flags] <context_path>",
 			DisableFlagsInUseLine: true,
-			Short:                 "Build docker image, optionally push to registries and/or load into docker daemon",
+			Short: "Build docker image, optionally push to registries and/or load into docker daemon",
 		},
 	}
 	buildCmd.Args = func(cmd *cobra.Command, args []string) error {
@@ -95,6 +96,7 @@ func getBuildCmd() *buildCmd {
 	buildCmd.PersistentFlags().StringVarP(&buildCmd.tag, "tag", "t", "", "Image tag (required)")
 
 	buildCmd.PersistentFlags().StringArrayVar(&buildCmd.pushRegistries, "push", nil, "Registry to push image to")
+	buildCmd.PersistentFlags().StringArrayVar(&buildCmd.replicas, "replica", nil, "Push targets with alternative full image names \"<registry>/<repo>:<tag>\"")
 	buildCmd.PersistentFlags().StringVar(&buildCmd.registryConfig, "registry-config", "", "Set build-time variables")
 	buildCmd.PersistentFlags().StringVar(&buildCmd.destination, "dest", "", "Destination of the image tar")
 
@@ -245,6 +247,12 @@ func (cmd *buildCmd) Build(contextDir string) error {
 	// Push image to registries that were specified in the --push flag.
 	for _, registry := range cmd.pushRegistries {
 		target := imageName.WithRegistry(registry)
+		if err := pushImage(buildContext, target); err != nil {
+			return fmt.Errorf("failed to push image: %s", err)
+		}
+	}
+	for _, altname := range cmd.replicas {
+		target := image.MustParseName(altname)
 		if err := pushImage(buildContext, target); err != nil {
 			return fmt.Errorf("failed to push image: %s", err)
 		}
