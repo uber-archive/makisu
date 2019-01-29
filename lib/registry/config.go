@@ -18,7 +18,6 @@ package registry
 import (
 	"time"
 
-	"github.com/docker/engine-api/types"
 	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/registry/security"
 	"github.com/uber/makisu/lib/utils/httputil"
@@ -33,7 +32,7 @@ var ConfigurationMap = Map{
 var DefaultDockerHubConfiguration = Config{
 	Security: security.Config{
 		TLS:       &httputil.TLSConfig{},
-		BasicAuth: &types.AuthConfig{}, // DockerHub requires empty username and password for public repositories.
+		BasicAuth: &security.BasicAuthConfig{}, // DockerHub requires empty username and password for public repositories.
 	}}
 
 // Map contains a map of registry config.

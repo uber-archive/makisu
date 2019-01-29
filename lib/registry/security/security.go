@@ -44,7 +44,7 @@ func (c *BasicAuthConfig) Get() (types.AuthConfig, error) {
 	if c.PasswordFile != "" {
 		password, err := ioutil.ReadFile(c.PasswordFile)
 		if err != nil {
-			return types.AuthConfig{}, fmt.Errorf("Read password file: %s", err)
+			return types.AuthConfig{}, fmt.Errorf("read password file: %s", err)
 		}
 		c.AuthConfig.Password = string(password)
 	}
