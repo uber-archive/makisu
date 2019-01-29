@@ -69,15 +69,15 @@ func (cmd *pullCmd) Pull(repository string) {
 		panic(err)
 	}
 
-	cmd.Extract(store, manifest)
-}
-
-func (cmd *pullCmd) Extract(store *storage.ImageStore, manifest *image.DistributionManifest) {
 	// If extract is not specified, exit here.
 	if cmd.extract == "" {
 		return
 	}
 
+	cmd.Extract(store, manifest)
+}
+
+func (cmd *pullCmd) Extract(store *storage.ImageStore, manifest *image.DistributionManifest) {
 	config := &image.Config{}
 	if reader, err := store.Layers.GetStoreFileReader(manifest.Config.Digest.Hex()); err != nil {
 		panic(err)
