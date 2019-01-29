@@ -17,6 +17,7 @@ package security
 import (
 	"crypto/tls"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"path"
 
@@ -31,10 +32,29 @@ const tokenUsername = "<token>"
 
 var credentialHelperPrefix = path.Join(pathutils.DefaultInternalDir, "docker-credential-")
 
+// BasicAuthConfig is a simple wrapper of Docker's types.AuthConfig with addtional support
+// for a password file.
+type BasicAuthConfig struct {
+	types.AuthConfig
+	PasswordFile string `yaml:"password_file" json:"password_file"`
+}
+
+// Get returns an AuthConfig.
+func (c *BasicAuthConfig) Get() (types.AuthConfig, error) {
+	if c.PasswordFile != "" {
+		password, err := ioutil.ReadFile(c.PasswordFile)
+		if err != nil {
+			return types.AuthConfig{}, fmt.Errorf("read password file: %s", err)
+		}
+		c.AuthConfig.Password = string(password)
+	}
+	return c.AuthConfig, nil
+}
+
 // Config contains tls and basic auth configuration.
 type Config struct {
 	TLS                    *httputil.TLSConfig `yaml:"tls"`
-	BasicAuth              *types.AuthConfig   `yaml:"basic"`
+	BasicAuth              *BasicAuthConfig    `yaml:"basic"`
 	RemoteCredentialsStore string              `yaml:"credsStore"`
 }
 
@@ -83,10 +103,13 @@ func (c Config) GetHTTPOption(addr, repo string) (httputil.SendOption, error) {
 
 func (c Config) getCredentials(helper, addr string) (types.AuthConfig, error) {
 	var authConfig types.AuthConfig
-	if c.BasicAuth != nil {
-		authConfig = *c.BasicAuth
-	}
 	var err error
+	if c.BasicAuth != nil {
+		authConfig, err = c.BasicAuth.Get()
+		if err != nil {
+			return types.AuthConfig{}, fmt.Errorf("get basic auth config: %s", err)
+		}
+	}
 	if helper != "" {
 		authConfig, err = c.getCredentialFromHelper(helper, addr)
 		if err != nil {
@@ -105,7 +128,10 @@ func (c Config) getCredentialFromHelper(helper, addr string) (types.AuthConfig, 
 
 	var ret types.AuthConfig
 	if c.BasicAuth != nil {
-		ret = *c.BasicAuth
+		ret, err = c.BasicAuth.Get()
+		if err != nil {
+			return types.AuthConfig{}, fmt.Errorf("get basic auth config: %s", err)
+		}
 	}
 	ret.ServerAddress = addr
 	if creds.Username == tokenUsername {
