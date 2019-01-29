@@ -41,10 +41,8 @@ type BasicAuthConfig struct {
 
 // Get returns an AuthConfig.
 func (c *BasicAuthConfig) Get() (types.AuthConfig, error) {
-	var password []byte
-	var err error
 	if c.PasswordFile != "" {
-		password, err = ioutil.ReadFile(c.PasswordFile)
+		password, err := ioutil.ReadFile(c.PasswordFile)
 		if err != nil {
 			return types.AuthConfig{}, fmt.Errorf("Read password file: %s", err)
 		}
