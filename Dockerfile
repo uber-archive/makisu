@@ -27,7 +27,6 @@ RUN make -C /go/src/github.com/awslabs/amazon-ecr-credential-helper linux-amd64
 FROM scratch
 COPY --from=builder /go/src/github.com/uber/makisu/bin/makisu/makisu.linux /makisu-internal/makisu
 ADD ./assets/cacerts.pem /makisu-internal/certs/cacerts.pem
-ENV SSL_CERT_DIR=/makisu-internal/certs
 
 COPY --from=gcr_cred_helper_builder /docker-credential-gcr /makisu-internal/docker-credential-gcr
 COPY --from=ecr_cred_helper_builder /go/src/github.com/awslabs/amazon-ecr-credential-helper/bin/linux-amd64/docker-credential-ecr-login /makisu-internal/docker-credential-ecr-login
