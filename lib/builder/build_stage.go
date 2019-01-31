@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io/ioutil"
-	"os"
 	"path"
 	"time"
 
@@ -274,32 +273,13 @@ func (stage *buildStage) GetDistributionManifest(
 	return &distributionManfest, nil
 }
 
-// saveImage saves the image produced at the end of this stage.
-func (stage *buildStage) saveImage(
+// generateManifest generates image manifest produced at the end of this stage.
+func (stage *buildStage) generateManifest(
 	store *storage.ImageStore, repo, tag string) (*image.DistributionManifest, error) {
 
 	manifest, err := stage.GetDistributionManifest(store)
 	if err != nil {
 		return nil, fmt.Errorf("get distribution manifest: %s", err)
-	}
-	manifestJSON, err := json.Marshal(manifest)
-	if err != nil {
-		return nil, fmt.Errorf("marshal manifest: %s", err)
-	}
-	manifestFile, err := ioutil.TempFile(stage.ctx.ImageStore.SandboxDir, "")
-	if err != nil {
-		return nil, fmt.Errorf("tmp manifest file: %s", err)
-	}
-
-	manifestPath := manifestFile.Name()
-	// Remove temp file after hard-linked to manifest store
-	defer os.Remove(manifestPath)
-
-	if err := ioutil.WriteFile(manifestPath, manifestJSON, 0755); err != nil {
-		return nil, fmt.Errorf("write manifest file: %s", err)
-	}
-	if err := store.Manifests.LinkStoreFileFrom(repo, tag, manifestPath); err != nil {
-		return nil, fmt.Errorf("commit manifest to store: %s", err)
 	}
 	return manifest, nil
 }

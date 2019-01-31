@@ -186,11 +186,11 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 		log.Errorf("Failed to push cache: %s", err)
 	}
 
-	// Save image manifest.
+	// Generate image manifest.
 	repo, tag := plan.target.GetRepository(), plan.target.GetTag()
-	manifest, err := currStage.saveImage(plan.baseCtx.ImageStore, repo, tag)
+	manifest, err := currStage.generateManifest(plan.baseCtx.ImageStore, repo, tag)
 	if err != nil {
-		return nil, fmt.Errorf("save image manifest: %s", err)
+		return nil, fmt.Errorf("generate image manifest: %s", err)
 	}
 
 	// Print out the image size.
