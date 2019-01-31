@@ -274,9 +274,9 @@ func (stage *buildStage) GetDistributionManifest(
 	return &distributionManfest, nil
 }
 
-// saveImage saves the image produced at the end of this stage.
-func (stage *buildStage) saveImage(
-	store *storage.ImageStore, repo, tag string) (*image.DistributionManifest, error) {
+// saveManifest saves the image produced at the end of this stage.
+func (stage *buildStage) saveManifest(
+	store *storage.ImageStore, imageName image.Name) (*image.DistributionManifest, error) {
 
 	manifest, err := stage.GetDistributionManifest(store)
 	if err != nil {
@@ -298,7 +298,10 @@ func (stage *buildStage) saveImage(
 	if err := ioutil.WriteFile(manifestPath, manifestJSON, 0755); err != nil {
 		return nil, fmt.Errorf("write manifest file: %s", err)
 	}
-	if err := store.Manifests.LinkStoreFileFrom(repo, tag, manifestPath); err != nil {
+
+	if err := store.Manifests.LinkStoreFileFrom(
+		imageName.GetRepository(), imageName.GetTag(), manifestPath); err != nil {
+
 		return nil, fmt.Errorf("commit manifest to store: %s", err)
 	}
 	return manifest, nil
