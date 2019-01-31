@@ -172,7 +172,8 @@ func (cmd *buildCmd) processFlags() error {
 }
 
 func (cmd *buildCmd) newBuildPlan(
-	buildContext *context.BuildContext, imageName image.Name) (*builder.BuildPlan, error) {
+	buildContext *context.BuildContext, imageName image.Name,
+	replicas []image.Name) (*builder.BuildPlan, error) {
 
 	// Read in and parse dockerfile.
 	dockerfile, err := cmd.getDockerfile(buildContext.ContextDir)
@@ -184,6 +185,11 @@ func (cmd *buildCmd) newBuildPlan(
 	if err := cleanManifest(buildContext, imageName); err != nil {
 		return nil, fmt.Errorf("failed to clean manifest: %s", err)
 	}
+	for _, replica := range replicas {
+		if err := cleanManifest(buildContext, replica); err != nil {
+			return nil, fmt.Errorf("failed to clean manifest: %s", err)
+		}
+	}
 
 	// Init cache manager.
 	cacheMgr := cmd.newCacheManager(buildContext, imageName)
@@ -194,8 +200,8 @@ func (cmd *buildCmd) newBuildPlan(
 	forceCommit := cmd.commit == "implicit"
 
 	// Create BuildPlan and validate it.
-	return builder.NewBuildPlan(buildContext, imageName, cacheMgr,
-		dockerfile, cmd.allowModifyFS, forceCommit)
+	return builder.NewBuildPlan(
+		buildContext, imageName, replicas, cacheMgr, dockerfile, cmd.allowModifyFS, forceCommit)
 }
 
 // Build image from the specified dockerfile.
@@ -235,7 +241,11 @@ func (cmd *buildCmd) Build(contextDir string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get target image name: %s", err)
 	}
-	buildPlan, err := cmd.newBuildPlan(buildContext, imageName)
+	var parsedReplicas []image.Name
+	for _, replica := range cmd.replicas {
+		parsedReplicas = append(parsedReplicas, image.MustParseName(replica))
+	}
+	buildPlan, err := cmd.newBuildPlan(buildContext, imageName, parsedReplicas)
 	if err != nil {
 		return fmt.Errorf("failed to create build plan: %s", err)
 	}
@@ -251,8 +261,8 @@ func (cmd *buildCmd) Build(contextDir string) error {
 			return fmt.Errorf("failed to push image: %s", err)
 		}
 	}
-	for _, altname := range cmd.replicas {
-		target := image.MustParseName(altname)
+	for _, replica := range cmd.replicas {
+		target := image.MustParseName(replica)
 		if err := pushImage(buildContext, target); err != nil {
 			return fmt.Errorf("failed to push image: %s", err)
 		}
