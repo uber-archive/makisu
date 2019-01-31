@@ -37,6 +37,7 @@ type BuildPlan struct {
 	baseCtx           *context.BuildContext
 	copyFromDirs      map[string][]string
 	target            image.Name
+	replicas          []image.Name
 	cacheMgr          cache.Manager
 	stages            []*buildStage
 	remoteImageStages map[string]*buildStage
@@ -47,7 +48,7 @@ type BuildPlan struct {
 // NewBuildPlan takes in contextDir, a target image and an ImageStore, and
 // returns a new BuildPlan.
 func NewBuildPlan(
-	ctx *context.BuildContext, target image.Name, cacheMgr cache.Manager,
+	ctx *context.BuildContext, target image.Name, replicas []image.Name, cacheMgr cache.Manager,
 	parsedStages []*dockerfile.Stage, allowModifyFS, forceCommit bool) (*BuildPlan, error) {
 
 	plan := &BuildPlan{
@@ -187,10 +188,15 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 	}
 
 	// Save image manifest.
-	repo, tag := plan.target.GetRepository(), plan.target.GetTag()
-	manifest, err := currStage.saveImage(plan.baseCtx.ImageStore, repo, tag)
+	manifest, err := currStage.saveManifest(plan.baseCtx.ImageStore, plan.target)
 	if err != nil {
-		return nil, fmt.Errorf("save image manifest: %s", err)
+		return nil, fmt.Errorf("save image manifest %s: %s", plan.target, err)
+	}
+	for _, replica := range plan.replicas {
+		_, err := currStage.saveManifest(plan.baseCtx.ImageStore, replica)
+		if err != nil {
+			return nil, fmt.Errorf("save alias manifest %s: %s", replica, err)
+		}
 	}
 
 	// Print out the image size.

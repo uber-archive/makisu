@@ -49,7 +49,7 @@ func TestBuildPlanExecution(t *testing.T) {
 	}
 	stages := []*dockerfile.Stage{{from, directives}}
 
-	plan, err := NewBuildPlan(ctx, target, cacheMgr, stages, true, false)
+	plan, err := NewBuildPlan(ctx, target, nil, cacheMgr, stages, true, false)
 	require.NoError(err)
 
 	manifest, err := plan.Execute()
@@ -93,7 +93,7 @@ func TestBuildPlanContextDirs(t *testing.T) {
 	// Here we need to set the allowModifyFS to true because we copy
 	// files across stages.
 	// TODO(pourchet): support copy --from without relying on FS.
-	plan, err := NewBuildPlan(ctx, target, cacheMgr, stages, true, false)
+	plan, err := NewBuildPlan(ctx, target, nil, cacheMgr, stages, true, false)
 	require.NoError(err)
 	require.Contains(plan.copyFromDirs, "stage1")
 	require.Len(plan.copyFromDirs, 1)
@@ -108,7 +108,7 @@ func TestBuildPlanContextDirs(t *testing.T) {
 	}
 	stages = []*dockerfile.Stage{{from, directives}}
 
-	_, err = NewBuildPlan(ctx, target, cacheMgr, stages, false, false)
+	_, err = NewBuildPlan(ctx, target, nil, cacheMgr, stages, false, false)
 	require.Error(err)
 
 	// Copy from subsequent stage.
@@ -119,7 +119,7 @@ func TestBuildPlanContextDirs(t *testing.T) {
 	from2 = dockerfile.FromDirectiveFixture("", envImage.String(), "stage2")
 	stages = []*dockerfile.Stage{{from1, directives1}, {from2, nil}}
 
-	_, err = NewBuildPlan(ctx, target, cacheMgr, stages, false, false)
+	_, err = NewBuildPlan(ctx, target, nil, cacheMgr, stages, false, false)
 	require.Error(err)
 }
 
@@ -142,7 +142,7 @@ func TestBuildPlanBadRun(t *testing.T) {
 	}
 	stages := []*dockerfile.Stage{{from, directives}}
 
-	plan, err := NewBuildPlan(ctx, target, cacheMgr, stages, true, false)
+	plan, err := NewBuildPlan(ctx, target, nil, cacheMgr, stages, true, false)
 	require.NoError(err)
 
 	_, err = plan.Execute()
@@ -166,7 +166,7 @@ func TestDuplicateStageAlias(t *testing.T) {
 	from2 := dockerfile.FromDirectiveFixture("", envImage.String(), "alias")
 	stages := []*dockerfile.Stage{{from1, nil}, {from2, nil}}
 
-	_, err = NewBuildPlan(ctx, target, cacheMgr, stages, false, false)
+	_, err = NewBuildPlan(ctx, target, nil, cacheMgr, stages, false, false)
 	require.Error(err)
 
 	// Same image different alias.
@@ -174,6 +174,6 @@ func TestDuplicateStageAlias(t *testing.T) {
 	from2 = dockerfile.FromDirectiveFixture("", envImage.String(), "alias2")
 	stages = []*dockerfile.Stage{{from1, nil}, {from2, nil}}
 
-	_, err = NewBuildPlan(ctx, target, cacheMgr, stages, false, false)
+	_, err = NewBuildPlan(ctx, target, nil, cacheMgr, stages, false, false)
 	require.NoError(err)
 }
