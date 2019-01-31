@@ -55,6 +55,7 @@ func NewBuildPlan(
 		baseCtx:           ctx,
 		copyFromDirs:      make(map[string][]string),
 		target:            target,
+		replicas:          replicas,
 		cacheMgr:          cacheMgr,
 		stages:            make([]*buildStage, len(parsedStages)),
 		remoteImageStages: make(map[string]*buildStage),
