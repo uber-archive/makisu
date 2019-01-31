@@ -13,13 +13,16 @@ def new_image_name():
 
 def test_build_simple(registry1, storage_dir):
     new_image = new_image_name()
+    replica_image = new_image_name()
     context_dir = os.path.join(
         os.getcwd(), 'testdata/build-context/simple')
 
     utils.makisu_build_image(
-        new_image, context_dir, storage_dir, load=True, registry=registry1.addr,
+        new_image, context_dir, storage_dir, load=True, registry=registry1.addr, replicas=[registry2.addr + "/" + replica_image]
         registry_cfg={"*": {"*": {"security": {"tls": {"client": {"disabled": True}}}}}})
     code, err = utils.docker_run_image(registry1.addr, new_image)
+    assert code == 0, err
+    code, err = utils.docker_run_image(registry1.addr, replica_image)
     assert code == 0, err
 
 
