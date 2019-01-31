@@ -188,7 +188,7 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 
 	// Generate image manifest.
 	repo, tag := plan.target.GetRepository(), plan.target.GetTag()
-	manifest, err := currStage.generateManifest(plan.baseCtx.ImageStore, repo, tag)
+	manifest, err := currStage.GetDistributionManifest(plan.baseCtx.ImageStore)
 	if err != nil {
 		return nil, fmt.Errorf("generate image manifest: %s", err)
 	}

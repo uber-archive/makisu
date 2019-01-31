@@ -273,17 +273,6 @@ func (stage *buildStage) GetDistributionManifest(
 	return &distributionManfest, nil
 }
 
-// generateManifest generates image manifest produced at the end of this stage.
-func (stage *buildStage) generateManifest(
-	store *storage.ImageStore, repo, tag string) (*image.DistributionManifest, error) {
-
-	manifest, err := stage.GetDistributionManifest(store)
-	if err != nil {
-		return nil, fmt.Errorf("get distribution manifest: %s", err)
-	}
-	return manifest, nil
-}
-
 // pullCacheLayers attempts to pull reusable layers from the distributed cache. Terminates once
 // a node that can be cached fails to pull its layer.
 func (stage *buildStage) pullCacheLayers(cacheMgr cache.Manager) {
