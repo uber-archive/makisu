@@ -35,8 +35,8 @@ var credentialHelperPrefix = path.Join(pathutils.DefaultInternalDir, "docker-cre
 // BasicAuthConfig is a simple wrapper of Docker's types.AuthConfig with addtional support
 // for a password file.
 type BasicAuthConfig struct {
-	types.AuthConfig
-	PasswordFile string `yaml:"password_file" json:"password_file"`
+	types.AuthConfig `yaml:",inline"`
+	PasswordFile     string `yaml:"password_file" json:"password_file"`
 }
 
 // Get returns an AuthConfig.
@@ -53,9 +53,9 @@ func (c *BasicAuthConfig) Get() (types.AuthConfig, error) {
 
 // Config contains tls and basic auth configuration.
 type Config struct {
-	TLS                    *httputil.TLSConfig `yaml:"tls"`
-	BasicAuth              *BasicAuthConfig    `yaml:"basic"`
-	RemoteCredentialsStore string              `yaml:"credsStore"`
+	TLS                    *httputil.TLSConfig `yaml:"tls" json:"tls"`
+	BasicAuth              *BasicAuthConfig    `yaml:"basic" json:"basic"`
+	RemoteCredentialsStore string              `yaml:"credsStore" json:"credsStore"`
 }
 
 // ApplyDefaults applies default configuration.
