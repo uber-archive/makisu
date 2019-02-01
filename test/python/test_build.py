@@ -23,7 +23,7 @@ def test_build_simple(registry1, registry2, storage_dir):
         registry_cfg={"*": {"*": {"security": {"tls": {"client": {"disabled": True}}}}}})
     code, err = utils.docker_run_image(registry1.addr, new_image)
     assert code == 0, err
-    code, err = utils.docker_run_image(registry1.addr, replica_image)
+    code, err = utils.docker_run_image(registry2.addr, replica_image)
     assert code == 0, err
 
 
