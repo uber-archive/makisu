@@ -93,7 +93,7 @@ def makisu_run_cmd(volumes, args):
 
 def makisu_build_image(
     new_image, context_dir, storage_dir, cache_dir=None, volumes=None,
-    docker_args=None, load=False, registry=None, registry_cfg=None):
+    docker_args=None, load=False, registry=None, replicas=None, registry_cfg=None):
 
     volumes = volumes or {}
     volumes[storage_dir] = storage_dir  # Sandbox and file store
@@ -115,6 +115,10 @@ def makisu_build_image(
 
     if registry:
        args.extend([ '--push', registry])
+
+    if replicas:
+        for replica in replicas:
+            args.extend(['--replica', replica])
 
     if registry_cfg is not None:
         args.extend(['--registry-config', json.dumps(registry_cfg)])

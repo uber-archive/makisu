@@ -243,7 +243,10 @@ func (stage *buildStage) GetDistributionManifest(
 	if err := ioutil.WriteFile(imageConfigPath, imageConfigJSON, 0755); err != nil {
 		return nil, fmt.Errorf("write image config: %s", err)
 	}
-	if err := store.Layers.LinkStoreFileFrom(imageConfigSHA256, imageConfigPath); err != nil {
+	// If this is for a replica, image config might already exists in store.
+	// Ignore
+	err = store.Layers.LinkStoreFileFrom(imageConfigSHA256, imageConfigPath)
+	if err != nil && !os.IsExist(err) {
 		return nil, fmt.Errorf("commit image config to store: %s", err)
 	}
 	imageConfigStat, err := store.Layers.GetStoreFileStat(imageConfigSHA256)
