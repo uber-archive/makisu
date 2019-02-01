@@ -26,7 +26,7 @@ var (
 
 func main() {
 	cmd := &cobra.Command{
-		Use:                   "--dest <destination of rootfs> <image repository>",
+		Use: "--dest <destination of rootfs> <image repository>",
 		DisableFlagsInUseLine: true,
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
@@ -58,7 +58,6 @@ func pullAndExtract(registryURL, repository, tag, destination string) {
 	registry.DefaultDockerHubConfiguration.Security.TLS.CA.Cert.Path = cacerts
 	registry.ConfigurationMap[image.DockerHubRegistry] = make(registry.RepositoryMap)
 	registry.ConfigurationMap[image.DockerHubRegistry]["library/*"] = registry.DefaultDockerHubConfiguration
-	registry.ConfigurationMap[image.DockerHubRegistry][".*"] = registry.DefaultDockerHubConfiguration
 
 	client := registry.New(store, registryURL, repository)
 	manifest, err := client.Pull(tag)
