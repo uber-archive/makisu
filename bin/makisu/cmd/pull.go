@@ -29,9 +29,9 @@ type pullCmd struct {
 func getPullCmd() *pullCmd {
 	pullCmd := &pullCmd{
 		Command: &cobra.Command{
-			Use:                   "pull --dest <destination of rootfs> <image repository>",
+			Use: "pull --dest <destination of rootfs> <image repository>",
 			DisableFlagsInUseLine: true,
-			Short:                 "Pull docker image from registry into the storage directory of makisu.",
+			Short: "Pull docker image from registry into the storage directory of makisu.",
 		},
 	}
 	pullCmd.Args = func(cmd *cobra.Command, args []string) error {
@@ -61,7 +61,6 @@ func (cmd *pullCmd) Pull(repository string) {
 	registry.DefaultDockerHubConfiguration.Security.TLS.CA.Cert.Path = cmd.cacerts
 	registry.ConfigurationMap[image.DockerHubRegistry] = make(registry.RepositoryMap)
 	registry.ConfigurationMap[image.DockerHubRegistry]["library/*"] = registry.DefaultDockerHubConfiguration
-	registry.ConfigurationMap[image.DockerHubRegistry][".*"] = registry.DefaultDockerHubConfiguration
 
 	client := registry.New(store, cmd.registry, repository)
 	manifest, err := client.Pull(cmd.tag)

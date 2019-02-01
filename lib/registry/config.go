@@ -18,15 +18,12 @@ package registry
 import (
 	"time"
 
-	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/registry/security"
 	"github.com/uber/makisu/lib/utils/httputil"
 )
 
 // ConfigurationMap is a global variable that maps registry name to config.
-var ConfigurationMap = Map{
-	image.DockerHubRegistry: RepositoryMap{"library/*": DefaultDockerHubConfiguration},
-}
+var ConfigurationMap = Map{}
 
 // DefaultDockerHubConfiguration contains docker hub registry configuration.
 var DefaultDockerHubConfiguration = Config{
