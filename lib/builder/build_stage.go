@@ -245,7 +245,7 @@ func (stage *buildStage) GetDistributionManifest(
 	}
 	// If this is for a replica, image config might already exists in store.
 	// Ignore
-	err := store.Layers.LinkStoreFileFrom(imageConfigSHA256, imageConfigPath)
+	err = store.Layers.LinkStoreFileFrom(imageConfigSHA256, imageConfigPath)
 	if err != nil && !os.IsExist(err) {
 		return nil, fmt.Errorf("commit image config to store: %s", err)
 	}
