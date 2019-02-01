@@ -11,7 +11,7 @@ def new_image_name():
     return "makisu-test:{}".format(random.randint(0, 1000000))
 
 
-def test_build_simple(registry1, storage_dir):
+def test_build_simple(registry1, registry2, storage_dir):
     new_image = new_image_name()
     replica_image = new_image_name()
     context_dir = os.path.join(
