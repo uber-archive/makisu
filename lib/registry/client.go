@@ -82,6 +82,9 @@ func NewWithClient(store *storage.ImageStore, registry, repository string, clien
 
 func newClient(store *storage.ImageStore, registry, repository string, client *http.Client) *DockerRegistryClient {
 	config := Config{}
+	if registry == image.DockerHubRegistry {
+		config = DefaultDockerHubConfiguration
+	}
 	repoConfig, ok := ConfigurationMap[registry]
 	if ok {
 		for repo, c := range repoConfig {

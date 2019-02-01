@@ -42,8 +42,6 @@ import (
 
 func (cmd *buildCmd) initRegistryConfig() error {
 	if cmd.registryConfig == "" {
-		registry.ConfigurationMap[image.DockerHubRegistry] = make(registry.RepositoryMap)
-		registry.ConfigurationMap[image.DockerHubRegistry][".*"] = registry.DefaultDockerHubConfiguration
 		return nil
 	}
 
