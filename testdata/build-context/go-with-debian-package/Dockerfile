@@ -4,7 +4,9 @@ FROM $BASE_IMAGE AS phase1
 
 # Make sure that the variable gets expanded at some point in the command
 # execution process.
-RUN ls $HOME
+RUN mkdir $HOME/test
+WORKDIR $HOME
+RUN ls test
 
 RUN apt-get update
 
