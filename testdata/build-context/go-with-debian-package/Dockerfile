@@ -1,6 +1,11 @@
 ARG BASE_IMAGE
 
 FROM $BASE_IMAGE AS phase1
+
+# Make sure that the variable gets expanded at some point in the command
+# execution process.
+RUN ls $HOME
+
 RUN apt-get update
 
 # Install runtime package
