@@ -16,10 +16,12 @@ package step
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/uber/makisu/lib/context"
 	"github.com/uber/makisu/lib/docker/image"
+	"github.com/uber/makisu/lib/log"
 )
 
 // WorkdirStep implements BuildStep and execute WORKDIR directive
@@ -46,10 +48,12 @@ func (s *WorkdirStep) UpdateCtxAndConfig(
 	if err != nil {
 		return nil, fmt.Errorf("copy image config: %s", err)
 	}
-	if filepath.IsAbs(s.workingDir) {
+	log.Infof("WORKDIR: %s | %v", s.workingDir, filepath.IsAbs(s.workingDir))
+	workdir := os.ExpandEnv(s.workingDir)
+	if filepath.IsAbs(workdir) {
 		config.Config.WorkingDir = ctx.RootDir
 	}
-	config.Config.WorkingDir = filepath.Join(config.Config.WorkingDir, s.workingDir)
+	config.Config.WorkingDir = filepath.Join(config.Config.WorkingDir, workdir)
 
 	return config, nil
 }
