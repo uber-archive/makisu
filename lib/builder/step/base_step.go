@@ -89,7 +89,7 @@ func (s *baseStep) ApplyCtxAndConfig(
 
 	// Set working dir.
 	if imageConfig.Config.WorkingDir != "" {
-		s.workingDir = imageConfig.Config.WorkingDir
+		s.workingDir = os.ExpandEnv(imageConfig.Config.WorkingDir)
 	}
 
 	// Create working dir if it does not exist.
