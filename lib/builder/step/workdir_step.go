@@ -54,5 +54,15 @@ func (s *WorkdirStep) UpdateCtxAndConfig(
 	}
 	config.Config.WorkingDir = filepath.Join(config.Config.WorkingDir, workdir)
 
+	// Create this workdir if it does not exist already.
+	if _, err := os.Lstat(config.Config.WorkingDir); err != nil {
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(config.Config.WorkingDir, 0755); err != nil {
+				return nil, fmt.Errorf("mkdir all working dir %s: %s", config.Config.WorkingDir, err)
+			}
+		} else {
+			return nil, fmt.Errorf("lstat working dir %s: %s", config.Config.WorkingDir, err)
+		}
+	}
 	return config, nil
 }
