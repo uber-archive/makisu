@@ -55,7 +55,7 @@ For a full list of flags, run `makisu build --help` or refer to the README [here
 
 ## Makisu anywhere
 
-To build Dockerfiles that contain RUN, Makisu still needs to run in a container.
+To build Dockerfiles that contain RUN, Makisu needs to run in an empty container with only Makisu binary.
 To try it locally, the following snippet can be placed inside your `~/.bashrc` or `~/.zshrc`:
 ```shell
 function makisu_build() {
