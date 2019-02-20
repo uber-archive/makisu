@@ -78,7 +78,7 @@ $ makisu_build -t myimage .
 ```
 Note:
 * Docker socket mount is optional. It's used together with `--load` for loading images back into Docker daemon for convenience of local development. So does the mount to /makisu-storage, which is used for local cache.
-* The `--modifyfs-true` option let Makisu assume ownership of the filesystem inside the container. Additional files that doesn't belong to the base image will get deleted at the beginning of build.
+* The `--modifyfs-true` option let Makisu assume ownership of the filesystem inside the container. Additional files that doesn't belong to the base image will be overwritten at the beginning of build.
 
 ## Makisu on Kubernetes
 
