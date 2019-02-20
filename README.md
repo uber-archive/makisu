@@ -55,7 +55,7 @@ For a full list of flags, run `makisu build --help` or refer to the README [here
 
 ## Makisu anywhere
 
-To build Dockerfiles that contain RUN, Makisu needs to run in an empty container.
+To build Dockerfiles that contain RUN, Makisu needs to run in an empty container (except Makisu binary and configs).
 To try it locally, the following snippet can be placed inside your `~/.bashrc` or `~/.zshrc`:
 ```shell
 function makisu_build() {
@@ -76,7 +76,7 @@ Now you can use `makisu_build` like you would use `docker build`:
 ```shell
 $ makisu_build -t myimage .
 ```
-Note: Docker socket mount is optional. It's used together with `--load` for loading images back into Docker daemon for convenience of local development. Neither does the mount to /makisu-storage, which is used for local cache.
+Note: Docker socket mount is optional. It's used together with `--load` for loading images back into Docker daemon for convenience of local development. So does the mount to /makisu-storage, which is used for local cache.
 
 ## Makisu on Kubernetes
 
