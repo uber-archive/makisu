@@ -660,6 +660,10 @@ func (fs *MemFS) untarSymlink(path string, header *tar.Header) error {
 	if err := os.Symlink(target, path); err != nil {
 		return fmt.Errorf("create symlink %s => %s: %s", path, target, err)
 	}
+
+	if err := os.Lchown(path, header.Uid, header.Gid); err != nil {
+		return fmt.Errorf("lchown symlink: %s", path)
+	}
 	return nil
 }
 
@@ -671,8 +675,7 @@ func (fs *MemFS) untarHardlink(path string, header *tar.Header) error {
 			"create link %s => %s: %s", path, target, err)
 	}
 	if err := tario.ApplyHeader(path, header); err != nil {
-		return fmt.Errorf(
-			"update hard link %s: %s", path, err)
+		return fmt.Errorf("update hard link %s: %s", path, err)
 	}
 	return nil
 }
