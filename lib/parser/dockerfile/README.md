@@ -29,7 +29,7 @@ The following directives are not supported: ONBUILD and SHELL.
 Syntax:
 - #!COMMIT
     - 'COMMIT' can be any case and there can be whitespace preceding '#', after '!', or after 'COMMIT'.
-    - It cannot be at the beginning of ta line, since all lines beginning with '#' would be ignored. 
+    - It cannot be at the beginning of a line, since all lines beginning with '#' would be ignored. 
 
 This is a special directive that indicates that a layer should be committed (used in the distributed cache). To enable this directive, `--commit=explicit` argument is required.
 
