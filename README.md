@@ -68,7 +68,7 @@ function makisu_build() {
         -v /tmp/makisu-storage:/makisu-storage \
         gcr.io/makisu-project/makisu:$makisu_version build \
             --modifyfs=true --load \
-            ${@:1:-1} /makisu-context
+            ${@:1:${#@}-1} /makisu-context
     cd -
 }
 ```
