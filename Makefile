@@ -49,27 +49,27 @@ bin/makisu/makisu.linux: $(ALL_SRC) vendor
 	CGO_ENABLED=0 GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ bin/makisu/*.go
 
 cbins:
-	docker run -i --rm -v $(PWD):/go/src/$(PACKAGE_NAME) \
+	docker run -i --rm -v $(PWD):/workspace/$(PACKAGE_NAME) \
 		--net=host \
 		--entrypoint=bash \
-		-w /go/src/$(PACKAGE_NAME) \
+		-w /workspace/$(PACKAGE_NAME) \
 		golang:$(GO_VERSION) \
 		-c "make lbins"
 
 $(ALL_SRC): ;
 
-
 # TODO(pourchet): Remove this hack to make dep more reliable. For some reason `dep ensure` fails
 # sometimes on TravisCI, so run it twice if it fails the first time.
-vendor: $(DEP_TOOL) go.mod go.sum
+vendor: go.mod go.sum
+	go get -v || go get -v || go get -v
 	go mod vendor
 
 cvendor:
-	docker run --rm -v $(PWD):/go/src/$(PACKAGE_NAME) \
-		-w /go/src/$(PACKAGE_NAME) \
+	docker run --rm -v $(PWD):/workspace/$(PACKAGE_NAME) \
+		-w /workspace/$(PACKAGE_NAME) \
 		--entrypoint=/bin/sh \
-		instrumentisto/dep \
-		-c "dep ensure"
+		golang:1.12 \
+		-c "go get"
 
 ext-tools: vendor $(EXT_TOOLS)
 
@@ -111,10 +111,10 @@ unit-test: $(ALL_SRC) vendor ext-tools
 	$(EXT_TOOLS_DIR)/gocov test $(ALL_PKGS) --tags "unit" | $(EXT_TOOLS_DIR)/gocov report
 
 cunit-test: $(ALL_SRC)
-	docker run -i --rm -v $(PWD):/go/src/$(PACKAGE_NAME) \
+	docker run -i --rm -v $(PWD):/workspace/$(PACKAGE_NAME) \
 		--net=host \
 		--entrypoint=bash \
-		-w /go/src/$(PACKAGE_NAME) \
+		-w /workspace/$(PACKAGE_NAME) \
 		golang:$(GO_VERSION) \
 		-c "make ext-tools unit-test"
 
