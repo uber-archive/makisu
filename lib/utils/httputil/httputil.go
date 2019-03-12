@@ -86,6 +86,11 @@ func IsAccepted(err error) bool {
 	return IsStatus(err, http.StatusAccepted)
 }
 
+// IsBadRequest returns true if err is a "bad request" StatusError.
+func IsBadRequest(err error) bool {
+	return IsStatus(err, http.StatusBadRequest)
+}
+
 // IsForbidden returns true if statis code is 403 "forbidden"
 func IsForbidden(err error) bool {
 	return IsStatus(err, http.StatusForbidden)
