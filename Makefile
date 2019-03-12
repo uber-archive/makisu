@@ -28,11 +28,10 @@ ALL_PKG_PATHS = $(shell go list -f '{{.Dir}}' ./...)
 FMT_SRC = $(shell echo "$(ALL_SRC)" | tr ' ' '\n')
 EXT_TOOLS = github.com/axw/gocov/gocov github.com/AlekSi/gocov-xml github.com/matm/gocov-html github.com/golang/mock/mockgen golang.org/x/lint/golint golang.org/x/tools/cmd/goimports github.com/client9/misspell/cmd/misspell
 EXT_TOOLS_DIR = ext-tools/$(OS)
-DEP_TOOL = $(EXT_TOOLS_DIR)/dep
 
 BUILD_LDFLAGS = -X $(PACKAGE_NAME)/lib/utils.BuildHash=$(PACKAGE_VERSION)
 GO_FLAGS = -gcflags '-N -l' -ldflags "$(BUILD_LDFLAGS)"
-GO_VERSION = 1.11
+GO_VERSION = 1.12
 
 REGISTRY ?= gcr.io/makisu-project
 
@@ -60,16 +59,10 @@ cbins:
 $(ALL_SRC): ;
 
 
-### Targets to install the dependencies.
-$(DEP_TOOL):
-	mkdir -p $(EXT_TOOLS_DIR)
-	go get github.com/golang/dep/cmd/dep
-	cp $(GOPATH)/bin/dep $(EXT_TOOLS_DIR)
-
 # TODO(pourchet): Remove this hack to make dep more reliable. For some reason `dep ensure` fails
 # sometimes on TravisCI, so run it twice if it fails the first time.
-vendor: $(DEP_TOOL) Gopkg.toml
-	$(EXT_TOOLS_DIR)/dep ensure || $(EXT_TOOLS_DIR)/dep ensure
+vendor: $(DEP_TOOL) go.mod go.sum
+	go mod vendor
 
 cvendor:
 	docker run --rm -v $(PWD):/go/src/$(PACKAGE_NAME) \
@@ -83,7 +76,7 @@ ext-tools: vendor $(EXT_TOOLS)
 .PHONY: $(EXT_TOOLS)
 $(EXT_TOOLS): vendor
 	@echo "Installing external tool $@"
-	@(ls $(EXT_TOOLS_DIR)/$(notdir $@) > /dev/null 2>&1) || GOBIN=$(PWD)/$(EXT_TOOLS_DIR) go install ./vendor/$@
+	@(ls $(EXT_TOOLS_DIR)/$(notdir $@) > /dev/null 2>&1) || GOBIN=$(PWD)/$(EXT_TOOLS_DIR) go install $@
 
 mocks: ext-tools
 	@echo "Generating mocks"

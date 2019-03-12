@@ -1,6 +1,5 @@
 vendor
 ext-tools
-mocks
 
 bin/makisu/makisu
 bin/makisu/makisu.linux

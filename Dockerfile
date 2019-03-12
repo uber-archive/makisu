@@ -1,12 +1,11 @@
-FROM golang:1.11 AS builder
+FROM golang:1.12 AS builder
 
 RUN mkdir -p /go/src/github.com/uber/makisu
 WORKDIR /go/src/github.com/uber/makisu
 
 ADD Makefile .
-RUN make ext-tools/Linux/dep
-
-ADD Gopkg.toml Gopkg.lock ./
+ADD go.mod ./go.mod
+ADD go.sum ./go.sum
 ADD .git ./.git
 ADD bin ./bin
 ADD lib ./lib
