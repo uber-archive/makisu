@@ -76,7 +76,7 @@ ext-tools: vendor $(EXT_TOOLS)
 .PHONY: $(EXT_TOOLS)
 $(EXT_TOOLS): vendor
 	@echo "Installing external tool $@"
-	@(ls $(EXT_TOOLS_DIR)/$(notdir $@) > /dev/null 2>&1) || GOBIN=$(PWD)/$(EXT_TOOLS_DIR) go install $@
+	@(ls $(EXT_TOOLS_DIR)/$(notdir $@) > /dev/null 2>&1) || GOBIN=$(PWD)/$(EXT_TOOLS_DIR) go install ./vendor/$@
 
 mocks: ext-tools
 	@echo "Generating mocks"
@@ -107,7 +107,7 @@ publish: images
 .PHONY: test unit-test integration cunit-test
 test: unit-test integration
 
-unit-test: $(ALL_SRC) vendor ext-tools mocks
+unit-test: $(ALL_SRC) vendor ext-tools
 	$(EXT_TOOLS_DIR)/gocov test $(ALL_PKGS) --tags "unit" | $(EXT_TOOLS_DIR)/gocov report
 
 cunit-test: $(ALL_SRC)
@@ -141,5 +141,5 @@ lint: ext-tools
 
 clean:
 	git clean -fd
-	-rm -rf vendor ext-tools mocks env
+	-rm -rf vendor ext-tools env
 	-rm bin/makisu/makisu
