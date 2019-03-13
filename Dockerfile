@@ -6,6 +6,7 @@ WORKDIR /workspace/github.com/uber/makisu
 ADD Makefile .
 ADD go.mod ./go.mod
 ADD go.sum ./go.sum
+RUN make vendor
 ADD .git ./.git
 ADD bin ./bin
 ADD lib ./lib
