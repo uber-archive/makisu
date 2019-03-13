@@ -211,7 +211,7 @@ func TestTLSClient(t *testing.T) {
 		badtls, err := badConfig.BuildClient()
 		require.NoError(err)
 
-		_, err = Get("https://"+addr+"/", SendTLS(badtls))
+		_, err = Get("https://"+addr+"/", SendTLS(badtls), DisableHTTPFallback())
 		require.True(IsNetworkError(err))
 	})
 
