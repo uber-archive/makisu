@@ -1,12 +1,12 @@
-FROM golang:1.11 AS builder
+FROM golang:1.12 AS builder
 
-RUN mkdir -p /go/src/github.com/uber/makisu
-WORKDIR /go/src/github.com/uber/makisu
+RUN mkdir -p /workspace/github.com/uber/makisu
+WORKDIR /workspace/github.com/uber/makisu
 
 ADD Makefile .
-RUN make ext-tools/Linux/dep
-
-ADD Gopkg.toml Gopkg.lock ./
+ADD go.mod ./go.mod
+ADD go.sum ./go.sum
+RUN make vendor
 ADD .git ./.git
 ADD bin ./bin
 ADD lib ./lib
@@ -25,7 +25,7 @@ RUN make -C /go/src/github.com/awslabs/amazon-ecr-credential-helper linux-amd64
 
 
 FROM scratch
-COPY --from=builder /go/src/github.com/uber/makisu/bin/makisu/makisu.linux /makisu-internal/makisu
+COPY --from=builder /workspace/github.com/uber/makisu/bin/makisu/makisu.linux /makisu-internal/makisu
 ADD ./assets/cacerts.pem /makisu-internal/certs/cacerts.pem
 
 COPY --from=gcr_cred_helper_builder /docker-credential-gcr /makisu-internal/docker-credential-gcr

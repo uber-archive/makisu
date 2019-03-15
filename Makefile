@@ -28,11 +28,10 @@ ALL_PKG_PATHS = $(shell go list -f '{{.Dir}}' ./...)
 FMT_SRC = $(shell echo "$(ALL_SRC)" | tr ' ' '\n')
 EXT_TOOLS = github.com/axw/gocov/gocov github.com/AlekSi/gocov-xml github.com/matm/gocov-html github.com/golang/mock/mockgen golang.org/x/lint/golint golang.org/x/tools/cmd/goimports github.com/client9/misspell/cmd/misspell
 EXT_TOOLS_DIR = ext-tools/$(OS)
-DEP_TOOL = $(EXT_TOOLS_DIR)/dep
 
 BUILD_LDFLAGS = -X $(PACKAGE_NAME)/lib/utils.BuildHash=$(PACKAGE_VERSION)
 GO_FLAGS = -gcflags '-N -l' -ldflags "$(BUILD_LDFLAGS)"
-GO_VERSION = 1.11
+GO_VERSION = 1.12
 
 REGISTRY ?= gcr.io/makisu-project
 
@@ -50,33 +49,27 @@ bin/makisu/makisu.linux: $(ALL_SRC) vendor
 	CGO_ENABLED=0 GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ bin/makisu/*.go
 
 cbins:
-	docker run -i --rm -v $(PWD):/go/src/$(PACKAGE_NAME) \
+	docker run -i --rm -v $(PWD):/workspace/$(PACKAGE_NAME) \
 		--net=host \
 		--entrypoint=bash \
-		-w /go/src/$(PACKAGE_NAME) \
+		-w /workspace/$(PACKAGE_NAME) \
 		golang:$(GO_VERSION) \
 		-c "make lbins"
 
 $(ALL_SRC): ;
 
-
-### Targets to install the dependencies.
-$(DEP_TOOL):
-	mkdir -p $(EXT_TOOLS_DIR)
-	go get github.com/golang/dep/cmd/dep
-	cp $(GOPATH)/bin/dep $(EXT_TOOLS_DIR)
-
 # TODO(pourchet): Remove this hack to make dep more reliable. For some reason `dep ensure` fails
 # sometimes on TravisCI, so run it twice if it fails the first time.
-vendor: $(DEP_TOOL) Gopkg.toml
-	$(EXT_TOOLS_DIR)/dep ensure || $(EXT_TOOLS_DIR)/dep ensure
+vendor: go.mod go.sum
+	go get -v || go get -v || go get -v
+	go mod vendor
 
 cvendor:
-	docker run --rm -v $(PWD):/go/src/$(PACKAGE_NAME) \
-		-w /go/src/$(PACKAGE_NAME) \
+	docker run --rm -v $(PWD):/workspace/$(PACKAGE_NAME) \
+		-w /workspace/$(PACKAGE_NAME) \
 		--entrypoint=/bin/sh \
-		instrumentisto/dep \
-		-c "dep ensure"
+		golang:1.12 \
+		-c "go get"
 
 ext-tools: vendor $(EXT_TOOLS)
 
@@ -114,14 +107,14 @@ publish: images
 .PHONY: test unit-test integration cunit-test
 test: unit-test integration
 
-unit-test: $(ALL_SRC) vendor ext-tools mocks
+unit-test: $(ALL_SRC) vendor ext-tools
 	$(EXT_TOOLS_DIR)/gocov test $(ALL_PKGS) --tags "unit" | $(EXT_TOOLS_DIR)/gocov report
 
 cunit-test: $(ALL_SRC)
-	docker run -i --rm -v $(PWD):/go/src/$(PACKAGE_NAME) \
+	docker run -i --rm -v $(PWD):/workspace/$(PACKAGE_NAME) \
 		--net=host \
 		--entrypoint=bash \
-		-w /go/src/$(PACKAGE_NAME) \
+		-w /workspace/$(PACKAGE_NAME) \
 		golang:$(GO_VERSION) \
 		-c "make ext-tools unit-test"
 
@@ -148,5 +141,5 @@ lint: ext-tools
 
 clean:
 	git clean -fd
-	-rm -rf vendor ext-tools mocks env
+	-rm -rf vendor ext-tools env
 	-rm bin/makisu/makisu
