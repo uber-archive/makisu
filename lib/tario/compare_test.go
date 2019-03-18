@@ -625,7 +625,7 @@ func TestIsSimilarRegularFile(t *testing.T) {
 		testFile2, err := ioutil.TempFile(tmpRoot, "test2")
 		require.NoError(err)
 
-		require.NoError(os.Chmod(testDir1, os.FileMode(0777)))
+		require.NoError(os.Chmod(testFile1.Name(), os.FileMode(0777)))
 
 		fi1, err := os.Lstat(testFile1.Name())
 		require.NoError(err)
