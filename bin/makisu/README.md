@@ -34,7 +34,7 @@ Flags:
 Global Flags:
       --cpu-profile         Profile the application
       --log-fmt string      The format of the logs. Valid values are "json" and "console" (default "json")
-      --log-level string    Verbose level of logs. Valid values are "trace", "debug", "info", "warn", "error", "fatal" (default "info")
+      --log-level string    Verbose level of logs. Valid values are "debug", "info", "warn", "error" (default "info")
       --log-output string   The output file path for the logs. Set to "stdout" to output to stdout (default "stdout")
 
 $ makisu version

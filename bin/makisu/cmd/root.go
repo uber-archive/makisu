@@ -45,7 +45,7 @@ func getRootCmd() *rootCmd {
 		},
 	}
 
-	rootCmd.PersistentFlags().StringVar(&rootCmd.logLevel, "log-level", "info", "Verbose level of logs. Valid values are \"trace\", \"debug\", \"info\", \"warn\", \"error\", \"fatal\"")
+	rootCmd.PersistentFlags().StringVar(&rootCmd.logLevel, "log-level", "info", "Verbose level of logs. Valid values are \"debug\", \"info\", \"warn\", \"error\"")
 	rootCmd.PersistentFlags().StringVar(&rootCmd.logOutput, "log-output", "stdout", "The output file path for the logs. Set to \"stdout\" to output to stdout")
 	rootCmd.PersistentFlags().StringVar(&rootCmd.logFormat, "log-fmt", "json", "The format of the logs. Valid values are \"json\" and \"console\"")
 	rootCmd.PersistentFlags().BoolVar(&rootCmd.cpuProfile, "cpu-profile", false, "Profile the application")
