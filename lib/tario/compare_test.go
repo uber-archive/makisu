@@ -440,6 +440,36 @@ func TestIsSimilarDirectory(t *testing.T) {
 		require.NoError(err)
 	})
 
+	t.Run("DifferentModeConsideredDifferent", func(t *testing.T) {
+		require := require.New(t)
+
+		tmpRoot, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot)
+
+		testDir1, err := ioutil.TempDir(tmpRoot, "test1")
+		require.NoError(err)
+		testDir2, err := ioutil.TempDir(tmpRoot, "test2")
+		require.NoError(err)
+
+		require.NoError(os.Chmod(testDir1, os.FileMode(0777)))
+
+		fi1, err := os.Lstat(testDir1)
+		require.NoError(err)
+		fi2, err := os.Lstat(testDir2)
+		require.NoError(err)
+
+		h, err := tar.FileInfoHeader(fi1, "")
+		require.NoError(err)
+		newH, err := tar.FileInfoHeader(fi2, "")
+		require.NoError(err)
+		similar, err := isSimilarDirectory(h, newH)
+		require.False(similar)
+		require.NoError(err)
+		similar, err = IsSimilarHeader(h, newH)
+		require.False(similar)
+		require.NoError(err)
+	})
 }
 
 func TestIsSimilarRegularFile(t *testing.T) {
@@ -565,6 +595,37 @@ func TestIsSimilarRegularFile(t *testing.T) {
 		atime := time.Now().Add(-time.Hour)
 		mtime := time.Now().Add(-time.Hour * 2)
 		require.NoError(os.Chtimes(testFile1.Name(), atime, mtime))
+
+		fi1, err := os.Lstat(testFile1.Name())
+		require.NoError(err)
+		fi2, err := os.Lstat(testFile2.Name())
+		require.NoError(err)
+
+		h, err := tar.FileInfoHeader(fi1, "")
+		require.NoError(err)
+		newH, err := tar.FileInfoHeader(fi2, "")
+		require.NoError(err)
+		similar, err := isSimilarRegularFile(h, newH)
+		require.False(similar)
+		require.NoError(err)
+		similar, err = IsSimilarHeader(h, newH)
+		require.False(similar)
+		require.NoError(err)
+	})
+
+	t.Run("DifferentModeConsideredDifferent", func(t *testing.T) {
+		require := require.New(t)
+
+		tmpRoot, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot)
+
+		testFile1, err := ioutil.TempFile(tmpRoot, "test1")
+		require.NoError(err)
+		testFile2, err := ioutil.TempFile(tmpRoot, "test2")
+		require.NoError(err)
+
+		require.NoError(os.Chmod(testFile1.Name(), os.FileMode(0777)))
 
 		fi1, err := os.Lstat(testFile1.Name())
 		require.NoError(err)
