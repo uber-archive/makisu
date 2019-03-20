@@ -54,7 +54,8 @@ func BasicAuthTransport(addr, repo string, tr http.RoundTripper, authConfig type
 		ClientID:   "docker",
 		ForceOAuth: false, // Only support basic auth.
 	}
-	return transport.NewTransport(tr, auth.NewAuthorizer(cm, auth.NewTokenHandlerWithOptions(opts))), nil
+	basicAuth := defaultCredStore{authConfig}
+	return transport.NewTransport(tr, auth.NewAuthorizer(cm, auth.NewTokenHandlerWithOptions(opts), auth.NewBasicHandler(basicAuth))), nil
 }
 
 func ping(addr string, tr http.RoundTripper) (challenge.Manager, error) {
