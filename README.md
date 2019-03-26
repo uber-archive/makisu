@@ -67,7 +67,9 @@ function makisu_build() {
         -v $(pwd):/makisu-context \
         -v /tmp/makisu-storage:/makisu-storage \
         gcr.io/makisu-project/makisu:$makisu_version build \
-            --modifyfs=true --load \
+            --commit=explicit \
+            --modifyfs=true \
+            --load \
             ${@:1:${#@}-1} /makisu-context
     cd -
 }
@@ -77,8 +79,9 @@ Now you can use `makisu_build` like you would use `docker build`:
 $ makisu_build -t myimage .
 ```
 Note:
-* Docker socket mount is optional. It's used together with `--load` for loading images back into Docker daemon for convenience of local development. So does the mount to /makisu-storage, which is used for local cache.
+* Docker socket mount is optional. It's used together with `--load` for loading images back into Docker daemon for convenience of local development. So does the mount to /makisu-storage, which is used for local cache. If the image would be pushed to registry directly, please remove `--load` for better performance.
 * The `--modifyfs-true` option let Makisu assume ownership of the filesystem inside the container. Files in the container that don't belong to the base image will be overwritten at the beginning of build.
+* The `--commit=explicit` option let Makisu only commit layer when it sees `#COMMIT` and at the end of the Dockerfile. See ["Explicit Commit and Cache"](#explicit-commit-and-cache) for more details.
 
 ## Makisu on Kubernetes
 
