@@ -160,7 +160,6 @@ func (c DockerRegistryClient) Push(tag string) error {
 	name := image.NewImageName(c.registry, c.repository, tag)
 	log.Infof("* Started pushing image %s", name)
 	starttime := time.Now()
-
 	if found, err := c.manifestExists(tag); err != nil {
 		return fmt.Errorf("check manifest exists for image %s: %s", name, err)
 	} else if found {
@@ -173,8 +172,14 @@ func (c DockerRegistryClient) Push(tag string) error {
 
 	multiError := utils.NewMultiErrors()
 	workers := concurrency.NewWorkerPool(c.config.Concurrency)
+	layerSets := make(map[string]interface{})
 	for _, layer := range manifest.GetLayerDigests() {
 		l := layer
+		if _, ok := layerSets[l.Hex()]; ok {
+			continue
+		} else {
+			layerSets[l.Hex()] = struct{}{}
+		}
 		workers.Do(func() {
 			if err := c.PushLayer(l); err != nil {
 				multiError.Add(fmt.Errorf("push layer %s: %s", l, err))
