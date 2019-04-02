@@ -119,8 +119,14 @@ func (c DockerRegistryClient) Pull(tag string) (*image.DistributionManifest, err
 
 	multiError := utils.NewMultiErrors()
 	workers := concurrency.NewWorkerPool(c.config.Concurrency)
+	layerSets := make(map[string]interface{})
 	for _, layer := range manifest.GetLayerDigests() {
 		l := layer
+		if _, ok := layerSets[l.Hex()]; ok {
+			continue
+		} else {
+			layerSets[l.Hex()] = struct{}{}
+		}
 		workers.Do(func() {
 			if _, err := c.PullLayer(l); err != nil {
 				multiError.Add(fmt.Errorf("pull layer %s: %s", l, err))
