@@ -181,10 +181,10 @@ It works very well with a subset of Docker build scenarios given a Bazel build f
 Kaniko provides good compatibility with Docker and executes build commands in userspace without the need for Docker daemon, although it must still run inside a container. Kaniko offers smooth integration with Kubernetes, making it a competent tool for Kubernetes users.
 On the other hand, Makisu has some performance tweaks for large images (especially those with node_modules), allows cache to expire, and offers more control over cache generation through #!COMMIT, make it optimal for complex workflows.
 
-### BuildKit
+### BuildKit / img
 
-BuildKit depends on runc/containerd and supports parallel stage executions, whereas Makisu and most other tools execute Dockefile in order.
-However, BuildKit still needs access to /proc to launch nested containers, which is not ideal and may not be doable in some production environments.
+BuildKit and img depend on runc/containerd and supports parallel stage executions, whereas Makisu and most other tools execute Dockefile in order.
+However, BuildKit and img still need seccomp and AppArmor to be disabled to launch nested containers, which is not ideal and may not be doable in some production environments.
 
 # Contributing
 
