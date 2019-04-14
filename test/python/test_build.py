@@ -159,8 +159,6 @@ def test_build_with_distributed_cache(registry1, storage_dir, cache_dir, tmpdir)
     assert list(l1.get_tar_headers())[0].uname != "root"
     assert list(l1.get_tar_headers())[0].gname != "root"
 
-    img.cleanup()
-
 
 def test_build_with_local_cache(registry1, storage_dir, cache_dir, tmpdir):
     new_image1 = new_image_name()
@@ -219,5 +217,3 @@ def test_build_go_with_debian_package(registry1, storage_dir):
     assert l2.get_tar_header_count() == 1, [h.name for h in l2.get_tar_headers()]
     assert list(l2.get_tar_headers())[0].uname != "root"
     assert list(l2.get_tar_headers())[0].gname != "root"
-
-    img.cleanup()
