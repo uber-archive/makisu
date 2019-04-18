@@ -42,19 +42,25 @@ func BasicAuthTransport(addr, repo string, tr http.RoundTripper, authConfig type
 	if err != nil {
 		return nil, fmt.Errorf("ping v2 registry: %s", err)
 	}
-	opts := auth.TokenHandlerOptions{
-		Transport:   tr,
-		Credentials: defaultCredStore{authConfig},
-		Scopes: []auth.Scope{
-			auth.RepositoryScope{
-				Repository: repo,
-				Actions:    []string{"pull", "push"},
+	// This looks weird but when using AWS ECR (especially the docker ecr helper) we get a Username and a Password
+	// Then, the ping will create a challenge by parsing the www-authenticate header from the ECR server (it will return a "Basic ...")
+	// So if we use the `NewTokenHandlerWithOptions` we will always fail the Scheme checking in vendor/github.com/docker/distribution/registry/client/auth/session.go#L98 ("basic" != "bearer")
+	if authConfig.Username != "" && authConfig.Password != "" {
+		return transport.NewTransport(tr, auth.NewAuthorizer(cm, auth.NewBasicHandler(defaultCredStore{authConfig}))), nil
+	} else {
+		return transport.NewTransport(tr, auth.NewAuthorizer(cm, auth.NewTokenHandlerWithOptions(auth.TokenHandlerOptions{
+			Transport:   tr,
+			Credentials: defaultCredStore{authConfig},
+			Scopes: []auth.Scope{
+				auth.RepositoryScope{
+					Repository: repo,
+					Actions:    []string{"pull", "push"},
+				},
 			},
-		},
-		ClientID:   "docker",
-		ForceOAuth: false, // Only support basic auth.
+			ClientID:   "docker",
+			ForceOAuth: false, // Only support basic auth.
+		}))), nil
 	}
-	return transport.NewTransport(tr, auth.NewAuthorizer(cm, auth.NewTokenHandlerWithOptions(opts))), nil
 }
 
 func ping(addr string, tr http.RoundTripper) (challenge.Manager, error) {

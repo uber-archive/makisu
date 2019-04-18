@@ -524,8 +524,10 @@ func (c DockerRegistryClient) pushOneLayerChunk(location string, start, endInclu
 		opt,
 		httputil.SendTimeout(c.config.Timeout),
 		c.config.sendRetry(),
-		// Docker registry returns 202 but gcr returns 204 on success.
-		httputil.SendAcceptedCodes(http.StatusAccepted, http.StatusNoContent),
+		// Docker registry returns 202
+		// GCR returns 204 on success
+		// AWS ECR returns 201 on success
+		httputil.SendAcceptedCodes(http.StatusAccepted, http.StatusNoContent, http.StatusCreated),
 		httputil.SendHeaders(headers),
 		httputil.SendBody(ratelimit.Reader(r, readerOptions)))
 	if err != nil {
