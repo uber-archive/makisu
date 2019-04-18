@@ -66,7 +66,7 @@ func (c copier) CopyFile(source, target string, uid, gid int) error {
 		return fmt.Errorf("mkdir all %s: %s", targetDir, err)
 	}
 	// Copy file permissions and contents.
-	return c.copyFile(source, target)
+	return c.copyFile(source, target, uid, gid)
 }
 
 // CopyDir recursively copies the directory at source to target. The source
@@ -92,7 +92,7 @@ func (c copier) CopyDir(source, target string, uid, gid int) error {
 		return fmt.Errorf("mkdir all %s: %s", target, err)
 	}
 	// Recursively copy directories and files.
-	return c.copyDirContents(source, target, target)
+	return c.copyDirContents(source, target, target, uid, gid)
 }
 
 func (c copier) isBlacklisted(source string) bool {
@@ -100,7 +100,7 @@ func (c copier) isBlacklisted(source string) bool {
 }
 
 // copyFile copies the permissions and contents of the file at src to dst.
-func (c copier) copyFile(src, dst string) error {
+func (c copier) copyFile(src, dst string, uid, gid int) error {
 	fi, err := os.Lstat(src)
 	if err != nil {
 		return fmt.Errorf("lstat %s: %s", src, err)
@@ -128,11 +128,11 @@ func (c copier) copyFile(src, dst string) error {
 	}
 
 	// Handle regular files.
-	return c.copyRegularFile(fi, src, dst)
+	return c.copyRegularFile(fi, src, dst, uid, gid)
 }
 
 // Open both files, creating dst if need be.
-func (c copier) copyRegularFile(fi os.FileInfo, src, dst string) error {
+func (c copier) copyRegularFile(fi os.FileInfo, src, dst string, uid, gid int) error {
 	r, err := os.Open(src)
 	if err != nil {
 		return fmt.Errorf("open %s: %s", dst, err)
@@ -155,7 +155,6 @@ func (c copier) copyRegularFile(fi os.FileInfo, src, dst string) error {
 	// Change the owner and mode of dst to that of src.
 	// Note: Chmod needs to be called after chown, otherwise setuid and setgid
 	// bits could be unset.
-	uid, gid := fileOwners(fi)
 	if err := os.Chown(dst, uid, gid); err != nil {
 		return fmt.Errorf("chown %s: %s", dst, err)
 	}
@@ -184,7 +183,7 @@ func (c copier) copySymlink(src, dst string) error {
 }
 
 // copyDirContents recursively copies the contents of directory src to dst. Both must exist.
-func (c copier) copyDirContents(src, dst, origDst string) error {
+func (c copier) copyDirContents(src, dst, origDst string, uid, gid int) error {
 	entries, err := ioutil.ReadDir(src)
 	if err != nil {
 		return fmt.Errorf("read dir %s: %s", src, err)
@@ -201,14 +200,14 @@ func (c copier) copyDirContents(src, dst, origDst string) error {
 		}
 		currDst := filepath.Join(dst, entry.Name())
 		if entry.IsDir() {
-			if err := c.copyDir(currSrc, currDst); err != nil {
+			if err := c.copyDir(currSrc, currDst, uid, gid); err != nil {
 				return fmt.Errorf("copy dir %s to %s: %s", currSrc, currDst, err)
 			}
-			if err := c.copyDirContents(currSrc, currDst, origDst); err != nil {
+			if err := c.copyDirContents(currSrc, currDst, origDst, uid, gid); err != nil {
 				return fmt.Errorf("copy dir contents %s to %s: %s", currSrc, currDst, err)
 			}
 		} else {
-			if err := c.copyFile(currSrc, currDst); err != nil {
+			if err := c.copyFile(currSrc, currDst, uid, gid); err != nil {
 				return fmt.Errorf("copy file %s to %s: %s", currSrc, currDst, err)
 			}
 		}
@@ -217,7 +216,7 @@ func (c copier) copyDirContents(src, dst, origDst string) error {
 }
 
 // copyDir copies the directory at src to dst.
-func (c copier) copyDir(src, dst string) error {
+func (c copier) copyDir(src, dst string, uid, gid int) error {
 	srcInfo, err := os.Lstat(src)
 	if err != nil {
 		return fmt.Errorf("lstat %s: %s", src, err)
@@ -244,7 +243,6 @@ func (c copier) copyDir(src, dst string) error {
 	// Change owner and mode of dst to that of src.
 	// Note: Chmod needs to be called after chown, otherwise setuid and setgid
 	// bits could be unset.
-	uid, gid := fileOwners(srcInfo)
 	if err := os.Chown(dst, uid, gid); err != nil {
 		return fmt.Errorf("chown %s: %s", dst, err)
 	}
