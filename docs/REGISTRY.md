@@ -83,8 +83,10 @@ directory for TLS verification.
 
 ## Cred helper
 
-Makisu images (>= 0.1.8) contains ECR and GCR cred helper binaries.
-To use them, plese pass in the environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY with corresponding registry config.
+Makisu images (>= 0.1.8) contains [ECR](https://github.com/awslabs/amazon-ecr-credential-helper) and [GCR](https://github.com/GoogleCloudPlatform/docker-credential-gcr) cred helper binaries.
+For ECR, you can export the following [variables](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html) and you might need to export `AWS_SDK_LOAD_CONFIG=true`.
+
+If you encounter a certificate validation errors (ex: `x509: certificate signed by unknown authority`) you might want to export the following variable `SSL_CERT_DIR=/makisu-internal/certs/`.
 
 Example AWS ECR config:
 ```yaml
@@ -102,4 +104,4 @@ Example GCR config:
       credsStore: gcr
 ```
 
-Note: for GCR, environment variable SSL_CERT_DIR is required.
+NB: You need to put your config files (ex: aws config/credentials file) inside the /makisu-internal/ dir (and use env variable to specify their locations) in order for the helpers to find and use them when building your images.
