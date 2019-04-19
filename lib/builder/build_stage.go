@@ -63,7 +63,7 @@ func newBuildStage(
 
 	// Create a new build context for the stage.
 	ctx, err := context.NewBuildContext(
-		baseCtx.RootDir, baseCtx.ContextDir, baseCtx.ImageStore)
+		baseCtx.RootDir, baseCtx.ContextDir, baseCtx.ImageStore, "")
 	if err != nil {
 		return nil, fmt.Errorf("create stage build context: %s", err)
 	}
@@ -84,7 +84,7 @@ func newRemoteImageStage(
 
 	// Create a new build context for the stage.
 	ctx, err := context.NewBuildContext(
-		baseCtx.RootDir, baseCtx.ContextDir, baseCtx.ImageStore)
+		baseCtx.RootDir, baseCtx.ContextDir, baseCtx.ImageStore, "")
 	if err != nil {
 		return nil, fmt.Errorf("create stage build context: %s", err)
 	}

@@ -53,7 +53,7 @@ func (s *bufferedSyncWriter) String() string {
 func TestExecCommandNoError(t *testing.T) {
 	require := require.New(t)
 	stdout, stderr := syncWriterFixture(), syncWriterFixture()
-	err := ExecCommand(stdout.Write, stderr.Write, ".", "go", "version")
+	err := ExecCommand(stdout.Write, stderr.Write, ".", "", "go", "version")
 	require.NoError(err)
 	require.Empty(stderr.String())
 	require.NotEmpty(stdout.String())
@@ -62,7 +62,7 @@ func TestExecCommandNoError(t *testing.T) {
 func TestExecCommandError(t *testing.T) {
 	require := require.New(t)
 	stdout, stderr := syncWriterFixture(), syncWriterFixture()
-	err := ExecCommand(stdout.Write, stderr.Write, ".", "go", "wrong")
+	err := ExecCommand(stdout.Write, stderr.Write, ".", "", "go", "wrong")
 	require.Error(err)
 	require.NotEmpty(stderr.String())
 }

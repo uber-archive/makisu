@@ -41,7 +41,7 @@ func BuildContextFixture() (*BuildContext, func()) {
 	store, c := storage.StoreFixture()
 	cleanup.Add(c)
 
-	context, err := NewBuildContext(rootDir, contextDir, store)
+	context, err := NewBuildContext(rootDir, contextDir, store, "")
 	if err != nil {
 		panic(err)
 	}
@@ -75,7 +75,7 @@ func BuildContextFixtureWithSampleImage() (*BuildContext, func()) {
 	store, c := storage.StoreFixtureWithSampleImage()
 	cleanup.Add(c)
 
-	context, err := NewBuildContext(rootDir, contextDir, store)
+	context, err := NewBuildContext(rootDir, contextDir, store, "")
 	if err != nil {
 		panic(err)
 	}

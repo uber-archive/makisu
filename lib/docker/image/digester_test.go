@@ -33,7 +33,7 @@ func TestDigestFromBytes(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	targetPath := tmpDir + ".tar"
-	err = shell.ExecCommand(log.Infof, log.Errorf, "", "tar", "cvf", targetPath, "--files-from", "/dev/null")
+	err = shell.ExecCommand(log.Infof, log.Errorf, "", "", "tar", "cvf", targetPath, "--files-from", "/dev/null")
 	require.NoError(err)
 	defer os.Remove(targetPath)
 

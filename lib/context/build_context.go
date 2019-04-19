@@ -50,11 +50,14 @@ type BuildContext struct {
 	CopyOps   []*snapshot.CopyOperation
 	MustScan  bool
 	stagesDir string // Contains dirs with files needed for 'copy --from' operations.
+
+	// Used by the user step and the run step to determine which user should run a command (format should be <user>[:<group>] or <UID>[:<GID>], default is "" or 0:0)
+	User string
 }
 
 // NewBuildContext inits a new BuildContext object.
 func NewBuildContext(
-	rootDir, contextDir string, imageStore *storage.ImageStore) (*BuildContext, error) {
+	rootDir, contextDir string, imageStore *storage.ImageStore, user string) (*BuildContext, error) {
 
 	stagesDir := filepath.Join(imageStore.SandboxDir, _stagesDir)
 	if err := os.MkdirAll(stagesDir, os.ModePerm); err != nil {
@@ -76,6 +79,7 @@ func NewBuildContext(
 		CopyOps:    make([]*snapshot.CopyOperation, 0),
 		MustScan:   false,
 		stagesDir:  stagesDir,
+		User:       user,
 	}, nil
 }
 

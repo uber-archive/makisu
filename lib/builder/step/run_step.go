@@ -48,5 +48,5 @@ func (s *RunStep) Execute(ctx *context.BuildContext, modifyFS bool) error {
 		return errors.New("attempted to execute RUN step without modifying file system")
 	}
 	ctx.MustScan = true
-	return shell.ExecCommand(log.Infof, log.Errorf, s.workingDir, "sh", "-c", s.cmd)
+	return shell.ExecCommand(log.Infof, log.Errorf, s.workingDir, ctx.User, "sh", "-c", s.cmd)
 }

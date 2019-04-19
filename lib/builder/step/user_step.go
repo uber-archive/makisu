@@ -46,5 +46,6 @@ func (s *UserStep) UpdateCtxAndConfig(
 		return nil, fmt.Errorf("copy image config: %s", err)
 	}
 	config.Config.User = s.user
+	ctx.User = s.user
 	return config, nil
 }

@@ -19,16 +19,31 @@ import (
 	"io"
 	"os/exec"
 	"syscall"
+
+	"github.com/uber/makisu/lib/utils"
 )
 
 // ShellStreamBufferSize is the size of the output buffers when streaming command stdout and stderr
 const ShellStreamBufferSize = 1 << 20
 
-// ExecCommand exec a command given workingDir, cmd and args, returns error if cmd fails
-func ExecCommand(outStream, errStream func(string, ...interface{}), workingDir, cmdName string, cmdArgs ...string) error {
+// ExecCommand exec a cmd and args inside workingDir as user, returns error if cmd fails
+func ExecCommand(outStream, errStream func(string, ...interface{}), workingDir, user, cmdName string, cmdArgs ...string) error {
 	cmd := exec.Command(cmdName, cmdArgs...)
 	if workingDir != "" {
 		cmd.Dir = workingDir
+	}
+
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+
+	if user != "" {
+		uid, gid, err := utils.ResolveChown(user)
+		if err != nil {
+			return fmt.Errorf("cmd user resolve: %s", err)
+		}
+
+		uid32 := uint32(uid)
+		gid32 := uint32(gid)
+		cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uid32, Gid: gid32}
 	}
 
 	outReader, outWriter := io.Pipe()

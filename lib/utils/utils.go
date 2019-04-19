@@ -16,9 +16,12 @@ package utils
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
+	"os/user"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -178,4 +181,48 @@ func GetUIDGID() (int, int, error) {
 func IsValidJSON(blob []byte) bool {
 	into := map[string]interface{}{}
 	return json.Unmarshal(blob, &into) == nil
+}
+
+// ResolveChown converts a chown string to uid and gid integers.
+// Format: <user>[:<group>]
+// Both <user> and <group> can be either user/group strings or uid/gids.
+// If <group> is not specified, gid will be set to the resolved uid.
+func ResolveChown(chown string) (uid, gid int, err error) {
+	// Default to 0 for both.
+	if chown == "" {
+		return 0, 0, nil
+	}
+
+	split := strings.Split(chown, ":")
+	if len(split) < 1 || len(split) > 2 {
+		return 0, 0, errors.New("failed to split on ':'")
+	}
+
+	uid, err = strconv.Atoi(split[0])
+	if err != nil {
+		user, err := user.Lookup(split[0])
+		if err != nil {
+			return 0, 0, fmt.Errorf("failed to look up user '%s': %s", split[0], err)
+		}
+		uid, err = strconv.Atoi(user.Uid)
+		if err != nil {
+			return 0, 0, fmt.Errorf("failed to parse uid to int '%s': %s", user.Uid, err)
+		}
+	}
+
+	if len(split) == 1 {
+		return uid, uid, nil
+	} else if gid, err := strconv.Atoi(split[1]); err == nil {
+		return uid, gid, nil
+	}
+
+	group, err := user.LookupGroup(split[1])
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to look up group '%s': %s", split[0], err)
+	}
+	gid, err = strconv.Atoi(group.Gid)
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to parse gid to int '%s': %s", group.Gid, err)
+	}
+	return uid, gid, nil
 }
