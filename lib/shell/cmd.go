@@ -17,7 +17,9 @@ package shell
 import (
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
+	"strings"
 	"syscall"
 
 	"github.com/uber/makisu/lib/utils"
@@ -35,7 +37,10 @@ func ExecCommand(outStream, errStream func(string, ...interface{}), workingDir, 
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
+	currentEnv := os.Environ()
+
 	if user != "" {
+		// Set the user to the one specified before
 		uid, gid, err := utils.ResolveChown(user)
 		if err != nil {
 			return fmt.Errorf("cmd user resolve: %s", err)
@@ -44,7 +49,15 @@ func ExecCommand(outStream, errStream func(string, ...interface{}), workingDir, 
 		uid32 := uint32(uid)
 		gid32 := uint32(gid)
 		cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uid32, Gid: gid32}
+
+		// We also need to change the HOME env var if we change user
+		home := fmt.Sprintf("HOME=/home/%s", strings.Split(user, ":")[0])
+
+		// Append it so it has a priority on any other env var from before (and will override previous HOME definition)
+		currentEnv = append(currentEnv, home)
 	}
+
+	cmd.Env = currentEnv
 
 	outReader, outWriter := io.Pipe()
 	errReader, errWriter := io.Pipe()
