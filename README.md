@@ -1,6 +1,6 @@
 # Makisu :sushi:
 
-[![Build Status](https://travis-ci.org/uber/makisu.svg?branch=master)](https://travis-ci.org/uber/makisu)
+[![Build Status](https://travis-ci.com/uber/makisu.svg?branch=master)](https://travis-ci.com/uber/makisu)
 [![GoReportCard](https://goreportcard.com/badge/github.com/uber/makisu)](https://goreportcard.com/report/github.com/uber/makisu)
 [![Github Release](https://img.shields.io/github/release/uber/makisu.svg)](https://github.com/uber/makisu/releases)
 
