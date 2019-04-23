@@ -222,7 +222,7 @@ func (cmd *buildCmd) Build(contextDir string) error {
 	if err != nil {
 		return fmt.Errorf("failed to init image store: %s", err)
 	}
-	buildContext, err := context.NewBuildContext("/", contextDirAbs, imageStore, "")
+	buildContext, err := context.NewBuildContext("/", contextDirAbs, imageStore)
 	if err != nil {
 		return fmt.Errorf("failed to create initial build context: %s", err)
 	}
