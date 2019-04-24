@@ -90,14 +90,10 @@ func (s *baseStep) SetWorkingDir(
 	return nil
 }
 
-// ApplyCtxAndConfig sets up the execution environment from build context and
-// image config.
-// This function will not be skipped.
-func (s *baseStep) ApplyCtxAndConfig(
-	ctx *context.BuildContext, imageConfig *image.Config) error {
-	s.SetWorkingDir(ctx, imageConfig)
-
-	// Set env from previous stage
+// SetEnvFromContext set environment variables from previous stages
+// Exporting the logic to this method allows for an easier `ApplyCtxAndConfig` overwriting
+func (s *baseStep) SetEnvFromContext(
+	ctx *context.BuildContext) error {
 	for key, value := range ctx.StageVars {
 		unquoted, err := strconv.Unquote(value)
 		if err == nil {
@@ -108,7 +104,16 @@ func (s *baseStep) ApplyCtxAndConfig(
 			return fmt.Errorf("failed to set env %s=%s: %s", key, value, err)
 		}
 	}
+	return nil
+}
 
+// ApplyCtxAndConfig sets up the execution environment from build context and
+// image config.
+// This function will not be skipped.
+func (s *baseStep) ApplyCtxAndConfig(
+	ctx *context.BuildContext, imageConfig *image.Config) error {
+	s.SetWorkingDir(ctx, imageConfig)
+	s.SetEnvFromContext(ctx)
 	return nil
 }
 

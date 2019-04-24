@@ -48,8 +48,9 @@ func (s *RunStep) RequireOnDisk() bool { return true }
 // ApplyCtxAndConfig setup the user that should be used to run the command
 // See ./user_step.go to see how it's set in image.Config
 func (s *RunStep) ApplyCtxAndConfig(ctx *context.BuildContext, imageConfig *image.Config) error {
-	// This is from base_step.go
+	// This is from ./base_step.go
 	s.SetWorkingDir(ctx, imageConfig)
+	s.SetEnvFromContext(ctx)
 
 	if imageConfig == nil {
 		return nil
