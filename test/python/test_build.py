@@ -60,6 +60,15 @@ def test_build_copy_from(registry1, storage_dir):
     code, err = utils.docker_run_image(registry1.addr, new_image)
     assert code == 0, err
 
+def test_build_copy_add_chown(registry1, storage_dir):
+    new_image = new_image_name()
+    context_dir = os.path.join(
+        os.getcwd(), 'testdata/build-context/copy-add-chown')
+
+    utils.makisu_build_image(
+        new_image, context_dir, storage_dir, registry=registry1.addr)
+    code, err = utils.docker_run_image(registry1.addr, new_image)
+    assert code == 0, err
 
 def test_build_arg_and_env(registry1, storage_dir):
     new_image = new_image_name()
