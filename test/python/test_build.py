@@ -79,6 +79,17 @@ def test_build_arg_and_env(registry1, storage_dir):
     assert code == 0, err
 
 
+def test_user_change(registry1, storage_dir):
+    new_image = new_image_name()
+    context_dir = os.path.join(
+        os.getcwd(), 'testdata/build-context/user-change')
+
+    utils.makisu_build_image(
+        new_image, context_dir, storage_dir, registry=registry1.addr)
+    code, err = utils.docker_run_image(registry1.addr, new_image)
+    assert code == 0, err
+
+
 # When we run makisu build, some mountpoints and their parent directories are
 # already created. As such, when we unpack `/var/run -> /run` symlink in
 # `debian:9` for instance, we get an error because we think we should delete
