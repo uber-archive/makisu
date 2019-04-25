@@ -17,7 +17,7 @@ package step
 import (
 	"fmt"
 	"hash/crc32"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -104,15 +104,18 @@ func (s *addCopyStep) SetCacheID(ctx *context.BuildContext, seed string) error {
 		s.cacheID = fmt.Sprintf("%x", b)
 	} else {
 		// Initialize the checksum with the seed, directive and args.
-		checksum := crc32.ChecksumIEEE([]byte(seed + string(s.directive) + s.args))
+		checksum := crc32.NewIEEE()
+		_, err := checksum.Write([]byte(seed + string(s.directive) + s.args))
+		if err != nil {
+			return fmt.Errorf("hash copy directive: %s", err)
+		}
 
 		// If the step args and the contents of sources are identical,
 		// we should be able to use the cache from the previous build.
-		checksum, err := s.updateContextChecksum(ctx, checksum)
-		if err != nil {
+		if err := s.updateContextChecksum(ctx, checksum); err != nil {
 			return fmt.Errorf("hash context sources: %s", err)
 		}
-		s.cacheID = fmt.Sprintf("%x", checksum)
+		s.cacheID = fmt.Sprintf("%x", checksum.Sum32())
 	}
 	return nil
 }
@@ -145,9 +148,9 @@ func (s *addCopyStep) Execute(ctx *context.BuildContext, modifyFS bool) (err err
 }
 
 // Updates the checksum passed in with the data stored in the context on the filesystem.
-func (s *addCopyStep) updateContextChecksum(ctx *context.BuildContext, checksum uint32) (uint32, error) {
+func (s *addCopyStep) updateContextChecksum(ctx *context.BuildContext, checksum io.Writer) error {
 	if s.fromStage != "" {
-		return 0, fmt.Errorf("Not supported: the copy step has from stage flag")
+		return fmt.Errorf("not supported: the copy step has from stage flag")
 	}
 
 	for _, source := range s.resolveFromPaths(ctx) {
@@ -155,13 +158,12 @@ func (s *addCopyStep) updateContextChecksum(ctx *context.BuildContext, checksum 
 			if err != nil {
 				return fmt.Errorf("prev error during walk: %s", err)
 			}
-			checksum, err = checksumPathContents(path, fi, checksum)
-			return err
+			return checksumPathContents(path, fi, checksum)
 		}); err != nil {
-			return 0, fmt.Errorf("walk %s: %s", source, err)
+			return fmt.Errorf("walk %s: %s", source, err)
 		}
 	}
-	return checksum, nil
+	return nil
 }
 
 func (s *addCopyStep) resolveFromPaths(ctx *context.BuildContext) []string {
@@ -186,33 +188,40 @@ func (s *addCopyStep) contextRootDir(ctx *context.BuildContext) string {
 	return ctx.ContextDir
 }
 
-func checksumPathContents(path string, fi os.FileInfo, checksum uint32) (uint32, error) {
+func checksumPathContents(path string, fi os.FileInfo, checksum io.Writer) error {
 	// Skip special files.
 	if utils.IsSpecialFile(fi) {
 		if fi.IsDir() {
-			return checksum, filepath.SkipDir
+			return filepath.SkipDir
 		}
-		return checksum, nil
+		return nil
 	}
 
-	checksum = crc32.Update(checksum, crc32.IEEETable, []byte(path))
+	if _, err := checksum.Write([]byte(path)); err != nil {
+		return fmt.Errorf("write path to checksum")
+	}
+
 	// If it is a directory, just return after checksumming the dir name.
 	if fi.IsDir() {
-		return checksum, nil
+		return nil
 	}
 
 	// If it's a symlink, don't follow.
 	if fi.Mode()&os.ModeSymlink != 0 {
 		target, err := os.Readlink(path)
 		if err != nil {
-			return 0, fmt.Errorf("read link %s: %s", path, err)
+			return fmt.Errorf("read link %s: %s", path, err)
 		}
-		return crc32.Update(checksum, crc32.IEEETable, []byte(target)), nil
+		_, err = checksum.Write([]byte(target))
+		return err
 	}
 
-	b, err := ioutil.ReadFile(path)
+	fh, err := os.Open(path)
 	if err != nil {
-		return 0, fmt.Errorf("read %s: %s", path, err)
+		return fmt.Errorf("open %s: %s", path, err)
 	}
-	return crc32.Update(checksum, crc32.IEEETable, b), nil
+	if _, err := io.Copy(checksum, fh); err != nil {
+		return fmt.Errorf("read %s: %s", path, err)
+	}
+	return nil
 }
