@@ -5,8 +5,5 @@ language: python
 services:
     - docker
 
-install:
-    - for i in $(seq 1 5); do (make vendor && break) || sleep 30; done
-
 script:
     - make cunit-test integration
