@@ -33,39 +33,6 @@ var (
 	validChown = fmt.Sprintf("%d:%d", testutil.CurrUID(), testutil.CurrGID())
 )
 
-func TestResolveChown(t *testing.T) {
-	tests := []struct {
-		desc    string
-		succeed bool
-		chown   string
-		uid     int
-		gid     int
-	}{
-		{"missing group", false, "user:", 0, 0},
-		{"missing user", false, ":group", 0, 0},
-		{"missing group or user", false, ":", 0, 0},
-		{"empty", true, "", 0, 0},
-		{"uid no group", true, "1", 1, 1},
-		{"uid and gid", true, "1:2", 1, 2},
-		{"user no group", true, fmt.Sprintf("%s", testutil.CurrUser()), testutil.CurrUID(), testutil.CurrUID()},
-		{"user and gid", true, fmt.Sprintf("%s:1", testutil.CurrUser()), testutil.CurrUID(), 1},
-		{"uid and gid", true, fmt.Sprintf("%d:%d", testutil.CurrUID(), testutil.CurrGID()), testutil.CurrUID(), testutil.CurrGID()},
-	}
-
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			require := require.New(t)
-			uid, gid, err := resolveChown(test.chown)
-			if test.succeed {
-				require.Equal(test.uid, uid)
-				require.Equal(test.gid, gid)
-			} else {
-				require.Error(err)
-			}
-		})
-	}
-}
-
 func TestNewCopyOperation(t *testing.T) {
 	require := require.New(t)
 

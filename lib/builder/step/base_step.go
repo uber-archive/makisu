@@ -66,29 +66,14 @@ func (s *baseStep) SetCacheID(ctx *context.BuildContext, seed string) error {
 	return nil
 }
 
-// ApplyCtxAndConfig sets up the execution environment from build context and
-// image config.
-// This function will not be skipped.
-func (s *baseStep) ApplyCtxAndConfig(
+// SetWorkingDir set the working dir of the current step
+// Exporting the logic to this method allows for an easier `ApplyCtxAndConfig` overwriting
+func (s *baseStep) SetWorkingDir(
 	ctx *context.BuildContext, imageConfig *image.Config) error {
 	s.workingDir = ctx.RootDir // Default workingDir to root.
-	if imageConfig == nil {
-		return nil
-	}
 
-	for key, value := range ctx.StageVars {
-		unquoted, err := strconv.Unquote(value)
-		if err == nil {
-			value = unquoted
-		}
-		value = os.ExpandEnv(value)
-		if err := os.Setenv(key, value); err != nil {
-			return fmt.Errorf("failed to set env %s=%s: %s", key, value, err)
-		}
-	}
-
-	// Set working dir.
-	if imageConfig.Config.WorkingDir != "" {
+	// Set working dir from imageConfig
+	if imageConfig != nil && imageConfig.Config.WorkingDir != "" {
 		s.workingDir = os.ExpandEnv(imageConfig.Config.WorkingDir)
 	}
 
@@ -102,6 +87,33 @@ func (s *baseStep) ApplyCtxAndConfig(
 			return fmt.Errorf("lstat working dir %s: %s", s.workingDir, err)
 		}
 	}
+	return nil
+}
+
+// SetEnvFromContext set environment variables from previous stages
+// Exporting the logic to this method allows for an easier `ApplyCtxAndConfig` overwriting
+func (s *baseStep) SetEnvFromContext(
+	ctx *context.BuildContext) error {
+	for key, value := range ctx.StageVars {
+		unquoted, err := strconv.Unquote(value)
+		if err == nil {
+			value = unquoted
+		}
+		value = os.ExpandEnv(value)
+		if err := os.Setenv(key, value); err != nil {
+			return fmt.Errorf("failed to set env %s=%s: %s", key, value, err)
+		}
+	}
+	return nil
+}
+
+// ApplyCtxAndConfig sets up the execution environment from build context and
+// image config.
+// This function will not be skipped.
+func (s *baseStep) ApplyCtxAndConfig(
+	ctx *context.BuildContext, imageConfig *image.Config) error {
+	s.SetWorkingDir(ctx, imageConfig)
+	s.SetEnvFromContext(ctx)
 	return nil
 }
 

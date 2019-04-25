@@ -18,6 +18,7 @@ import (
 	"errors"
 
 	"github.com/uber/makisu/lib/context"
+	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/log"
 	"github.com/uber/makisu/lib/shell"
 )
@@ -27,6 +28,9 @@ type RunStep struct {
 	*baseStep
 
 	cmd string
+
+	// Used by the user step and the run step to determine which user should run a command (format should be <user>[:<group>] or <UID>[:<GID>], default is "" which is 0:0)
+	user string
 }
 
 // NewRunStep returns a BuildStep from given arguments.
@@ -41,6 +45,21 @@ func NewRunStep(args, cmd string, commit bool) *RunStep {
 // layers to be present on disk.
 func (s *RunStep) RequireOnDisk() bool { return true }
 
+// ApplyCtxAndConfig setup the user that should be used to run the command
+// See ./user_step.go to see how it's set in image.Config
+func (s *RunStep) ApplyCtxAndConfig(ctx *context.BuildContext, imageConfig *image.Config) error {
+	// This is from ./base_step.go
+	s.SetWorkingDir(ctx, imageConfig)
+	s.SetEnvFromContext(ctx)
+
+	if imageConfig == nil {
+		return nil
+	}
+
+	s.user = imageConfig.Config.User
+	return nil
+}
+
 // Execute executes the step.
 // It shells out to run the specified command, which might change local file system.
 func (s *RunStep) Execute(ctx *context.BuildContext, modifyFS bool) error {
@@ -48,5 +67,5 @@ func (s *RunStep) Execute(ctx *context.BuildContext, modifyFS bool) error {
 		return errors.New("attempted to execute RUN step without modifying file system")
 	}
 	ctx.MustScan = true
-	return shell.ExecCommand(log.Infof, log.Errorf, s.workingDir, "sh", "-c", s.cmd)
+	return shell.ExecCommand(log.Infof, log.Errorf, s.workingDir, s.user, "sh", "-c", s.cmd)
 }
