@@ -80,7 +80,7 @@ func streamCmd(outStream, errStream formatStream, cmd *exec.Cmd) error {
 
 func setProcAttributes(cmd *exec.Cmd, user string) error {
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	if user != "" {
+	if user == "" {
 		return nil
 	}
 
