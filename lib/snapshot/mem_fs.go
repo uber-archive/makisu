@@ -392,6 +392,8 @@ func (fs *MemFS) addToLayer(l *memLayer, c *CopyOperation) error {
 			if err != nil {
 				return fmt.Errorf("create header %s: %s", currDst, err)
 			}
+			hdr.Uid = c.uid
+			hdr.Gid = c.gid
 			return fs.maybeAddToLayer(l, currSrc, currDst, hdr, false)
 		}); err != nil {
 			return fmt.Errorf("copy src %s to dst %s: %s", src, c.dst, err)
