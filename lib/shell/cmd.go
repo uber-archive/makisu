@@ -28,37 +28,31 @@ import (
 // ShellStreamBufferSize is the size of the output buffers when streaming command stdout and stderr
 const ShellStreamBufferSize = 1 << 20
 
+type formatStream func(string, ...interface{})
+
 // ExecCommand exec a cmd and args inside workingDir as user, returns error if cmd fails
-func ExecCommand(outStream, errStream func(string, ...interface{}), workingDir, user, cmdName string, cmdArgs ...string) error {
+func ExecCommand(outStream, errStream formatStream, workingDir, user, cmdName string, cmdArgs ...string) error {
 	cmd := exec.Command(cmdName, cmdArgs...)
 	if workingDir != "" {
 		cmd.Dir = workingDir
 	}
 
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	if err := setProcAttributes(cmd, user); err != nil {
+		return fmt.Errorf("set command creds: %v", err)
+	}
 
-	currentEnv := os.Environ()
-
+	cmd.Env = os.Environ()
 	if user != "" {
-		// Set the user to the one specified before
-		uid, gid, err := utils.ResolveChown(user)
-		if err != nil {
-			return fmt.Errorf("cmd user resolve: %s", err)
-		}
-
-		uid32 := uint32(uid)
-		gid32 := uint32(gid)
-		cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uid32, Gid: gid32}
-
 		// We also need to change the HOME env var if we change user
 		home := fmt.Sprintf("HOME=/home/%s", strings.Split(user, ":")[0])
 
 		// Append it so it has a priority on any other env var from before (and will override previous HOME definition)
-		currentEnv = append(currentEnv, home)
+		cmd.Env = append(cmd.Env, home)
 	}
+	return streamCmd(outStream, errStream, cmd)
+}
 
-	cmd.Env = currentEnv
-
+func streamCmd(outStream, errStream formatStream, cmd *exec.Cmd) error {
 	outReader, outWriter := io.Pipe()
 	errReader, errWriter := io.Pipe()
 	cmd.Stdout, cmd.Stderr = outWriter, errWriter
@@ -78,15 +72,24 @@ func ExecCommand(outStream, errStream func(string, ...interface{}), workingDir, 
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("cmd start: %s", err)
 	} else if err := cmd.Wait(); err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
-			// Command exited with code other than 0.
-			ws := exitError.Sys().(syscall.WaitStatus)
-			exitCode := ws.ExitStatus()
-			errStream("Command exited with %d\n", exitCode)
-			return exitError
-		}
+		errStream("Command exited with %d\n", cmd.ProcessState.ExitCode())
 		return fmt.Errorf("cmd wait: %s", err)
 	}
+	return nil
+}
+
+func setProcAttributes(cmd *exec.Cmd, user string) error {
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	if user != "" {
+		return nil
+	}
+
+	uid, gid, err := utils.ResolveChown(user)
+	if err != nil {
+		return fmt.Errorf("cmd user resolve: %s", err)
+	}
+
+	cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(uid), Gid: uint32(gid)}
 	return nil
 }
 
