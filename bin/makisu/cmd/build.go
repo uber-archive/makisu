@@ -64,6 +64,8 @@ type buildCmd struct {
 
 	storageDir       string
 	compressionLevel string
+
+	preserveRoot bool
 }
 
 func getBuildCmd() *buildCmd {
@@ -118,6 +120,8 @@ func getBuildCmd() *buildCmd {
 
 	buildCmd.PersistentFlags().StringVar(&buildCmd.storageDir, "storage", "", "Directory that makisu uses for temp files and cached layers. Mount this path for better caching performance. If modifyfs is set, default to /makisu-storage; Otherwise default to /tmp/makisu-storage")
 	buildCmd.PersistentFlags().StringVar(&buildCmd.compressionLevel, "compression", "default", "Image compression level, could be 'no', 'speed', 'size', 'default'")
+
+	buildCmd.PersistentFlags().BoolVar(&buildCmd.preserveRoot, "preserve-root", false, "Copy / in the storage dir and copy it back after build.")
 
 	buildCmd.MarkFlagRequired("tag")
 	buildCmd.Flags().SortFlags = false
@@ -232,6 +236,14 @@ func (cmd *buildCmd) Build(contextDir string) error {
 	// Optionally remove everything before and after build.
 	defer storage.CleanupSandbox(cmd.storageDir)
 	if cmd.allowModifyFS {
+		if cmd.preserveRoot {
+			rootPreserver, err := storage.NewRootPreserver("/", cmd.storageDir, pathutils.DefaultBlacklist)
+			if err != nil {
+				return fmt.Errorf("failed to preserve root: %s", err)
+			}
+			defer rootPreserver.RevertRootBack()
+		}
+		log.Debugf("build.Cmd.Build() first call")
 		buildContext.MemFS.Remove()
 		defer buildContext.MemFS.Remove()
 	}
