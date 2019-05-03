@@ -65,8 +65,8 @@ func copyOldRootToBackup(rootDir, backupDir string, blacklist []string) error {
 	return nil
 }
 
-// RevertRootBack will copy the backupDir in the initial root dir
-func (r *RootPreserver) RevertRootBack() error {
+// RestoreRoot will copy the backupDir in the initial root dir
+func (r *RootPreserver) RestoreRoot() error {
 	copier := fileio.NewCopier(r.blacklist)
 
 	// TODO: Handle uid, gid preservation

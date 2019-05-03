@@ -241,7 +241,7 @@ func (cmd *buildCmd) Build(contextDir string) error {
 			if err != nil {
 				return fmt.Errorf("failed to preserve root: %s", err)
 			}
-			defer rootPreserver.RevertRootBack()
+			defer rootPreserver.RestoreRoot()
 		}
 		log.Debugf("build.Cmd.Build() first call")
 		buildContext.MemFS.Remove()
