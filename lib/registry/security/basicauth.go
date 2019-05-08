@@ -45,7 +45,8 @@ func BasicAuthTransport(addr, repo string, tr http.RoundTripper, authConfig type
 	// This looks weird but when using AWS ECR (especially the docker ecr helper) we get a Username and a Password
 	// Then, the ping will create a challenge by parsing the www-authenticate header from the ECR server (it will return a "Basic ...")
 	// So if we use the `NewTokenHandlerWithOptions` we will always fail the Scheme checking in vendor/github.com/docker/distribution/registry/client/auth/session.go#L98 ("basic" != "bearer")
-	if authConfig.Username != "" && authConfig.Password != "" {
+	// We also have a special case for index.docker.io because it does not support Basic Auth
+	if authConfig.Username != "" && authConfig.Password != "" && addr != "index.docker.io" {
 		return transport.NewTransport(tr, auth.NewAuthorizer(cm, auth.NewBasicHandler(defaultCredStore{authConfig}))), nil
 	} else {
 		return transport.NewTransport(tr, auth.NewAuthorizer(cm, auth.NewTokenHandlerWithOptions(auth.TokenHandlerOptions{
