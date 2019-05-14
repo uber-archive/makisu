@@ -20,7 +20,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path"
+	"strings"
 
+	"github.com/GoogleCloudPlatform/docker-credential-gcr/config"
+	"github.com/GoogleCloudPlatform/docker-credential-gcr/credhelper"
+	"github.com/GoogleCloudPlatform/docker-credential-gcr/store"
 	"github.com/uber/makisu/lib/pathutils"
 	"github.com/uber/makisu/lib/utils/httputil"
 
@@ -122,11 +126,28 @@ func (c Config) getCredentials(helper, addr string) (types.AuthConfig, error) {
 }
 
 func (c Config) getCredentialFromHelper(helper, addr string) (types.AuthConfig, error) {
-	if helper == "ecr-login" {
+	if strings.HasPrefix(helper, "ecr") {
 		client := ecr.ECRHelper{ClientFactory: api.DefaultClientFactory{}}
 		username, password, err := client.Get(addr)
 		if err != nil {
 			return types.AuthConfig{}, fmt.Errorf("get credentials from helper ECR: %s", err)
+		}
+		return types.AuthConfig{
+			Username: username,
+			Password: password,
+		}, nil
+	} else if strings.HasPrefix(helper, "gcr") {
+		store, err := store.DefaultGCRCredStore()
+		if err != nil {
+			return types.AuthConfig{}, fmt.Errorf("get credentials from helper GCR: %s", err)
+		}
+		userCfg, err := config.LoadUserConfig()
+		if err != nil {
+			return types.AuthConfig{}, fmt.Errorf("get credentials from helper GCR: %s", err)
+		}
+		username, password, err := credhelper.NewGCRCredentialHelper(store, userCfg).Get(addr)
+		if err != nil {
+			return types.AuthConfig{}, fmt.Errorf("get credentials from helper GCR: %s", err)
 		}
 		return types.AuthConfig{
 			Username: username,
