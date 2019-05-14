@@ -24,6 +24,8 @@ import (
 	"github.com/uber/makisu/lib/pathutils"
 	"github.com/uber/makisu/lib/utils/httputil"
 
+	ecr "github.com/awslabs/amazon-ecr-credential-helper/ecr-login"
+	"github.com/awslabs/amazon-ecr-credential-helper/ecr-login/api"
 	"github.com/docker/docker-credential-helpers/client"
 	"github.com/docker/engine-api/types"
 )
@@ -120,6 +122,17 @@ func (c Config) getCredentials(helper, addr string) (types.AuthConfig, error) {
 }
 
 func (c Config) getCredentialFromHelper(helper, addr string) (types.AuthConfig, error) {
+	if helper == "ecr-login" {
+		client := ecr.ECRHelper{ClientFactory: api.DefaultClientFactory{}}
+		username, password, err := client.Get(addr)
+		if err != nil {
+			return types.AuthConfig{}, fmt.Errorf("get credentials from helper ECR: %s", err)
+		}
+		return types.AuthConfig{
+			Username: username,
+			Password: password,
+		}, nil
+	}
 	helperFullName := credentialHelperPrefix + helper
 	creds, err := client.Get(client.NewShellProgramFunc(helperFullName), addr)
 	if err != nil {

@@ -7,6 +7,7 @@ require (
 	github.com/alicebob/gopher-json v0.0.0-20180125190556-5a6b3ba71ee6 // indirect
 	github.com/alicebob/miniredis v2.4.5+incompatible
 	github.com/andres-erbsen/clock v0.0.0-20160526145045-9e14626cd129
+	github.com/awslabs/amazon-ecr-credential-helper v0.3.0 // indirect
 	github.com/axw/gocov v0.0.0-20170322000131-3a69a0d2a4ef
 	github.com/client9/misspell v0.3.4
 	github.com/docker/distribution v2.7.0+incompatible
