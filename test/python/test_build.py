@@ -237,3 +237,26 @@ def test_build_go_with_debian_package(registry1, storage_dir):
     assert l2.get_tar_header_count() == 1, [h.name for h in l2.get_tar_headers()]
     assert list(l2.get_tar_headers())[0].uname != "root"
     assert list(l2.get_tar_headers())[0].gname != "root"
+
+# A little bit of crazyness on this test but I didn't want to add more complex methods
+# to test the `--preserve-root` flag.
+# See the [Dockerfile](../testdata/build-context/preserve-root/Dockerfile)
+def test_build_with_preserve_root(registry1, storage_dir):
+    new_image = new_image_name()
+    context_dir = os.path.join(
+        os.getcwd(), 'testdata/build-context/preserve-root')
+
+    os.environ["MAKISU_ALPINE"] = "1"
+
+    utils.docker_push_image(utils.get_base_image(), registry1.addr)
+
+    docker_build_args = [
+        "BASE_IMAGE={}/{}".format(registry1.addr, utils.get_base_image()),
+    ]
+    utils.makisu_build_image(
+        new_image, context_dir, storage_dir, registry=registry1.addr, docker_args=docker_build_args, load=True)
+    code, err = utils.docker_run_image(registry1.addr, new_image)
+
+    del os.environ["MAKISU_ALPINE"]
+
+    assert code == 0, err
