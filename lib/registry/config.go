@@ -48,7 +48,7 @@ type Config struct {
 	PushRate      float64       `yaml:"push_rate" json:"push_rate"`
 	// If not specify, a default chunk size will be used.
 	// Set it to -1 to turn off chunk upload.
-	// NOTE: gcr does not support chunked upload.
+	// NOTE: gcr and ecr do not support chunked upload.
 	PushChunk int64           `yaml:"push_chunk" json:"push_chunk"`
 	Security  security.Config `yaml:"security" json:"security"`
 }
