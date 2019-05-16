@@ -92,6 +92,7 @@ Example AWS ECR config:
 ```yaml
 "someawsregistry":
   "my-project/*":
+    push_chunk: -1
     security:
       credsStore: ecr-login
 ```
@@ -100,8 +101,13 @@ Example GCR config:
 ```yaml
 "gcr.io":
   "my-project/*":
+    push_chunk: -1
     security:
       credsStore: gcr
 ```
 
 NB: You need to put your config files (ex: aws config/credentials file) inside the /makisu-internal/ dir (and use env variable to specify their locations) in order for the helpers to find and use them when building your images.
+
+## Handling `BLOB_UPLOAD_INVALID` and `BLOB_UPLOAD_UNKNOWN` errors
+
+If you encounter these errors when pushing your image to a registry, try to use the `push_chunk: -1` option (some registries, despite implementing registry v2 do not support chunked upload, ECR and GCR being one example).
