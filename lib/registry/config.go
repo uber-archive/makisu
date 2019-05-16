@@ -40,17 +40,17 @@ type RepositoryMap map[string]Config
 
 // Config contains docker registry client configuration.
 type Config struct {
-	Concurrency   int           `yaml:"concurrency"`
-	Timeout       time.Duration `yaml:"timeout"`
-	Retries       int           `yaml:"retries"`
-	RetryInterval time.Duration `yaml:"retry_interval"`
-	RetryBackoff  float64       `yaml:"retry_backoff"`
-	PushRate      float64       `yaml:"push_rate"`
+	Concurrency   int           `yaml:"concurrency" json:"concurrency"`
+	Timeout       time.Duration `yaml:"timeout" json:"timeout"`
+	Retries       int           `yaml:"retries" json:"retries"`
+	RetryInterval time.Duration `yaml:"retry_interval" json:"retry_interval"`
+	RetryBackoff  float64       `yaml:"retry_backoff" json:"retry_backoff"`
+	PushRate      float64       `yaml:"push_rate" json:"push_rate"`
 	// If not specify, a default chunk size will be used.
 	// Set it to -1 to turn off chunk upload.
 	// NOTE: gcr does not support chunked upload.
-	PushChunk int64           `yaml:"push_chunk"`
-	Security  security.Config `yaml:"security"`
+	PushChunk int64           `yaml:"push_chunk" json:"push_chunk"`
+	Security  security.Config `yaml:"security" json:"security"`
 }
 
 func (c Config) applyDefaults() Config {
