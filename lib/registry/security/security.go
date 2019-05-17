@@ -20,7 +20,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path"
-	"strings"
 
 	"github.com/GoogleCloudPlatform/docker-credential-gcr/config"
 	"github.com/GoogleCloudPlatform/docker-credential-gcr/credhelper"
@@ -126,7 +125,8 @@ func (c Config) getCredentials(helper, addr string) (types.AuthConfig, error) {
 }
 
 func (c Config) getCredentialFromHelper(helper, addr string) (types.AuthConfig, error) {
-	if strings.HasPrefix(helper, "ecr") {
+	switch helper {
+	case "ecr-login":
 		client := ecr.ECRHelper{ClientFactory: api.DefaultClientFactory{}}
 		username, password, err := client.Get(addr)
 		if err != nil {
@@ -136,7 +136,7 @@ func (c Config) getCredentialFromHelper(helper, addr string) (types.AuthConfig, 
 			Username: username,
 			Password: password,
 		}, nil
-	} else if strings.HasPrefix(helper, "gcr") {
+	case "gcr":
 		store, err := store.DefaultGCRCredStore()
 		if err != nil {
 			return types.AuthConfig{}, fmt.Errorf("get credentials from helper GCR: %s", err)
@@ -153,26 +153,27 @@ func (c Config) getCredentialFromHelper(helper, addr string) (types.AuthConfig, 
 			Username: username,
 			Password: password,
 		}, nil
-	}
-	helperFullName := credentialHelperPrefix + helper
-	creds, err := client.Get(client.NewShellProgramFunc(helperFullName), addr)
-	if err != nil {
-		return types.AuthConfig{}, err
-	}
-
-	var ret types.AuthConfig
-	if c.BasicAuth != nil {
-		ret, err = c.BasicAuth.Get()
+	default:
+		helperFullName := credentialHelperPrefix + helper
+		creds, err := client.Get(client.NewShellProgramFunc(helperFullName), addr)
 		if err != nil {
-			return types.AuthConfig{}, fmt.Errorf("get basic auth config: %s", err)
+			return types.AuthConfig{}, err
 		}
+
+		var ret types.AuthConfig
+		if c.BasicAuth != nil {
+			ret, err = c.BasicAuth.Get()
+			if err != nil {
+				return types.AuthConfig{}, fmt.Errorf("get basic auth config: %s", err)
+			}
+		}
+		ret.ServerAddress = addr
+		if creds.Username == tokenUsername {
+			ret.IdentityToken = creds.Secret
+		} else {
+			ret.Password = creds.Secret
+			ret.Username = creds.Username
+		}
+		return ret, nil
 	}
-	ret.ServerAddress = addr
-	if creds.Username == tokenUsername {
-		ret.IdentityToken = creds.Secret
-	} else {
-		ret.Password = creds.Secret
-		ret.Username = creds.Username
-	}
-	return ret, nil
 }
