@@ -12,15 +12,8 @@ ADD bin ./bin
 ADD lib ./lib
 RUN make lbins
 
-
-FROM golang:1.11 AS gcr_cred_helper_builder
-RUN go get -u github.com/GoogleCloudPlatform/docker-credential-gcr
-RUN CGO_ENABLED=0 make -C /go/src/github.com/GoogleCloudPlatform/docker-credential-gcr && \
-    cp /go/src/github.com/GoogleCloudPlatform/docker-credential-gcr/bin/docker-credential-gcr /docker-credential-gcr
-
 FROM scratch
 COPY --from=builder /workspace/github.com/uber/makisu/bin/makisu/makisu.linux /makisu-internal/makisu
 ADD ./assets/cacerts.pem /makisu-internal/certs/cacerts.pem
 
-COPY --from=gcr_cred_helper_builder /docker-credential-gcr /makisu-internal/docker-credential-gcr
 ENTRYPOINT ["/makisu-internal/makisu"]
