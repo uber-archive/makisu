@@ -16,7 +16,6 @@ package cmd
 
 import (
 	ctx "context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -35,39 +34,16 @@ import (
 	"github.com/uber/makisu/lib/parser/dockerfile"
 	"github.com/uber/makisu/lib/pathutils"
 	"github.com/uber/makisu/lib/registry"
-	"github.com/uber/makisu/lib/utils"
 	"github.com/uber/makisu/lib/utils/stringset"
-	yaml "gopkg.in/yaml.v2"
 )
 
 func (cmd *buildCmd) initRegistryConfig() error {
 	if cmd.registryConfig == "" {
 		return nil
 	}
-
 	cmd.registryConfig = os.ExpandEnv(cmd.registryConfig)
-	config := make(registry.Map)
-	if utils.IsValidJSON([]byte(cmd.registryConfig)) {
-		if err := json.Unmarshal([]byte(cmd.registryConfig), &config); err != nil {
-			return fmt.Errorf("unmarshal registry config: %s", err)
-		}
-	} else {
-		data, err := ioutil.ReadFile(cmd.registryConfig)
-		if err != nil {
-			return fmt.Errorf("read registry config: %s", err)
-		}
-		if err := yaml.Unmarshal(data, &config); err != nil {
-			return fmt.Errorf("unmarshal registry config: %s", err)
-		}
-	}
-
-	for reg, repoConfig := range config {
-		if _, ok := registry.ConfigurationMap[reg]; !ok {
-			registry.ConfigurationMap[reg] = make(registry.RepositoryMap)
-		}
-		for repo, config := range repoConfig {
-			registry.ConfigurationMap[reg][repo] = config
-		}
+	if err := registry.UpdateGlobalConfig(cmd.registryConfig); err != nil {
+		return fmt.Errorf("init registry config: %s", err)
 	}
 	return nil
 }
