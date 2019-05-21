@@ -16,9 +16,15 @@ package registry
 
 // Config contains registry client configuration.
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"time"
 
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/uber/makisu/lib/registry/security"
+	"github.com/uber/makisu/lib/utils"
 	"github.com/uber/makisu/lib/utils/httputil"
 )
 
@@ -85,4 +91,34 @@ func (c *Config) sendRetry() httputil.SendOption {
 		httputil.RetryMax(c.Retries),
 		httputil.RetryInterval(c.RetryInterval),
 		httputil.RetryBackoff(c.RetryBackoff))
+}
+
+// UpdateGlobalConfig updates the global registry config given either:
+// - a JSON string of the configuration
+// - a path to a YAML file
+func UpdateGlobalConfig(registryConfig string) error {
+	config := make(Map)
+	if utils.IsValidJSON([]byte(registryConfig)) {
+		if err := json.Unmarshal([]byte(registryConfig), &config); err != nil {
+			return fmt.Errorf("unmarshal registry config: %s", err)
+		}
+	} else {
+		data, err := ioutil.ReadFile(registryConfig)
+		if err != nil {
+			return fmt.Errorf("read registry config: %s", err)
+		}
+		if err := yaml.Unmarshal(data, &config); err != nil {
+			return fmt.Errorf("unmarshal registry config: %s", err)
+		}
+	}
+
+	for reg, repoConfig := range config {
+		if _, ok := ConfigurationMap[reg]; !ok {
+			ConfigurationMap[reg] = make(RepositoryMap)
+		}
+		for repo, config := range repoConfig {
+			ConfigurationMap[reg][repo] = config
+		}
+	}
+	return nil
 }
