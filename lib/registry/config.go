@@ -21,10 +21,11 @@ import (
 	"io/ioutil"
 	"time"
 
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/uber/makisu/lib/registry/security"
 	"github.com/uber/makisu/lib/utils"
 	"github.com/uber/makisu/lib/utils/httputil"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // ConfigurationMap is a global variable that maps registry name to config.
