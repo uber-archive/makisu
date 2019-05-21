@@ -22,6 +22,7 @@ import (
 	"path"
 
 	"github.com/uber/makisu/lib/pathutils"
+	"github.com/uber/makisu/lib/utils"
 	"github.com/uber/makisu/lib/utils/httputil"
 
 	"github.com/docker/docker-credential-helpers/client"
@@ -64,7 +65,7 @@ func (c Config) ApplyDefaults() Config {
 		c.TLS = &httputil.TLSConfig{}
 	}
 	if c.TLS.CA.Cert.Path == "" {
-		c.TLS.CA.Cert.Path = pathutils.DefaultCACertsPath
+		c.TLS.CA.Cert.Path = utils.DefaultEnv("SSL_CERT_DIR", pathutils.DefaultCACertsPath)
 	}
 	return c
 }
