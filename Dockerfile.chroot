@@ -5,7 +5,6 @@ ADD . /workspace
 WORKDIR /workspace
 
 ENV SSL_CERT_DIR=/etc/ssl/certs
-RUN makisu pull --extract /testdir --registry gcr.io --tag v0.1.10 makisu-project/makisu
 RUN ./tools/scripts/makisu_chroot.sh build -t test:121 --modifyfs=true testdata/build-context/symlink
 RUN ./tools/scripts/makisu_chroot.sh build -t test:121 --modifyfs=true testdata/build-context/user-change
 RUN ./tools/scripts/makisu_chroot.sh build -t test:121 --modifyfs=true testdata/build-context/chroot-simple

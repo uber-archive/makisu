@@ -16,15 +16,22 @@ function makisu::prepare_internals () {
 }
 
 function makisu::prepare_dev () {
-    mkdir -p $CHROOT/dev
+    mkdir -p $CHROOT/dev $CHROOT/shm
     mknod -m 622 $CHROOT/dev/console c 5 1
+    mknod -m 622 $CHROOT/dev/initctl p
+    mknod -m 666 $CHROOT/dev/full c 1 7
     mknod -m 666 $CHROOT/dev/null c 1 3
-    mknod -m 666 $CHROOT/dev/zero c 1 5
     mknod -m 666 $CHROOT/dev/ptmx c 5 2
+    mknod -m 666 $CHROOT/dev/random c 1 8
     mknod -m 666 $CHROOT/dev/tty c 5 0
-    mknod -m 444 $CHROOT/dev/random c 1 8
-    mknod -m 444 $CHROOT/dev/urandom c 1 9
+    mknod -m 666 $CHROOT/dev/tty0 c 4 0
+    mknod -m 666 $CHROOT/dev/urandom c 1 9
+    mknod -m 666 $CHROOT/dev/zero c 1 5
     chown root:tty $CHROOT/dev/{console,ptmx,tty}
+
+    # https://github.com/moby/moby/blob/8e610b2b55bfd1bfa9436ab110d311f5e8a74dcb/contrib/mkimage-crux.sh
+    # https://github.com/moby/moby/blob/8e610b2b55bfd1bfa9436ab110d311f5e8a74dcb/contrib/mkimage-arch.sh
+    # https://github.com/moby/moby/blob/d7ab8ad145fad4c63112f34721663021e5b02707/contrib/mkimage-yum.sh
 }
 
 function makisu::prepare_etc () {
