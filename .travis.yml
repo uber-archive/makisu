@@ -1,13 +1,16 @@
 sudo: required
 
-language: python
+language: go
+
+go:
+  - 1.12.x
 
 services:
-    - docker
+  - docker
 
 before_script:
-- "curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | sudo bash"
+  - "curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | sudo bash"
 
 script:
-    - make cunit-test integration
-    - "fossa --option allow-unresolved:true" 
+  - make cunit-test integration
+  - "fossa --option allow-unresolved:true" 
