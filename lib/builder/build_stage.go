@@ -36,7 +36,7 @@ import (
 )
 
 type buildStageOptions struct {
-	// forceCommit will make every step attampt to commit a layer.
+	// forceCommit will make every step attempt to commit a layer.
 	// Commit() is noop for steps other than ADD/COPY/RUN if they are not after
 	// an uncommitted RUN, so this won't generate extra empty layers.
 	forceCommit   bool
@@ -255,12 +255,12 @@ func (stage *buildStage) GetDistributionManifest(
 	}
 
 	// Save the manifest at the last node to a temp file, then move into store.
-	distributionManfest := image.DistributionManifest{
+	distributionManifest := image.DistributionManifest{
 		SchemaVersion: 2,
 		MediaType:     image.MediaTypeManifest,
 	}
 
-	distributionManfest.Config = image.Descriptor{
+	distributionManifest.Config = image.Descriptor{
 		MediaType: image.MediaTypeConfig,
 		Size:      imageConfigStat.Size(),
 		Digest:    image.Digest("sha256:" + imageConfigSHA256),
@@ -273,8 +273,8 @@ func (stage *buildStage) GetDistributionManifest(
 		}
 	}
 
-	distributionManfest.Layers = descriptors
-	return &distributionManfest, nil
+	distributionManifest.Layers = descriptors
+	return &distributionManifest, nil
 }
 
 // saveManifest saves the image produced at the end of this stage.

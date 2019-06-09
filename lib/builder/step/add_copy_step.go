@@ -44,7 +44,7 @@ import (
 // - If <dest> does not end with a trailing slash, it will be considered a regular file and the contents of <src> will
 //   be written at <dest>.
 // - If <dest> doesn’t exist, it is created along with all missing directories in its path.
-// So in summarry there are 6 supported cases:
+// So in summary there are 6 supported cases:
 // - COPY file1 /target/file1
 // - COPY file1 /target/dir1/
 // - COPY file1, file2 ... /tmp/dir1/

@@ -358,7 +358,7 @@ func (op *localFileOp) GetFileReadWriter(name string) (w FileReadWriter, err err
 	return w, err
 }
 
-// GetFileMetadata loads metadata assocciated with the file.
+// GetFileMetadata loads metadata associated with the file.
 func (op *localFileOp) GetFileMetadata(name string, md metadata.Metadata) (err error) {
 	if loadErr := op.lockHelper(name, _lockLevelPeek, func(name string, entry FileEntry) {
 		err = entry.GetMetadata(md)
@@ -368,7 +368,7 @@ func (op *localFileOp) GetFileMetadata(name string, md metadata.Metadata) (err e
 	return err
 }
 
-// SetFileMetadata creates or overwrites metadata assocciate with the file.
+// SetFileMetadata creates or overwrites metadata associate with the file.
 func (op *localFileOp) SetFileMetadata(name string, md metadata.Metadata) (updated bool, err error) {
 	if loadErr := op.lockHelper(name, _lockLevelWrite, func(name string, entry FileEntry) {
 		updated, err = entry.SetMetadata(md)
@@ -378,7 +378,7 @@ func (op *localFileOp) SetFileMetadata(name string, md metadata.Metadata) (updat
 	return updated, err
 }
 
-// SetFileMetadataAt overwrites metadata assocciate with the file with content.
+// SetFileMetadataAt overwrites metadata associate with the file with content.
 func (op *localFileOp) SetFileMetadataAt(
 	name string, md metadata.Metadata, b []byte, offset int64) (updated bool, err error) {
 

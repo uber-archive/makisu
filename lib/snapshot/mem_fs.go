@@ -148,7 +148,7 @@ func (fs *MemFS) UpdateFromTarPath(source string, untar bool) error {
 }
 
 // UpdateFromTarReader updates MemFS with the contents of the tarball from the
-// gvien reader, and optionally untars the tarball onto the root of MemFS.
+// given reader, and optionally untars the tarball onto the root of MemFS.
 func (fs *MemFS) UpdateFromTarReader(r *tar.Reader, untar bool) error {
 	start := time.Now()
 	// Keep a list of all hard links that we will create in a second pass.
