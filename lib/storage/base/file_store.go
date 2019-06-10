@@ -60,7 +60,7 @@ func NewLRUFileStore(size int, clk clock.Clock) FileStore {
 	}
 }
 
-// NewFileOp contructs a new FileOp object.
+// NewFileOp constructs a new FileOp object.
 func (s *localFileStore) NewFileOp() FileOp {
 	return NewLocalFileOp(s)
 }

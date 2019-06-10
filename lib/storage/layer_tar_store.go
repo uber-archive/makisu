@@ -69,7 +69,7 @@ func NewLayerTarStore(rootdir string) (*LayerTarStore, error) {
 	}
 	for _, f := range files {
 		if _, err := backend.NewFileOp().AcceptState(cacheState).GetFileStat(f.Name()); err != nil {
-			// Probably caused by an empty directory. Try detele.
+			// Probably caused by an empty directory. Try delete.
 			log.Warnf("Failed to load cached manifest: %s", err)
 			if err := backend.NewFileOp().AcceptState(cacheState).DeleteFile(f.Name()); err != nil {
 				log.Warnf("Failed to cleanup cached manifest: %s", err)

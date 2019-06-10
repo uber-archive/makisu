@@ -147,7 +147,7 @@ func (n *buildNode) applyLayer(digestPair *image.DigestPair, modifyfs bool) erro
 	return nil
 }
 
-// pushCacheLayers pushs cached layers for this node's digest pair(s).
+// pushCacheLayers pushes cached layers for this node's digest pair(s).
 func (n *buildNode) pushCacheLayer(cacheMgr cache.Manager) error {
 	var digestPair *image.DigestPair
 	if len(n.digestPairs) != 0 {

@@ -153,7 +153,7 @@ func (cmd *buildCmd) processFlags() error {
 		return fmt.Errorf("failed to initialize registry configuration: %s", err)
 	}
 
-	// If modifyfs is true, verify it's not runninng on Mac.
+	// If modifyfs is true, verify it's not running on Mac.
 	if cmd.allowModifyFS && runtime.GOOS == "darwin" {
 		return fmt.Errorf("modifyfs option could erase fs and is not allowed on Mac")
 	}
