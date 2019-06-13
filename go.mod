@@ -4,9 +4,12 @@ go 1.12
 
 require (
 	github.com/AlekSi/gocov-xml v0.0.0-20190121064608-3a14fb1c4737
+	github.com/GoogleCloudPlatform/docker-credential-gcr v1.5.0 // indirect
 	github.com/alicebob/gopher-json v0.0.0-20180125190556-5a6b3ba71ee6 // indirect
 	github.com/alicebob/miniredis v2.4.5+incompatible
 	github.com/andres-erbsen/clock v0.0.0-20160526145045-9e14626cd129
+	github.com/aws/aws-sdk-go v1.19.29 // indirect
+	github.com/awslabs/amazon-ecr-credential-helper v0.3.0
 	github.com/axw/gocov v0.0.0-20170322000131-3a69a0d2a4ef
 	github.com/client9/misspell v0.3.4
 	github.com/docker/distribution v2.7.0+incompatible
@@ -27,6 +30,7 @@ require (
 	github.com/klauspost/cpuid v1.2.0 // indirect
 	github.com/klauspost/pgzip v1.2.1
 	github.com/matm/gocov-html v0.0.0-20160206185555-f6dd0fd0ebc7
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect

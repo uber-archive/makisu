@@ -108,6 +108,17 @@ Example GCR config:
 
 NB: You need to put your config files (ex: aws config/credentials file) inside the /makisu-internal/ dir (and use env variable to specify their locations) in order for the helpers to find and use them when building your images.
 
+### Using another cred helper
+
+For now makisu handles ECR and GCR as lib instead of calling their binaries.
+If you want to use another docker credentials helper, add its binary in the directory `/makisu-internal`, with a name matching `docker-credential-<cred-helper-name>`, then in your configuration:
+```yaml
+"example.com":
+  "my-project/*":
+    security:
+      credsStore: <cred-helper-name>
+```
+
 ## Handling `BLOB_UPLOAD_INVALID` and `BLOB_UPLOAD_UNKNOWN` errors
 
 If you encounter these errors when pushing your image to a registry, try to use the `push_chunk: -1` option (some registries, despite implementing registry v2 do not support chunked upload, ECR and GCR being one example).

@@ -21,10 +21,15 @@ import (
 	"net/http"
 	"path"
 
+	"github.com/GoogleCloudPlatform/docker-credential-gcr/config"
+	"github.com/GoogleCloudPlatform/docker-credential-gcr/credhelper"
+	"github.com/GoogleCloudPlatform/docker-credential-gcr/store"
 	"github.com/uber/makisu/lib/pathutils"
 	"github.com/uber/makisu/lib/utils"
 	"github.com/uber/makisu/lib/utils/httputil"
 
+	ecr "github.com/awslabs/amazon-ecr-credential-helper/ecr-login"
+	"github.com/awslabs/amazon-ecr-credential-helper/ecr-login/api"
 	"github.com/docker/docker-credential-helpers/client"
 	"github.com/docker/engine-api/types"
 )
@@ -121,25 +126,55 @@ func (c Config) getCredentials(helper, addr string) (types.AuthConfig, error) {
 }
 
 func (c Config) getCredentialFromHelper(helper, addr string) (types.AuthConfig, error) {
-	helperFullName := credentialHelperPrefix + helper
-	creds, err := client.Get(client.NewShellProgramFunc(helperFullName), addr)
-	if err != nil {
-		return types.AuthConfig{}, err
-	}
-
-	var ret types.AuthConfig
-	if c.BasicAuth != nil {
-		ret, err = c.BasicAuth.Get()
+	switch helper {
+	case "ecr-login":
+		client := ecr.ECRHelper{ClientFactory: api.DefaultClientFactory{}}
+		username, password, err := client.Get(addr)
 		if err != nil {
-			return types.AuthConfig{}, fmt.Errorf("get basic auth config: %s", err)
+			return types.AuthConfig{}, fmt.Errorf("get credentials from helper ECR: %s", err)
 		}
+		return types.AuthConfig{
+			Username: username,
+			Password: password,
+		}, nil
+	case "gcr":
+		store, err := store.DefaultGCRCredStore()
+		if err != nil {
+			return types.AuthConfig{}, fmt.Errorf("get credentials from helper GCR: %s", err)
+		}
+		userCfg, err := config.LoadUserConfig()
+		if err != nil {
+			return types.AuthConfig{}, fmt.Errorf("get credentials from helper GCR: %s", err)
+		}
+		username, password, err := credhelper.NewGCRCredentialHelper(store, userCfg).Get(addr)
+		if err != nil {
+			return types.AuthConfig{}, fmt.Errorf("get credentials from helper GCR: %s", err)
+		}
+		return types.AuthConfig{
+			Username: username,
+			Password: password,
+		}, nil
+	default:
+		helperFullName := credentialHelperPrefix + helper
+		creds, err := client.Get(client.NewShellProgramFunc(helperFullName), addr)
+		if err != nil {
+			return types.AuthConfig{}, err
+		}
+
+		var ret types.AuthConfig
+		if c.BasicAuth != nil {
+			ret, err = c.BasicAuth.Get()
+			if err != nil {
+				return types.AuthConfig{}, fmt.Errorf("get basic auth config: %s", err)
+			}
+		}
+		ret.ServerAddress = addr
+		if creds.Username == tokenUsername {
+			ret.IdentityToken = creds.Secret
+		} else {
+			ret.Password = creds.Secret
+			ret.Username = creds.Username
+		}
+		return ret, nil
 	}
-	ret.ServerAddress = addr
-	if creds.Username == tokenUsername {
-		ret.IdentityToken = creds.Secret
-	} else {
-		ret.Password = creds.Secret
-		ret.Username = creds.Username
-	}
-	return ret, nil
 }
