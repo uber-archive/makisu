@@ -197,9 +197,14 @@ func checksumPathContents(ctx *context.BuildContext, path string, fi os.FileInfo
 		return nil
 	}
 
-	trimmedPath := strings.TrimPrefix(path, ctx.ContextDir)
+	trimmedPath, err := filepath.Rel(ctx.ContextDir, path)
+	if err != nil {
+		return fmt.Errorf("write path is outside of context dir (%s,%s): %v",
+			ctx.ContextDir, path, err)
+	}
+
 	if _, err := checksum.Write([]byte(trimmedPath)); err != nil {
-		return fmt.Errorf("write path to checksum")
+		return fmt.Errorf("write path to checksum: %v", err)
 	}
 
 	// If it is a directory, just return after checksumming the dir name.
