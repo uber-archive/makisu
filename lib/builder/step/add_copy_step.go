@@ -158,7 +158,7 @@ func (s *addCopyStep) updateContextChecksum(ctx *context.BuildContext, checksum 
 			if err != nil {
 				return fmt.Errorf("prev error during walk: %s", err)
 			}
-			return checksumPathContents(path, fi, checksum)
+			return checksumPathContents(ctx, path, fi, checksum)
 		}); err != nil {
 			return fmt.Errorf("walk %s: %s", source, err)
 		}
@@ -188,7 +188,7 @@ func (s *addCopyStep) contextRootDir(ctx *context.BuildContext) string {
 	return ctx.ContextDir
 }
 
-func checksumPathContents(path string, fi os.FileInfo, checksum io.Writer) error {
+func checksumPathContents(ctx *context.BuildContext, path string, fi os.FileInfo, checksum io.Writer) error {
 	// Skip special files.
 	if utils.IsSpecialFile(fi) {
 		if fi.IsDir() {
@@ -197,7 +197,8 @@ func checksumPathContents(path string, fi os.FileInfo, checksum io.Writer) error
 		return nil
 	}
 
-	if _, err := checksum.Write([]byte(path)); err != nil {
+	trimmedPath := strings.TrimPrefix(path, ctx.ContextDir)
+	if _, err := checksum.Write([]byte(trimmedPath)); err != nil {
 		return fmt.Errorf("write path to checksum")
 	}
 
