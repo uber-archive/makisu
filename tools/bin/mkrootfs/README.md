@@ -1,7 +1,7 @@
 # mkrootfs
 ----------
 
-This tool was written to allow the creaetion of root filesystems from docker 
+This tool was written to allow the creation of root filesystems from docker 
 image names. The binary will download the docker image and untar them in the 
 destination directory provided.
 ```
