@@ -60,7 +60,7 @@ func isSimilarHardLink(h *tar.Header, nh *tar.Header) (bool, error) {
 		h.Linkname == nh.Linkname &&
 		h.Uid == nh.Uid &&
 		h.Gid == nh.Gid &&
-		h.Mode == nh.Mode {
+		h.FileInfo().Mode() == nh.FileInfo().Mode() {
 		return true, nil
 	}
 	return false, nil
@@ -74,14 +74,15 @@ func isSimilarDirectory(h *tar.Header, nh *tar.Header) (bool, error) {
 	if hMtime.Equal(nhMtime) &&
 		h.Uid == nh.Uid &&
 		h.Gid == nh.Gid &&
-		h.Mode == nh.Mode {
+		h.FileInfo().Mode() == nh.FileInfo().Mode() {
 		return true, nil
 	}
 	return false, nil
 }
 
 // isSimilarRegularFile returns if the given headers are describing similar
-// regular files. It only checks mtime, size, and owner, ignoring path and content.
+// regular files. It only checks mtime, size, and owner, ignoring path and
+// content.
 func isSimilarRegularFile(h *tar.Header, nh *tar.Header) (bool, error) {
 	hMtime := h.ModTime.Truncate(1 * time.Second)
 	nhMtime := nh.ModTime.Truncate(1 * time.Second)
@@ -89,7 +90,7 @@ func isSimilarRegularFile(h *tar.Header, nh *tar.Header) (bool, error) {
 		h.Uid == nh.Uid &&
 		h.Gid == nh.Gid &&
 		h.Size == nh.Size &&
-		h.Mode == nh.Mode {
+		h.FileInfo().Mode() == nh.FileInfo().Mode() {
 		return true, nil
 	}
 	return false, nil
