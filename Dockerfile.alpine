@@ -1,4 +1,4 @@
-FROM golang:1.12 AS builder
+FROM golang:1.12.6 AS builder
 
 RUN mkdir -p /workspace/github.com/uber/makisu
 WORKDIR /workspace/github.com/uber/makisu
