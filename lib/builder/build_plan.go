@@ -41,6 +41,7 @@ type BuildPlan struct {
 	cacheMgr          cache.Manager
 	stages            []*buildStage
 	remoteImageStages map[string]*buildStage
+	stageCacheIDs     map[string]string
 
 	opts *buildPlanOptions
 }
@@ -59,6 +60,7 @@ func NewBuildPlan(
 		cacheMgr:          cacheMgr,
 		stages:            make([]*buildStage, len(parsedStages)),
 		remoteImageStages: make(map[string]*buildStage),
+		stageCacheIDs:     make(map[string]string),
 		opts: &buildPlanOptions{
 			forceCommit:   forceCommit,
 			allowModifyFS: allowModifyFS,
@@ -74,7 +76,9 @@ func NewBuildPlan(
 	for i, parsedStage := range parsedStages {
 		// Add this stage to the plan.
 		stage, err := newBuildStage(
-			ctx, parsedStage.From.Alias, parsedStage, digestPairs, plan.opts)
+			ctx, parsedStage.From.Alias, parsedStage, digestPairs, plan.opts, &plan.stageCacheIDs)
+		plan.stageCacheIDs[parsedStage.From.Alias] = stage.finalCacheID()
+		log.Infof("----------- Stage %s: steps %d: final CacheID: %s", parsedStage.From.Alias, len(stage.nodes), stage.finalCacheID())
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert parsed stage: %s", err)
 		}

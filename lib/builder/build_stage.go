@@ -59,7 +59,8 @@ type buildStage struct {
 // newBuildStage initializes a buildStage.
 func newBuildStage(
 	baseCtx *context.BuildContext, alias string, parsedStage *dockerfile.Stage,
-	digestPairs image.DigestPairMap, planOpts *buildPlanOptions) (*buildStage, error) {
+	digestPairs image.DigestPairMap, planOpts *buildPlanOptions,
+	stageCacheIDs *map[string]string) (*buildStage, error) {
 
 	// Create a new build context for the stage.
 	ctx, err := context.NewBuildContext(
@@ -67,6 +68,8 @@ func newBuildStage(
 	if err != nil {
 		return nil, fmt.Errorf("create stage build context: %s", err)
 	}
+	// TODO: should be pass in NewBuildContext
+	ctx.StagesCacheIDs = stageCacheIDs
 
 	// Create steps from parsed stage.
 	steps, err := createDockerfileSteps(ctx, parsedStage, planOpts)
@@ -352,6 +355,12 @@ func (stage *buildStage) String() string {
 func (stage *buildStage) checkpoint(copyFromDirs []string) error {
 	newRoot := stage.ctx.CopyFromRoot(stage.alias)
 	return stage.ctx.MemFS.Checkpoint(newRoot, copyFromDirs)
+}
+
+// return the cacheID of the last build step.
+func (stage *buildStage) finalCacheID() string {
+	lastNode := stage.nodes[len(stage.nodes)-1]
+	return (*lastNode).BuildStep.CacheID()
 }
 
 func (stage *buildStage) cleanup() error { return stage.ctx.MemFS.Remove() }

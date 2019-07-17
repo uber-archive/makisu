@@ -19,6 +19,7 @@ import (
 
 	"github.com/uber/makisu/lib/context"
 	"github.com/uber/makisu/lib/docker/image"
+	"github.com/uber/makisu/lib/log"
 	"github.com/uber/makisu/lib/parser/dockerfile"
 )
 
@@ -147,5 +148,6 @@ func NewDockerfileStep(
 	if err := step.SetCacheID(ctx, seed); err != nil {
 		return nil, fmt.Errorf("set cache id: %s", err)
 	}
+	log.Infof("----------- CacheID for %s %v", d, step.CacheID())
 	return step, nil
 }

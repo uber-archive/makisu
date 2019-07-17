@@ -18,11 +18,9 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/uber/makisu/lib/context"
 	"github.com/uber/makisu/lib/pathutils"
@@ -94,14 +92,20 @@ func (s *addCopyStep) ContextDirs() (string, []string) {
 // ID randomly if copying from another stage, else checksums the file contents.
 func (s *addCopyStep) SetCacheID(ctx *context.BuildContext, seed string) error {
 	if s.fromStage != "" {
-		// It is copying from a previous stage, return random bytes.
-		// TODO: support cache here by chaining stage sha.
-		b := make([]byte, 4)
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
-		if _, err := r.Read(b); err != nil {
-			return fmt.Errorf("read rand: %s", err)
+		// Find the cacheId of the stage.
+		// This is not perfect, because we should use the hash of the directory
+		// to be copied, but it's not available at this point.
+		// Anyway the whole cacheID of the stage superseed the hash of the directory.
+		fromStageCacheID, ok := (*ctx.StagesCacheIDs)[s.fromStage]
+		if !ok {
+			return fmt.Errorf("Unknown stage: %s", s.fromStage)
 		}
-		s.cacheID = fmt.Sprintf("%x", b)
+		checksum := crc32.NewIEEE()
+		_, err := checksum.Write([]byte(seed + string(s.directive) + s.args + fromStageCacheID))
+		if err != nil {
+			return fmt.Errorf("hash copy directive: %s", err)
+		}
+		s.cacheID = fmt.Sprintf("%x", checksum.Sum32())
 	} else {
 		// Initialize the checksum with the seed, directive and args.
 		checksum := crc32.NewIEEE()

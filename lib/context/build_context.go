@@ -50,6 +50,8 @@ type BuildContext struct {
 	CopyOps   []*snapshot.CopyOperation
 	MustScan  bool
 	stagesDir string // Contains dirs with files needed for 'copy --from' operations.
+
+	StagesCacheIDs *map[string]string
 }
 
 // NewBuildContext inits a new BuildContext object.
