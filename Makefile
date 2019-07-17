@@ -41,12 +41,12 @@ REGISTRY ?= gcr.io/makisu-project
 bins: bin/makisu/makisu
 
 bin/makisu/makisu: $(ALL_SRC) vendor
-	go build -mod=vendor -tags bins $(GO_FLAGS) -o $@ bin/makisu/*.go
+	go build -tags bins $(GO_FLAGS) -o $@ bin/makisu/*.go
 
 lbins: bin/makisu/makisu.linux
 
 bin/makisu/makisu.linux: $(ALL_SRC) vendor
-	CGO_ENABLED=0 GOOS=linux go build -mod=vendor -tags bins $(GO_FLAGS) -o $@ bin/makisu/*.go
+	CGO_ENABLED=0 GOOS=linux go build -tags bins $(GO_FLAGS) -o $@ bin/makisu/*.go
 
 cbins:
 	docker run -i --rm -v $(PWD):/workspace/$(PACKAGE_NAME) \
@@ -58,18 +58,11 @@ cbins:
 
 $(ALL_SRC): ;
 
-# TODO(pourchet): Remove this hack to make dep more reliable. For some reason `dep ensure` fails
-# sometimes on TravisCI, so run it twice if it fails the first time.
+# TODO(pourchet): Remove this hack to make dep more reliable. For some reason `go mod download` fails
+# sometimes on TravisCI, so run it a few times if it fails.
 vendor: go.mod go.sum
-	go get -v || go get -v || go get -v
+	go mod download || go mod download || go mod download
 	go mod vendor
-
-cvendor:
-	docker run --rm -v $(PWD):/workspace/$(PACKAGE_NAME) \
-		-w /workspace/$(PACKAGE_NAME) \
-		--entrypoint=/bin/sh \
-		golang:1.12 \
-		-c "go get"
 
 ext-tools: vendor $(EXT_TOOLS)
 

@@ -3,7 +3,7 @@ sudo: required
 language: go
 
 go:
-  - 1.12.x
+  - 1.12.6
 
 services:
   - docker
@@ -11,6 +11,12 @@ services:
 before_script:
   - "curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | sudo bash"
 
+env:
+  - GOPATH="" GO111MODULE=on
+
 script:
-  - make cunit-test integration
-  - "fossa --option allow-unresolved:true" 
+  - "chmod -R a+rw . || true"
+  - "make cunit-test"
+  - "chmod -R a+rw . || true"
+  - "make integration"
+  - "fossa --option allow-unresolved:true"

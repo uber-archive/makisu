@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	github.com/AlekSi/gocov-xml v0.0.0-20190121064608-3a14fb1c4737
-	github.com/GoogleCloudPlatform/docker-credential-gcr v1.5.0 // indirect
+	github.com/GoogleCloudPlatform/docker-credential-gcr v1.5.0
 	github.com/alicebob/gopher-json v0.0.0-20180125190556-5a6b3ba71ee6 // indirect
 	github.com/alicebob/miniredis v2.4.5+incompatible
 	github.com/andres-erbsen/clock v0.0.0-20160526145045-9e14626cd129
@@ -49,6 +49,7 @@ require (
 	go.uber.org/zap v1.9.1
 	golang.org/x/lint v0.0.0-20190301231843-5614ed5bae6f
 	golang.org/x/net v0.0.0-20190311183353-d8887717615a
+	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45 // indirect
 	golang.org/x/tools v0.0.0-20190311215038-5c2858a9cfe5
 	gopkg.in/yaml.v2 v2.2.2
 )
