@@ -16,7 +16,7 @@ env:
 
 script:
   - "chmod -R a+rw . || true"
-  - make cunit-test
+  - "make cunit-test"
   - "chmod -R a+rw . || true"
-  - make integration
+  - "make integration"
   - "fossa --option allow-unresolved:true"
