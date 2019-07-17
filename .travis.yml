@@ -12,5 +12,8 @@ before_script:
   - "curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | sudo bash"
 
 script:
-  - make cunit-test integration
-  - "fossa --option allow-unresolved:true" 
+  - chmod -R a+rw .
+  - make cunit-test
+  - chmod -R a+rw .
+  - make integration
+  - "fossa --option allow-unresolved:true"
