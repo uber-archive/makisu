@@ -148,6 +148,6 @@ func NewDockerfileStep(
 	if err := step.SetCacheID(ctx, seed); err != nil {
 		return nil, fmt.Errorf("set cache id: %s", err)
 	}
-	log.Infof("----------- CacheID for %s %v", d, step.CacheID())
+	log.Infof("----------- CacheID %v for %s", step.CacheID(), d)
 	return step, nil
 }
