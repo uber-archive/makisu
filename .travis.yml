@@ -15,9 +15,8 @@ env:
   - GOPATH="" GO111MODULE=on
 
 script:
-  - go list -m -json all
-  - chmod -R a+rw .
+  - "chmod -R a+rw . || true"
   - make cunit-test
-  - chmod -R a+rw .
+  - "chmod -R a+rw . || true"
   - make integration
   - "fossa --option allow-unresolved:true"
