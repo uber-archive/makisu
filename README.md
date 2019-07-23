@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/logo/Lockup.svg" width="175" title="Makisu Logo"></p>
+<p align="center"><img src="assets/logo/Lockup.svg" width="375" title="Makisu Logo"></p>
 
 [![Build Status](https://travis-ci.com/uber/makisu.svg?branch=master)](https://travis-ci.com/uber/makisu)
 [![GoReportCard](https://goreportcard.com/badge/github.com/uber/makisu)](https://goreportcard.com/report/github.com/uber/makisu)
