@@ -15,5 +15,7 @@ RUN make lbins
 FROM scratch
 COPY --from=builder /workspace/github.com/uber/makisu/bin/makisu/makisu.linux /makisu-internal/makisu
 ADD ./assets/cacerts.pem /makisu-internal/certs/cacerts.pem
+# Required for embedded GCR docker-credential-helper to work correctly
+ENV SSL_CERT_DIR /makisu-internal/certs
 
 ENTRYPOINT ["/makisu-internal/makisu"]
