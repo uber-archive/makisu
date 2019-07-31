@@ -145,7 +145,7 @@ func (c DockerRegistryClient) Pull(tag string) (*image.DistributionManifest, err
 	if err := c.saveManifest(tag, manifest); err != nil {
 		return nil, fmt.Errorf("save manifest: %s", err)
 	}
-	log.Infof("* Finished pulling image %s in %s", name, time.Since(starttime))
+	log.Infow(fmt.Sprintf("* Pulled image %s", name), "duration", time.Since(starttime))
 	return manifest, nil
 }
 
@@ -193,7 +193,7 @@ func (c DockerRegistryClient) Push(tag string) error {
 	if err := c.PushManifest(tag, manifest); err != nil {
 		return fmt.Errorf("push manifest: %s", err)
 	}
-	log.Infof("* Finished pushing image %s in %s", name, time.Since(starttime))
+	log.Infow(fmt.Sprintf("* Pushed image %s", name), "duration", time.Since(starttime))
 	return nil
 }
 
