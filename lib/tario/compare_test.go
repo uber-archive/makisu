@@ -507,6 +507,42 @@ func TestIsSimilarRegularFile(t *testing.T) {
 		require.NoError(err)
 	})
 
+	t.Run("NoChangeWithTypeRegA", func(t *testing.T) {
+		require := require.New(t)
+
+		tmpRoot, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot)
+
+		testFile1, err := ioutil.TempFile(tmpRoot, "test1")
+		require.NoError(err)
+		testFile2, err := ioutil.TempFile(tmpRoot, "test2")
+		require.NoError(err)
+
+		atime := time.Now().Add(-time.Hour)
+		mtime := time.Now().Add(-time.Hour * 2)
+		require.NoError(os.Chtimes(testFile1.Name(), atime, mtime))
+		require.NoError(os.Chtimes(testFile2.Name(), atime, mtime))
+
+		fi1, err := os.Lstat(testFile1.Name())
+		require.NoError(err)
+		fi2, err := os.Lstat(testFile2.Name())
+		require.NoError(err)
+
+		h, err := tar.FileInfoHeader(fi1, "")
+		require.NoError(err)
+		require.Equal(tar.TypeReg, int32(h.Typeflag))
+		newH, err := tar.FileInfoHeader(fi2, "")
+		require.NoError(err)
+		newH.Typeflag = tar.TypeRegA
+		similar, err := isSimilarRegularFile(h, newH)
+		require.True(similar)
+		require.NoError(err)
+		similar, err = IsSimilarHeader(h, newH)
+		require.True(similar)
+		require.NoError(err)
+	})
+
 	t.Run("DifferentContentButSameSizeConsideredSimilar", func(t *testing.T) {
 		require := require.New(t)
 
