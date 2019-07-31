@@ -318,7 +318,7 @@ func (fs *MemFS) createLayerByScan() (*memLayer, error) {
 		return nil, fmt.Errorf("walk %s: %s", root, err)
 	}
 
-	log.Infow("* Collected diff", "count", l.count(), "duration", time.Since(start).Round(time.Millisecond))
+	log.Infow(fmt.Sprintf("* Collected diff: %d files found", l.count()), "duration", time.Since(start).Round(time.Millisecond))
 	return l, nil
 }
 
