@@ -165,7 +165,7 @@ func (fs *MemFS) UpdateFromTarReader(r *tar.Reader, untar bool) error {
 		if err == io.EOF {
 			duration := time.Since(start).Round(time.Millisecond)
 			if untar {
-				log.Infof("* Untarred %d files to %s in %v", count, fs.tree.src, duration)
+				log.Infow(fmt.Sprintf("* Untarred %d files to %s", count, fs.tree.src), "duration", duration)
 			}
 			break
 		} else if err != nil {
@@ -318,8 +318,7 @@ func (fs *MemFS) createLayerByScan() (*memLayer, error) {
 		return nil, fmt.Errorf("walk %s: %s", root, err)
 	}
 
-	duration := time.Since(start).Round(time.Millisecond)
-	log.Infof("* Finished collecting diff in %s: %d files found", duration, l.count())
+	log.Infow("* Collected diff", "count", l.count(), "duration", time.Since(start).Round(time.Millisecond))
 	return l, nil
 }
 

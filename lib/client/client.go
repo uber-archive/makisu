@@ -159,7 +159,7 @@ func (cli *MakisuClient) prepareContext(context string) (string, error) {
 	if err := fileio.NewCopier(nil).CopyDir(context, targetPath, uid, gid); err != nil {
 		return "", err
 	}
-	log.Infof("Finished copying over context in %v", time.Since(start))
+	log.Infow("Copied context", "duration", time.Since(start))
 	return targetContext, nil
 }
 

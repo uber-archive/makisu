@@ -124,7 +124,7 @@ func (n *buildNode) doExecute(cacheMgr cache.Manager, opts *buildNodeOptions) er
 	if err != nil {
 		return fmt.Errorf("execute step: %s", err)
 	}
-	log.Infof("* Execute %s took %v", n.String(), time.Since(start))
+	log.Infow(fmt.Sprintf("* Executed %s", n.String()), "duration", time.Since(start))
 	return nil
 }
 
