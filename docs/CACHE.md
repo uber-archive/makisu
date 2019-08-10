@@ -21,6 +21,7 @@ To disable it, set ttl to 0s.
 To configure redis cache, use the following options:
 ```
 --redis-cache-addr string         The address of a redis server for cacheID to layer sha mapping
+--redis-cache-password string           The password of the Redis server, should match 'requirepass' in redis.conf
 --redis-cache-ttl duration        Time-To-Live for redis cache (default 168h0m0s)
 ```
 

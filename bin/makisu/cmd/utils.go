@@ -169,7 +169,7 @@ func (cmd *buildCmd) newCacheManager(buildContext *context.BuildContext, imageNa
 	if cmd.redisCacheAddress != "" {
 		log.Infof("Using redis at %s for cacheID storage", cmd.redisCacheAddress)
 
-		kvStore, err = keyvalue.NewRedisStore(cmd.redisCacheAddress, cmd.redisCacheTTL)
+		kvStore, err = keyvalue.NewRedisStore(cmd.redisCacheAddress, cmd.redisCachePassword, cmd.redisCacheTTL)
 		if err != nil {
 			log.Errorf("Failed to connect to redis store: %s", err)
 		}

@@ -36,13 +36,14 @@ type redisStore struct {
 // NewRedisStore returns a new instance of Store backed by a redis server.
 // In this constructor we try to open a connection to redis. If that attempt fails
 // we return an error. If it succeeds we just close that connection.
-func NewRedisStore(addr string, ttl time.Duration) (Store, error) {
+func NewRedisStore(addr, password string, ttl time.Duration) (Store, error) {
 	cli := redis.NewClient(&redis.Options{
 		Addr:         addr,
 		MaxRetries:   MaxRetires,
 		DialTimeout:  DialTimeout,
 		ReadTimeout:  ReadTimeout,
 		WriteTimeout: WriteTimeout,
+		Password:     password,
 	})
 	if _, err := cli.Ping().Result(); err != nil {
 		return nil, err
