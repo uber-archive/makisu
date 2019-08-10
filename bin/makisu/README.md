@@ -20,6 +20,7 @@ Flags:
       --blacklist stringArray           Makisu will ignore all changes to these locations in the resulting docker images
       --local-cache-ttl duration        Time-To-Live for local cache (default 168h0m0s)
       --redis-cache-addr string         The address of a redis server for cacheID to layer sha mapping
+      --redis-cache-password string           The password of the Redis server, should match 'requirepass' in redis.conf
       --redis-cache-ttl duration        Time-To-Live for redis cache (default 168h0m0s)
       --http-cache-addr string          The address of the http server for cacheID to layer sha mapping
       --http-cache-header stringArray   Request header for http cache server. Format is "--http-cache-header <header>:<value>"
