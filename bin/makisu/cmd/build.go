@@ -51,11 +51,12 @@ type buildCmd struct {
 	commit        string
 	blacklists    []string
 
-	localCacheTTL     time.Duration
-	redisCacheAddress string
-	redisCacheTTL     time.Duration
-	httpCacheAddress  string
-	httpCacheHeaders  []string
+	localCacheTTL      time.Duration
+	redisCacheAddress  string
+	redisCachePassword string
+	redisCacheTTL      time.Duration
+	httpCacheAddress   string
+	httpCacheHeaders   []string
 
 	dockerHost    string
 	dockerVersion string
@@ -109,6 +110,7 @@ func getBuildCmd() *buildCmd {
 
 	buildCmd.PersistentFlags().DurationVar(&buildCmd.localCacheTTL, "local-cache-ttl", time.Hour*168, "Time-To-Live for local cache")
 	buildCmd.PersistentFlags().StringVar(&buildCmd.redisCacheAddress, "redis-cache-addr", "", "The address of a redis server for cacheID to layer sha mapping")
+	buildCmd.PersistentFlags().StringVar(&buildCmd.redisCachePassword, "redis-cache-password", "", "The password of the Redis server, should match 'requirepass' in redis.conf")
 	buildCmd.PersistentFlags().DurationVar(&buildCmd.redisCacheTTL, "redis-cache-ttl", time.Hour*168, "Time-To-Live for redis cache")
 	buildCmd.PersistentFlags().StringVar(&buildCmd.httpCacheAddress, "http-cache-addr", "", "The address of the http server for cacheID to layer sha mapping")
 	buildCmd.PersistentFlags().StringArrayVar(&buildCmd.httpCacheHeaders, "http-cache-header", nil, "Request header for http cache server. Format is \"--http-cache-header <header>:<value>\"")
