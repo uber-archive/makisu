@@ -32,7 +32,7 @@ func TestRedisStore(t *testing.T) {
 
 		d, err := time.ParseDuration("10s")
 		require.NoError(err)
-		store, err := NewRedisStore(s.Addr(), d)
+		store, err := NewRedisStore(s.Addr(), "", d)
 		require.NoError(err)
 
 		loc, err := store.Get("a")
@@ -48,7 +48,7 @@ func TestRedisStore(t *testing.T) {
 
 		d, err := time.ParseDuration("10s")
 		require.NoError(err)
-		store, err := NewRedisStore(s.Addr(), d)
+		store, err := NewRedisStore(s.Addr(), "", d)
 		require.NoError(err)
 
 		defer store.Cleanup()
