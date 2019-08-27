@@ -25,7 +25,7 @@ jobs:
       script:
         - "chmod -R a+rw . || true"
         - "make integration"
-    - stage: "Fossa"
+    - stage: "Compliance"
       name: "Fossa Check"
       script:
         - "chmod -R a+rw . || true"
