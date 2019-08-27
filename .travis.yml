@@ -14,9 +14,19 @@ before_script:
 env:
   - GOPATH="" GO111MODULE=on
 
-script:
-  - "chmod -R a+rw . || true"
-  - "make cunit-test"
-  - "chmod -R a+rw . || true"
-  - "make integration"
-  - "fossa --option allow-unresolved:true"
+jobs:
+  include:
+    - stage: "Tests"
+      name: "Unit Tests"
+      script:
+        - "chmod -R a+rw . || true"
+        - "make cunit-test"
+    - name: "Integration Tests"
+      script:
+        - "chmod -R a+rw . || true"
+        - "make integration"
+    - stage: "Fossa"
+      name: "Fossa Check"
+      script:
+        - "chmod -R a+rw . || true"
+        - "fossa --option allow-unresolved:true"
