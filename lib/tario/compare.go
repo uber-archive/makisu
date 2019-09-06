@@ -22,10 +22,6 @@ import (
 
 // IsSimilarHeader returns if the given headers are describing similar entries.
 func IsSimilarHeader(h *tar.Header, nh *tar.Header) (bool, error) {
-	if h.Typeflag != nh.Typeflag {
-		return false, nil
-	}
-
 	// Don't support modifying "/".
 	if h.Name == "" && nh.Name == "" {
 		return true, nil
@@ -33,12 +29,24 @@ func IsSimilarHeader(h *tar.Header, nh *tar.Header) (bool, error) {
 
 	switch h.Typeflag {
 	case tar.TypeSymlink:
+		if nh.Typeflag != tar.TypeSymlink {
+			return false, nil
+		}
 		return isSimilarSymlink(h, nh)
 	case tar.TypeLink:
+		if nh.Typeflag != tar.TypeLink {
+			return false, nil
+		}
 		return isSimilarHardLink(h, nh)
 	case tar.TypeDir:
+		if nh.Typeflag != tar.TypeDir {
+			return false, nil
+		}
 		return isSimilarDirectory(h, nh)
 	case tar.TypeReg, tar.TypeRegA:
+		if nh.Typeflag != tar.TypeReg && nh.Typeflag != tar.TypeRegA {
+			return false, nil
+		}
 		return isSimilarRegularFile(h, nh)
 	default:
 		return false, fmt.Errorf("unsupported type %b", h.Typeflag)
