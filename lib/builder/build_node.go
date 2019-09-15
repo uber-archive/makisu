@@ -166,6 +166,7 @@ func (n *buildNode) pushCacheLayer(cacheMgr cache.Manager) error {
 func (n *buildNode) pullCacheLayer(cacheMgr cache.Manager) bool {
 	digestPair, err := cacheMgr.PullCache(n.CacheID())
 	if err != nil {
+		// TODO: distinguish cache not found and pull failure.
 		log.Errorf("Failed to fetch intermediate layer with cache ID %s: %s", n.CacheID(), err)
 		return false
 	} else if digestPair == nil {

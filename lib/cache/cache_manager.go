@@ -100,7 +100,7 @@ func New(
 
 // PullCache tries to fetch the layer corresponding to the cache ID.
 // If the layer is not found, it returns ErrorLayerNotFound.
-// This function is blocking
+// This function is blocking.
 func (manager *registryCacheManager) PullCache(cacheID string) (*image.DigestPair, error) {
 	manager.Lock()
 	defer manager.Unlock()

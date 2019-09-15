@@ -310,12 +310,12 @@ func (stage *buildStage) saveManifest(
 	return manifest, nil
 }
 
-// pullCacheLayers attempts to pull reusable layers from the distributed cache. Terminates once
-// a node that can be cached fails to pull its layer.
+// pullCacheLayers attempts to pull reusable layers from the distributed cache.
+// Terminates once a node that can be cached fails to pull its layer.
 func (stage *buildStage) pullCacheLayers(cacheMgr cache.Manager) {
-	// Skip the first node since it's a FROM step. We do not want to try
-	// to pull from cache because the step itself will pull the right layers when
-	// it gets executed.
+	// Skip the first node since it's a FROM step. We do not want to try to pull
+	// from cache because the step itself will pull the right layers when it
+	// gets executed.
 	for _, node := range stage.nodes[1:] {
 		// Stop once the cache chain is broken.
 		if node.HasCommit() || stage.opts.forceCommit {
