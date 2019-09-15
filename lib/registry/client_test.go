@@ -16,6 +16,7 @@ package registry
 
 import (
 	"io/ioutil"
+	"path"
 	"testing"
 
 	"github.com/uber/makisu/lib/context"
@@ -25,14 +26,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var _testdata = "../../testdata"
-
 func TestPullManifest(t *testing.T) {
 	require := require.New(t)
 	ctx, cleanup := context.BuildContextFixture()
 	defer cleanup()
 
-	p, err := PullClientFixture(ctx, _testdata)
+	p, err := PullClientFixtureWithAlpine(ctx)
 	require.NoError(err)
 
 	// Pull manifest.
@@ -45,7 +44,7 @@ func TestPullImage(t *testing.T) {
 	ctx, cleanup := context.BuildContextFixture()
 	defer cleanup()
 
-	p, err := PullClientFixture(ctx, _testdata)
+	p, err := PullClientFixtureWithAlpine(ctx)
 	require.NoError(err)
 
 	// Pull image.
@@ -59,16 +58,35 @@ func TestPullImage(t *testing.T) {
 	require.NoError(err)
 }
 
-func TestPullWithExistingLayer(t *testing.T) {
+func TestPullImageWithDuplicateLayers(t *testing.T) {
 	require := require.New(t)
 	ctx, cleanup := context.BuildContextFixture()
 	defer cleanup()
 
-	p, err := PullClientFixture(ctx, _testdata)
+	p, err := PullClientFixtureWithAlpineDup(ctx)
+	require.NoError(err)
+
+	// Pull image.
+	_, err = p.Pull(testutil.SampleImageTag)
+	require.NoError(err)
+
+	_, err = p.store.Layers.GetStoreFileStat("393ccd5c4dd90344c9d725125e13f636ce0087c62f5ca89050faaacbb9e3ed5b")
+	require.NoError(err)
+
+	_, err = p.store.Manifests.GetStoreFileStat(testutil.SampleImageRepoName, testutil.SampleImageTag)
+	require.NoError(err)
+}
+
+func TestPullWithExistingLayerInCache(t *testing.T) {
+	require := require.New(t)
+	ctx, cleanup := context.BuildContextFixture()
+	defer cleanup()
+
+	p, err := PullClientFixtureWithAlpine(ctx)
 	require.NoError(err)
 
 	// Put layer in store first.
-	layerTarData, err := ioutil.ReadFile("../../testdata/files/test_layer.tar")
+	layerTarData, err := ioutil.ReadFile(path.Join(_testFileDirAlpine, "test_layer.tar"))
 	require.NoError(err)
 	err = ctx.ImageStore.Layers.CreateDownloadFile("393ccd5c4dd90344c9d725125e13f636ce0087c62f5ca89050faaacbb9e3ed5b", 0)
 	require.NoError(err)
@@ -93,7 +111,7 @@ func TestManifestExists(t *testing.T) {
 	ctx, cleanup := context.BuildContextFixture()
 	defer cleanup()
 
-	p, err := PullClientFixture(ctx, _testdata)
+	p, err := PullClientFixtureWithAlpine(ctx)
 	require.NoError(err)
 
 	exists, err := p.manifestExists(testutil.SampleImageTag)
@@ -106,7 +124,7 @@ func TestLayerExists(t *testing.T) {
 	ctx, cleanup := context.BuildContextFixture()
 	defer cleanup()
 
-	p, err := PullClientFixture(ctx, _testdata)
+	p, err := PullClientFixtureWithAlpine(ctx)
 	require.NoError(err)
 
 	exists, err := p.layerExists("sha256:" + testutil.SampleLayerTarDigest)
