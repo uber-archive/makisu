@@ -55,7 +55,7 @@ func newMountInfo() *mountInfo {
 func (info *mountInfo) initialize() error {
 	content, err := ioutil.ReadFile(info.mountsFile)
 	if os.IsNotExist(err) {
-		log.Debug("Cannot init mountmanager, /proc/mounts does not exist")
+		log.Debug("Skipping mountmanager init, /proc/mounts does not exist")
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("mountmanager initialize: %s", err)

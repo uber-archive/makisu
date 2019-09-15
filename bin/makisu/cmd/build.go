@@ -72,9 +72,9 @@ type buildCmd struct {
 func getBuildCmd() *buildCmd {
 	buildCmd := &buildCmd{
 		Command: &cobra.Command{
-			Use:                   "build -t=<image_tag> [flags] <context_path>",
+			Use: "build -t=<image_tag> [flags] <context_path>",
 			DisableFlagsInUseLine: true,
-			Short:                 "Build docker image, optionally push to registries and/or load into docker daemon",
+			Short: "Build docker image, optionally push to registries and/or load into docker daemon",
 		},
 	}
 	buildCmd.Args = func(cmd *cobra.Command, args []string) error {
@@ -245,7 +245,6 @@ func (cmd *buildCmd) Build(contextDir string) error {
 			}
 			defer rootPreserver.RestoreRoot()
 		}
-		log.Debugf("build.Cmd.Build() first call")
 		buildContext.MemFS.Remove()
 		defer buildContext.MemFS.Remove()
 	}
