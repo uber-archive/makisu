@@ -17,6 +17,7 @@ package step
 import (
 	"encoding/json"
 	"io/ioutil"
+	"path/filepath"
 	"testing"
 
 	"github.com/uber/makisu/lib/context"
@@ -129,7 +130,11 @@ func TestFromStepRegularFlow(t *testing.T) {
 	ctx, cleanup := context.BuildContextFixture()
 	defer cleanup()
 
-	p, err := registry.PullClientFixture(ctx, "../../../testdata")
+	testFileDirAlpine := "../../../testdata/files/alpine"
+	p, err := registry.PullClientFixture(ctx,
+		filepath.Join(testFileDirAlpine, "test_distribution_manifest"),
+		filepath.Join(testFileDirAlpine, "test_image_config"),
+		filepath.Join(testFileDirAlpine, "test_layer.tar"))
 	require.NoError(err)
 
 	step, err := NewFromStep("", "fakeregistry.dev/library/alpine:latest", "")
@@ -150,7 +155,7 @@ func TestFromStepRegularFlow(t *testing.T) {
 	// Generate config.
 	conf, err := step.UpdateCtxAndConfig(ctx, nil)
 	require.NoError(err)
-	expectedConfBytes, err := ioutil.ReadFile("../../../testdata/files/test_image_config")
+	expectedConfBytes, err := ioutil.ReadFile("../../../testdata/files/alpine/test_image_config")
 	require.NoError(err)
 	var expectedConf image.Config
 	require.NoError(json.Unmarshal(expectedConfBytes, &expectedConf))

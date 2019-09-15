@@ -13,28 +13,59 @@ import (
 	"github.com/uber/makisu/lib/utils/testutil"
 )
 
-// PullClientFixture returns a new registry client fixture that can handle
-// image pull requests.
-func PullClientFixture(ctx *context.BuildContext, testdataDir string) (*DockerRegistryClient, error) {
-	image := image.MustParseName(fmt.Sprintf("localhost:5055/%s:%s", testutil.SampleImageRepoName, testutil.SampleImageTag))
+const (
+	_testFileDirAlpine    = "../../testdata/files/alpine"
+	_testFileDirAlpineDup = "../../testdata/files/alpine_dup"
+)
+
+// PullClientFixture returns a new registry client fixture that can handle image
+// pull requests using a local alpine test image.
+func PullClientFixtureWithAlpine(ctx *context.BuildContext) (*DockerRegistryClient, error) {
+	return PullClientFixture(ctx,
+		filepath.Join(_testFileDirAlpine, "test_distribution_manifest"),
+		filepath.Join(_testFileDirAlpine, "test_image_config"),
+		filepath.Join(_testFileDirAlpine, "test_layer.tar"))
+}
+
+// PullClientFixture returns a new registry client fixture that can handle image
+// pull requests using a local alpine test image that contains duplicate layers.
+func PullClientFixtureWithAlpineDup(ctx *context.BuildContext) (*DockerRegistryClient, error) {
+	return PullClientFixture(ctx,
+		filepath.Join(_testFileDirAlpineDup, "test_distribution_manifest"),
+		filepath.Join(_testFileDirAlpine, "test_image_config"),
+		filepath.Join(_testFileDirAlpine, "test_layer.tar"))
+}
+
+// PullClientFixture returns a new registry client fixture that can handle image
+// pull requests.
+func PullClientFixture(
+	ctx *context.BuildContext, manifestPath, imageConfigPath, layerTarPath string,
+) (*DockerRegistryClient, error) {
+
+	imageName := image.MustParseName(
+		fmt.Sprintf("localhost:5055/%s:%s", testutil.SampleImageRepoName, testutil.SampleImageTag))
 	cli := &http.Client{
 		Transport: pullTransportFixture{
-			image:       image,
-			testdataDir: testdataDir,
+			imageName:       imageName,
+			manifestPath:    manifestPath,
+			imageConfigPath: imageConfigPath,
+			layerTarPath:    layerTarPath,
 		},
 	}
-	c := NewWithClient(ctx.ImageStore, image.GetRegistry(), image.GetRepository(), cli)
+	c := NewWithClient(ctx.ImageStore, imageName.GetRegistry(), imageName.GetRepository(), cli)
 	c.config.Security.TLS.Client.Disabled = true
 	return c, nil
 }
 
 type pullTransportFixture struct {
-	image       image.Name
-	testdataDir string
+	imageName       image.Name
+	manifestPath    string
+	imageConfigPath string
+	layerTarPath    string
 }
 
 func (t pullTransportFixture) manifestResponse() (*http.Response, error) {
-	manifest, err := os.Open(filepath.Join(t.testdataDir, "files/test_distribution_manifest"))
+	manifest, err := os.Open(t.manifestPath)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +79,7 @@ func (t pullTransportFixture) manifestResponse() (*http.Response, error) {
 }
 
 func (t pullTransportFixture) imageConfigResponse() (*http.Response, error) {
-	imageConfig, err := os.Open(filepath.Join(t.testdataDir, "files/test_image_config"))
+	imageConfig, err := os.Open(t.imageConfigPath)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +91,7 @@ func (t pullTransportFixture) imageConfigResponse() (*http.Response, error) {
 }
 
 func (t pullTransportFixture) layerResponse() (*http.Response, error) {
-	layerTar, err := os.Open(filepath.Join(t.testdataDir, "files/test_layer.tar"))
+	layerTar, err := os.Open(t.layerTarPath)
 	if err != nil {
 		return nil, err
 	}
@@ -72,8 +103,10 @@ func (t pullTransportFixture) layerResponse() (*http.Response, error) {
 }
 
 func (t pullTransportFixture) RoundTrip(r *http.Request) (*http.Response, error) {
-	repoURL := fmt.Sprintf("http://%s/v2/%s", t.image.GetRegistry(), t.image.GetRepository())
-	manifestURL := fmt.Sprintf("%s/manifests/%s", repoURL, t.image.GetTag())
+	repoURL := fmt.Sprintf(
+		"http://%s/v2/%s", t.imageName.GetRegistry(), t.imageName.GetRepository())
+	manifestURL := fmt.Sprintf(
+		"%s/manifests/%s", repoURL, t.imageName.GetTag())
 	imageConfigURL := repoURL + "/blobs/sha256:" + testutil.SampleImageConfigDigest
 	layerTarURL := repoURL + "/blobs/sha256:" + testutil.SampleLayerTarDigest
 	url := r.URL.String()

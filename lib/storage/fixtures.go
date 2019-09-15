@@ -48,7 +48,7 @@ func StoreFixture() (*ImageStore, func()) {
 func StoreFixtureWithSampleImage() (*ImageStore, func()) {
 	store, c := StoreFixture()
 
-	manifestData, err := ioutil.ReadFile("../../testdata/files/test_distribution_manifest")
+	manifestData, err := ioutil.ReadFile("../../testdata/files/alpine/test_distribution_manifest")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func StoreFixtureWithSampleImage() (*ImageStore, func()) {
 		log.Fatal(err)
 	}
 
-	imageConfigData, err := ioutil.ReadFile("../../testdata/files/test_image_config")
+	imageConfigData, err := ioutil.ReadFile("../../testdata/files/alpine/test_image_config")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -85,7 +85,7 @@ func StoreFixtureWithSampleImage() (*ImageStore, func()) {
 		log.Fatal(err)
 	}
 
-	layerTarData, err := ioutil.ReadFile("../../testdata/files/test_layer.tar")
+	layerTarData, err := ioutil.ReadFile("../../testdata/files/alpine/test_layer.tar")
 	if err != nil {
 		log.Fatal(err)
 	}

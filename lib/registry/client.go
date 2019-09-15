@@ -119,13 +119,14 @@ func (c DockerRegistryClient) Pull(tag string) (*image.DistributionManifest, err
 
 	multiError := utils.NewMultiErrors()
 	workers := concurrency.NewWorkerPool(c.config.Concurrency)
-	layerSets := make(map[string]interface{})
+	layerSet := make(map[string]interface{})
 	for _, layer := range manifest.GetLayerDigests() {
 		l := layer
-		if _, ok := layerSets[l.Hex()]; ok {
+		if _, ok := layerSet[l.Hex()]; ok {
+			// Duplicate layer.
 			continue
 		} else {
-			layerSets[l.Hex()] = struct{}{}
+			layerSet[l.Hex()] = struct{}{}
 		}
 		workers.Do(func() {
 			if _, err := c.PullLayer(l); err != nil {
@@ -172,13 +173,14 @@ func (c DockerRegistryClient) Push(tag string) error {
 
 	multiError := utils.NewMultiErrors()
 	workers := concurrency.NewWorkerPool(c.config.Concurrency)
-	layerSets := make(map[string]interface{})
+	layerSet := make(map[string]interface{})
 	for _, layer := range manifest.GetLayerDigests() {
 		l := layer
-		if _, ok := layerSets[l.Hex()]; ok {
+		if _, ok := layerSet[l.Hex()]; ok {
+			// Duplicate layer.
 			continue
 		} else {
-			layerSets[l.Hex()] = struct{}{}
+			layerSet[l.Hex()] = struct{}{}
 		}
 		workers.Do(func() {
 			if err := c.PushLayer(l); err != nil {
@@ -330,7 +332,6 @@ func (c DockerRegistryClient) pullLayerHelper(
 	}
 	defer resp.Body.Close()
 
-	// TODO: handle concurrent download of the same file.
 	if err := c.store.Layers.CreateDownloadFile(layerDigest.Hex(), 0); err != nil {
 		return nil, fmt.Errorf("create layer file: %s", err)
 	}

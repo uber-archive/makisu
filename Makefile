@@ -87,8 +87,10 @@ env: test/python/requirements.txt
 images:
 	docker build -t $(REGISTRY)/makisu:$(PACKAGE_VERSION) -f Dockerfile .
 	docker tag $(REGISTRY)/makisu:$(PACKAGE_VERSION) makisu:$(PACKAGE_VERSION)
+	docker tag $(REGISTRY)/makisu:$(PACKAGE_VERSION) makisu:latest
 	docker build -t $(REGISTRY)/makisu-alpine:$(PACKAGE_VERSION) -f Dockerfile.alpine .
 	docker tag $(REGISTRY)/makisu-alpine:$(PACKAGE_VERSION) makisu-alpine:$(PACKAGE_VERSION)
+	docker tag $(REGISTRY)/makisu-alpine:$(PACKAGE_VERSION) makisu-alpine:latest
 
 publish: images
 	docker push $(REGISTRY)/makisu:$(PACKAGE_VERSION)
