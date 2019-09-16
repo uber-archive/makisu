@@ -28,9 +28,6 @@ type Digest string
 // DigestPairs is a list of DigestPair
 type DigestPairs []*DigestPair
 
-// DigestPairMap is a map from string to DigestPairs
-type DigestPairMap map[string]DigestPairs
-
 // Hex returns the hex part of the digest.
 // Example:
 //   e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855

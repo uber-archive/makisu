@@ -14,20 +14,20 @@
 
 package keyvalue
 
-// MemStore implements Client interface. It stores cache key-value mappings
+// MockStore implements Client interface. It stores cache key-value mappings
 // in memory.
-type MemStore map[string]string
+type MockStore map[string]string
 
 // Get returns the value of a key previously set in memory.
-func (m MemStore) Get(key string) (string, error) {
+func (m MockStore) Get(key string) (string, error) {
 	return m[key], nil
 }
 
 // Put stores a key and its value in memory.
-func (m MemStore) Put(key, value string) error {
+func (m MockStore) Put(key, value string) error {
 	m[key] = value
 	return nil
 }
 
 // Cleanup does nothing, but is implemented to comply with Client interface.
-func (m MemStore) Cleanup() error { return nil }
+func (m MockStore) Cleanup() error { return nil }

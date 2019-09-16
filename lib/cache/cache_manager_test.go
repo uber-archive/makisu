@@ -49,13 +49,13 @@ func TestNoopCache(t *testing.T) {
 	require.NoError(err)
 }
 
-func TestMemStore(t *testing.T) {
+func TestMockStore(t *testing.T) {
 	require := require.New(t)
 
 	ctx, cleanup := context.BuildContextFixture()
 	defer cleanup()
 
-	kvStore := keyvalue.MemStore{}
+	kvStore := keyvalue.MockStore{}
 	cacheMgr := cache.New(ctx.ImageStore, kvStore, registry.NoopClientFixture())
 
 	_, err := cacheMgr.PullCache("cacheid1")

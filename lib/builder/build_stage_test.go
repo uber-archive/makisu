@@ -123,10 +123,10 @@ func TestPullCacheLayers(t *testing.T) {
 				allowModifyFS: false,
 			}
 
-			stage, err := newBuildStage(ctx, alias, tc.stage, image.DigestPairMap{}, opts)
+			stage, err := newBuildStage(ctx, alias, tc.stage, opts)
 			require.NoError(err)
 
-			kvStore := keyvalue.MemStore{}
+			kvStore := keyvalue.MockStore{}
 			cacheMgr := cache.New(ctx.ImageStore, kvStore, registry.NoopClientFixture())
 
 			for i, node := range stage.nodes {

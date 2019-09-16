@@ -46,12 +46,11 @@ type buildStageOptions struct {
 
 // buildStage represents a sequence of steps to build intermediate layers or a final image.
 type buildStage struct {
-	ctx               *context.BuildContext
-	alias             string
-	copyFromDirs      map[string][]string
-	nodes             []*buildNode
-	lastImageConfig   *image.Config
-	sharedDigestPairs image.DigestPairMap
+	ctx             *context.BuildContext
+	alias           string
+	copyFromDirs    map[string][]string
+	nodes           []*buildNode
+	lastImageConfig *image.Config
 
 	opts *buildStageOptions
 }
@@ -59,7 +58,7 @@ type buildStage struct {
 // newBuildStage initializes a buildStage.
 func newBuildStage(
 	baseCtx *context.BuildContext, alias string, parsedStage *dockerfile.Stage,
-	digestPairs image.DigestPairMap, planOpts *buildPlanOptions) (*buildStage, error) {
+	planOpts *buildPlanOptions) (*buildStage, error) {
 
 	// Create a new build context for the stage.
 	ctx, err := context.NewBuildContext(
@@ -74,13 +73,12 @@ func newBuildStage(
 		return nil, fmt.Errorf("new dockerfile steps: %s", err)
 	}
 
-	return newBuildStageHelper(ctx, alias, steps, digestPairs, planOpts)
+	return newBuildStageHelper(ctx, alias, steps, planOpts)
 }
 
 // newRemoteImageStage initializes a buildStage.
 func newRemoteImageStage(
-	baseCtx *context.BuildContext, alias string, digestPairs image.DigestPairMap,
-	planOpts *buildPlanOptions) (*buildStage, error) {
+	baseCtx *context.BuildContext, alias string, planOpts *buildPlanOptions) (*buildStage, error) {
 
 	// Create a new build context for the stage.
 	ctx, err := context.NewBuildContext(
@@ -105,12 +103,12 @@ func newRemoteImageStage(
 		allowModifyFS: planOpts.allowModifyFS,
 	}
 
-	return newBuildStageHelper(ctx, alias, steps, digestPairs, opts)
+	return newBuildStageHelper(ctx, alias, steps, opts)
 }
 
 func newBuildStageHelper(
 	ctx *context.BuildContext, alias string, steps []step.BuildStep,
-	digestPairs image.DigestPairMap, planOpts *buildPlanOptions) (*buildStage, error) {
+	planOpts *buildPlanOptions) (*buildStage, error) {
 
 	// Convert each step to a build node.
 	var requireOnDisk bool
@@ -134,11 +132,10 @@ func newBuildStageHelper(
 	}
 
 	stage := &buildStage{
-		ctx:               ctx,
-		copyFromDirs:      copyFromDirs,
-		alias:             alias,
-		nodes:             nodes,
-		sharedDigestPairs: digestPairs,
+		ctx:          ctx,
+		copyFromDirs: copyFromDirs,
+		alias:        alias,
+		nodes:        nodes,
 		opts: &buildStageOptions{
 			allowModifyFS: planOpts.allowModifyFS,
 			forceCommit:   planOpts.forceCommit,
@@ -172,14 +169,6 @@ func createDockerfileSteps(
 // build performs the build for that stage. There are side effects that should
 // be expected on each node within the stage.
 func (stage *buildStage) build(cacheMgr cache.Manager, lastStage, copiedFrom bool) error {
-	// Reuse the digestpairs that other stages have populated.
-	for _, node := range stage.nodes {
-		if pairs, ok := stage.sharedDigestPairs[node.CacheID()]; ok {
-			log.Infof("* Reusing digest pairs computed from earlier step %s", node.CacheID())
-			node.digestPairs = pairs
-		}
-	}
-
 	var err error
 	diffIDs := make([]image.Digest, 0)
 	histories := make([]image.History, 0)
@@ -213,11 +202,6 @@ func (stage *buildStage) build(cacheMgr cache.Manager, lastStage, copiedFrom boo
 				CreatedBy: fmt.Sprintf("makisu: %s", node.String()),
 				Author:    "makisu",
 			})
-		}
-
-		// Update the shared map of cacheID to digest pair.
-		if len(node.digestPairs) != 0 {
-			stage.sharedDigestPairs[node.CacheID()] = node.digestPairs
 		}
 	}
 	stage.lastImageConfig.Created = time.Now()

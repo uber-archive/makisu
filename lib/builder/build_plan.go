@@ -70,11 +70,10 @@ func NewBuildPlan(
 		return nil, fmt.Errorf("build alias list: %s", err)
 	}
 
-	digestPairs := make(image.DigestPairMap)
 	for i, parsedStage := range parsedStages {
 		// Add this stage to the plan.
 		stage, err := newBuildStage(
-			ctx, parsedStage.From.Alias, parsedStage, digestPairs, plan.opts)
+			ctx, parsedStage.From.Alias, parsedStage, plan.opts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert parsed stage: %s", err)
 		}
@@ -86,7 +85,7 @@ func NewBuildPlan(
 		plan.stages[i] = stage
 	}
 
-	if err := plan.handleCopyFromDirs(aliases, digestPairs); err != nil {
+	if err := plan.handleCopyFromDirs(aliases); err != nil {
 		return nil, fmt.Errorf("handle cross refs: %s", err)
 	}
 	return plan, nil
@@ -95,9 +94,7 @@ func NewBuildPlan(
 // handleCopyFromDirs goes through all of the stages in the build plan and looks
 // at the `COPY --from` steps to make sure they are valid. If the --from source
 // is another image, we create a new image stage in the build plan.
-func (plan *BuildPlan) handleCopyFromDirs(
-	aliases map[string]bool, digestPairs image.DigestPairMap) error {
-
+func (plan *BuildPlan) handleCopyFromDirs(aliases map[string]bool) error {
 	for _, stage := range plan.stages {
 		for alias, dirs := range stage.copyFromDirs {
 			if _, ok := aliases[alias]; !ok {
@@ -110,7 +107,7 @@ func (plan *BuildPlan) handleCopyFromDirs(
 					return fmt.Errorf("copy from nonexistent stage %s", alias)
 				}
 				remoteImageStage, err := newRemoteImageStage(
-					plan.baseCtx, alias, digestPairs, plan.opts)
+					plan.baseCtx, alias, plan.opts)
 				if err != nil {
 					return fmt.Errorf("new image stage: %s", err)
 				}
@@ -135,7 +132,7 @@ func buildAliases(stages dockerfile.Stages) (map[string]bool, error) {
 			if _, ok := aliases[parsedStage.From.Alias]; ok {
 				return nil, fmt.Errorf("duplicate stage alias: %s", parsedStage.From.Alias)
 			} else if _, err := strconv.Atoi(parsedStage.From.Alias); err == nil {
-				// Docker would return `name can't start with a number or contain symbols`
+				// Docker would return `name can't start with a number or contain symbols`.
 				return nil, fmt.Errorf("stage alias cannot be a number: %s", parsedStage.From.Alias)
 			}
 		} else {
@@ -148,13 +145,6 @@ func buildAliases(stages dockerfile.Stages) (map[string]bool, error) {
 
 // Execute executes all build stages in order.
 func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
-	// Execute pre-build procedures. Try to pull some reusable layers from the
-	// registry.
-	// TODO: Pull in parallel
-	for _, stage := range plan.stages {
-		stage.pullCacheLayers(plan.cacheMgr)
-	}
-
 	for alias, stage := range plan.remoteImageStages {
 		// Building that pseudo stage will unpack the image directly into the
 		// stage's cross stage directory.
@@ -173,6 +163,9 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 	for k := 0; k < len(plan.stages); k++ {
 		currStage = plan.stages[k]
 		log.Infof("* Stage %d/%d : %s", k+1, len(plan.stages), currStage.String())
+
+		// Try to pull reusable layers cached from previous builds.
+		currStage.pullCacheLayers(plan.cacheMgr)
 
 		lastStage := k == len(plan.stages)-1
 		_, copiedFrom := plan.copyFromDirs[currStage.alias]
