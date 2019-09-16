@@ -58,8 +58,8 @@ cbins:
 
 $(ALL_SRC): ;
 
-# TODO(pourchet): Remove this hack to make dep more reliable. For some reason `go mod download` fails
-# sometimes on TravisCI, so run it a few times if it fails.
+# TODO(pourchet): Remove this hack to make dep more reliable. For some reason `go mod download`
+# fails sometimes on TravisCI, so run it a few times if it fails.
 vendor: go.mod go.sum
 	go mod download || go mod download || go mod download
 	go mod vendor
@@ -75,6 +75,8 @@ mocks: ext-tools
 	@echo "Generating mocks"
 	mkdir -p mocks/net/http
 	$(EXT_TOOLS_DIR)/mockgen -destination=mocks/net/http/mockhttp.go -package=mockhttp net/http RoundTripper
+	mkdir -p mocks/lib/registry
+	$(EXT_TOOLS_DIR)/mockgen -destination=mocks/lib/registry/mockclient.go -package=mockregistry github.com/uber/makisu/lib/registry Client
 
 env: test/python/requirements.txt
 	[ -d env ] || virtualenv --setuptools env

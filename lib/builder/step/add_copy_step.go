@@ -90,8 +90,9 @@ func (s *addCopyStep) ContextDirs() (string, []string) {
 	return s.fromStage, s.fromPaths
 }
 
-// SetCacheID sets the cache ID of the step given a seed SHA256 value. Calculates the
-// ID randomly if copying from another stage, else checksums the file contents.
+// SetCacheID sets the cache ID of the step given a seed SHA256 value.
+// Calculates the ID randomly if copying from another stage, else checksums the
+// file contents.
 func (s *addCopyStep) SetCacheID(ctx *context.BuildContext, seed string) error {
 	if s.fromStage != "" {
 		// It is copying from a previous stage, return random bytes.
@@ -120,7 +121,8 @@ func (s *addCopyStep) SetCacheID(ctx *context.BuildContext, seed string) error {
 	return nil
 }
 
-// Execute executes the add/copy step. If modifyFS is true, actually performs the on-disk copy.
+// Execute executes the add/copy step. If modifyFS is true, actually performs
+// the on-disk copy.
 func (s *addCopyStep) Execute(ctx *context.BuildContext, modifyFS bool) (err error) {
 	sourceRoot := s.contextRootDir(ctx)
 	sources := s.resolveFromPaths(ctx)
@@ -188,7 +190,9 @@ func (s *addCopyStep) contextRootDir(ctx *context.BuildContext) string {
 	return ctx.ContextDir
 }
 
-func checksumPathContents(ctx *context.BuildContext, path string, fi os.FileInfo, checksum io.Writer) error {
+func checksumPathContents(
+	ctx *context.BuildContext, path string, fi os.FileInfo, checksum io.Writer) error {
+
 	// Skip special files.
 	if utils.IsSpecialFile(fi) {
 		if fi.IsDir() {

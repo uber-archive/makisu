@@ -66,13 +66,13 @@ func (s *baseStep) SetCacheID(ctx *context.BuildContext, seed string) error {
 	return nil
 }
 
-// SetWorkingDir set the working dir of the current step
-// Exporting the logic to this method allows for an easier `ApplyCtxAndConfig` overwriting
+// SetWorkingDir set the working dir of the current step.
+// Exporting the logic to this method allows overwriting `ApplyCtxAndConfig`.
 func (s *baseStep) SetWorkingDir(
 	ctx *context.BuildContext, imageConfig *image.Config) error {
 	s.workingDir = ctx.RootDir // Default workingDir to root.
 
-	// Set working dir from imageConfig
+	// Set working dir from imageConfig.
 	if imageConfig != nil && imageConfig.Config.WorkingDir != "" {
 		s.workingDir = os.ExpandEnv(imageConfig.Config.WorkingDir)
 	}

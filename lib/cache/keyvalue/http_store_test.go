@@ -20,10 +20,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/uber/makisu/mocks/net/http"
+
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
-
-	"github.com/uber/makisu/mocks/net/http"
 )
 
 const _testURL = "http://localhost:0/test"

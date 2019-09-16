@@ -65,13 +65,24 @@ func (manager noopCacheManager) WaitForPush() error {
 // It needs an additional key-value store for cache key/layer name lookup.
 // It implements CacheManager interface.
 type registryCacheManager struct {
-	imageStore     *storage.ImageStore
-	kvStore        keyvalue.Store
-	registryClient registry.Client
-
 	sync.Mutex
 	wg         sync.WaitGroup
 	pushErrors utils.MultiErrors
+
+	// imageStore manages local files.
+	imageStore *storage.ImageStore
+
+	// kvStore stores cache key-value pairs in an external storage.
+	kvStore keyvalue.Store
+
+	// memKVStore stores cache key-value pairs in memory. This is specifically
+	// needed for the case where a layer is still being pushed, thus kvStore
+	// doesn't contain the key-value pairs yet, but the layer can be reused for
+	// the following stage.
+	memKVStore map[string]string
+
+	// registryClient is the client for docker registry.
+	registryClient registry.Client
 }
 
 var (
@@ -80,8 +91,8 @@ var (
 	ErrorLayerNotFound = errors.Errorf("layer not found in cache")
 )
 
-// New returns a new cache manager that interacts with the registry
-// passed in as well as the local filesystem through the image store.
+// New returns a new cache manager that interacts with the registry passed in as
+// well as the local filesystem through the image store.
 // By default the registry field is left blank.
 func New(
 	imageStore *storage.ImageStore, kvStore keyvalue.Store,
@@ -94,34 +105,41 @@ func New(
 	return &registryCacheManager{
 		imageStore:     imageStore,
 		kvStore:        kvStore,
+		memKVStore:     make(map[string]string),
 		registryClient: registryClient,
 	}
 }
 
 // PullCache tries to fetch the layer corresponding to the cache ID.
 // If the layer is not found, it returns ErrorLayerNotFound.
-// This function is blocking
+// This function is blocking.
 func (manager *registryCacheManager) PullCache(cacheID string) (*image.DigestPair, error) {
 	manager.Lock()
 	defer manager.Unlock()
 
 	var entry string
 	var err error
-	for i := 0; ; i++ {
-		entry, err = manager.kvStore.Get(_cachePrefix + cacheID)
-		if err == nil && entry != "" {
-			break
-		} else if entry == "" {
-			return nil, errors.Wrapf(ErrorLayerNotFound, "find layer %s", cacheID)
-		} else {
-			if i >= 2 {
-				return nil, fmt.Errorf("query cache id %s: %s", cacheID, err)
+	key := _cachePrefix + cacheID
+	entry, ok := manager.memKVStore[key]
+	if ok {
+		log.Infof("Found mapping in cacheID mem kv store: %s => %s", cacheID, entry)
+	} else {
+		for i := 0; ; i++ {
+			entry, err = manager.kvStore.Get(key)
+			if err == nil && entry != "" {
+				break
+			} else if entry == "" {
+				return nil, errors.Wrapf(ErrorLayerNotFound, "find layer %s", cacheID)
+			} else {
+				if i >= 2 {
+					return nil, fmt.Errorf("query cache id %s: %s", cacheID, err)
+				}
+				log.Info("Retrying query for cacheID %s", cacheID)
+				time.Sleep(time.Second)
 			}
-			log.Info("Retrying query for cacheID %s", cacheID)
-			time.Sleep(time.Second)
 		}
+		log.Infof("Found mapping in cacheID kv store: %s => %s", cacheID, entry)
 	}
-	log.Infof("Found mapping in cacheID KVStore: %s => %s", cacheID, entry)
 
 	if entry == _cacheEmptyEntry {
 		return nil, nil
@@ -140,6 +158,7 @@ func (manager *registryCacheManager) PullCache(cacheID string) (*image.DigestPai
 		if manager.registryClient == nil {
 			return nil, fmt.Errorf("registry client not configured to pull cache")
 		}
+
 		// Pull layer from docker registry.
 		info, err = manager.registryClient.PullLayer(gzipDigest)
 		if err != nil {
@@ -164,6 +183,13 @@ func (manager *registryCacheManager) PullCache(cacheID string) (*image.DigestPai
 
 // PushCache tries to push an image layer asynchronously.
 func (manager *registryCacheManager) PushCache(cacheID string, digestPair *image.DigestPair) error {
+	manager.Lock()
+	defer manager.Unlock()
+
+	key := _cachePrefix + cacheID
+	entry := createEntry(digestPair)
+	manager.memKVStore[key] = entry
+
 	if manager.registryClient == nil {
 		manager.pushErrors.Add(fmt.Errorf("registry client not configured to push cache"))
 		return nil
@@ -174,9 +200,6 @@ func (manager *registryCacheManager) PushCache(cacheID string, digestPair *image
 	go func() {
 		defer manager.wg.Done()
 
-		manager.Lock()
-		defer manager.Unlock()
-
 		if digestPair != nil {
 			if err := manager.registryClient.PushLayer(digestPair.GzipDescriptor.Digest); err != nil {
 				manager.pushErrors.Add(fmt.Errorf("push layer %s: %s", digestPair.GzipDescriptor.Digest, err))
@@ -184,7 +207,9 @@ func (manager *registryCacheManager) PushCache(cacheID string, digestPair *image
 			}
 		}
 
-		entry := createEntry(digestPair)
+		manager.Lock()
+		defer manager.Unlock()
+
 		if err := manager.kvStore.Put(_cachePrefix+cacheID, entry); err != nil {
 			manager.pushErrors.Add(fmt.Errorf("store tag mapping (%s,%s): %s", cacheID, entry, err))
 			return
