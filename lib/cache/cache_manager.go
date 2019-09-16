@@ -200,15 +200,15 @@ func (manager *registryCacheManager) PushCache(cacheID string, digestPair *image
 	go func() {
 		defer manager.wg.Done()
 
-		manager.Lock()
-		defer manager.Unlock()
-
 		if digestPair != nil {
 			if err := manager.registryClient.PushLayer(digestPair.GzipDescriptor.Digest); err != nil {
 				manager.pushErrors.Add(fmt.Errorf("push layer %s: %s", digestPair.GzipDescriptor.Digest, err))
 				return
 			}
 		}
+
+		manager.Lock()
+		defer manager.Unlock()
 
 		if err := manager.kvStore.Put(_cachePrefix+cacheID, entry); err != nil {
 			manager.pushErrors.Add(fmt.Errorf("store tag mapping (%s,%s): %s", cacheID, entry, err))
