@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Cache Configuration - Makisu</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Cache Configuration";
+    var mkdocs_page_input_path = "CACHE.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Makisu</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1 current">
+		
+    <a class="current" href="./">Cache Configuration</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l2"><a href="#cache-configuration">Cache Configuration</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#local-file-cache">Local file cache</a></li>
+        
+            <li><a class="toctree-l3" href="#redis-cache">Redis cache</a></li>
+        
+            <li><a class="toctree-l3" href="#http-cache">HTTP cache</a></li>
+        
+            <li><a class="toctree-l3" href="#explicit-commit-and-cache">Explicit commit and cache</a></li>
+        
+        </ul>
+    
+
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../CONTRIBUTING/">Contributing To Makisu</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../REGISTRY/">Registry configuration</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Makisu</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Cache Configuration</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="cache-configuration">Cache Configuration</h1>
+<p>Makisu supports distributed cache, which can significantly reduce build time, by up to 90% for some of Uber's code repos.
+Makisu caches docker image layers both locally and in docker registry (if --push parameter is provided).
+It uses a separate key-value store to map lines of a Dockerfile to names of the layers.</p>
+<p>For cache key-value store, Makisu supports 3 choices:
+local file cache, redis based distributed cache, and generic HTTP based distributed cache.</p>
+<h2 id="local-file-cache">Local file cache</h2>
+<p>If no cache options are provided, local file cache is used by default.
+To configure local file cache TTL:</p>
+<pre><code>--local-cache-ttl duration        Time-To-Live for local cache (default 168h0m0s)
+</code></pre>
+
+<p>To disable it, set ttl to 0s.</p>
+<h2 id="redis-cache">Redis cache</h2>
+<p>To configure redis cache, use the following options:</p>
+<pre><code>--redis-cache-addr string         The address of a redis server for cacheID to layer sha mapping
+--redis-cache-password string           The password of the Redis server, should match 'requirepass' in redis.conf
+--redis-cache-ttl duration        Time-To-Live for redis cache (default 168h0m0s)
+</code></pre>
+
+<h2 id="http-cache">HTTP cache</h2>
+<p>To configure HTTP cache, use the following options:</p>
+<pre><code>--http-cache-addr string          The address of the http server for cacheID to layer sha mapping
+--http-cache-header stringArray   Request header for http cache server. Format is &quot;--http-cache-header &lt;header&gt;:&lt;value&gt;&quot;
+</code></pre>
+
+<h2 id="explicit-commit-and-cache">Explicit commit and cache</h2>
+<p>By default, Makisu will cache each directive in a Dockerfile. To avoid committing and caching everything, the layer cache can be further optimized via explicit caching with the <code>--commit=explicit</code> flag.
+Dockerfile directives may then be manually cached using the <code>#!COMMIT</code> annotation:</p>
+<pre><code class="Dockerfile">FROM node:8.1.3
+
+ADD package.json package.json
+ADD pre-build.sh
+
+# A bunch of pre-install steps here.
+...
+...
+...
+
+# A step to be cached. A single layer will be committed and cached here on top of base image.
+RUN npm install #!COMMIT
+
+...
+...
+...
+
+# The last step of the last stage always commit by default, generating and caching another layer.
+ENTRYPOINT [&quot;/bin/bash&quot;]
+</code></pre>
+
+<p>In this example, only 2 additional layers on top of base image will be generated and cached.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../CONTRIBUTING/" class="btn btn-neutral float-right" title="Contributing To Makisu">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href=".." class="btn btn-neutral" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href=".." style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../CONTRIBUTING/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+
+</body>
+</html>

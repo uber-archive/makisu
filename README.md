@@ -1,4 +1,5 @@
-<p align="center"><img src="assets/logo/Lockup.svg" width="700" title="Makisu Logo"></p>
+
+![Makisu](assets/logo/Lockup.svg "Makisu Logo")
 
 [![Build Status](https://travis-ci.com/uber/makisu.svg?branch=master)](https://travis-ci.com/uber/makisu)
 [![GoReportCard](https://goreportcard.com/badge/github.com/uber/makisu)](https://goreportcard.com/report/github.com/uber/makisu)
@@ -7,6 +8,7 @@
 Makisu is a fast and flexible Docker image build tool designed for unprivileged containerized environments such as Mesos or Kubernetes.
 
 Some highlights of Makisu:
+
 * Requires no elevated privileges or containerd/Docker daemon, making the build process portable.
 * Uses a distributed layer cache to improve performance across a build cluster.
 * Provides control over generated layers with a new optional keyword [`#!COMMIT`](#explicit-commit-and-cache), reducing the number of layers in images.
@@ -119,7 +121,7 @@ Then connect Makisu to redis cache by passing `--redis-cache-addr=redis:6379` ar
 If the Redis server is password-protected, use `--redis-cache-password=password` argument.
 Cache has a 7 day TTL by default, which can be configured with `--local-cache-ttl=7d` argument.
 
-For more options on cache, please see [documentation](docs/CACHE.md).
+For more options on cache, please see [Cache](docs/CACHE.md).
 
 ## Explicit commit and cache
 

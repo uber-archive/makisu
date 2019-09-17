@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Registry configuration - Makisu</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Registry configuration";
+    var mkdocs_page_input_path = "REGISTRY.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Makisu</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="..">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../CACHE/">Cache Configuration</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../CONTRIBUTING/">Contributing To Makisu</a>
+	    </li>
+          
+            <li class="toctree-l1 current">
+		
+    <a class="current" href="./">Registry configuration</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l2"><a href="#registry-configuration">Registry configuration</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#general-info">General info</a></li>
+        
+            <li><a class="toctree-l3" href="#examples">Examples</a></li>
+        
+            <li><a class="toctree-l3" href="#cred-helper">Cred helper</a></li>
+        
+            <li><a class="toctree-l3" href="#handling-blob_upload_invalid-and-blob_upload_unknown-errors">Handling BLOB_UPLOAD_INVALID and BLOB_UPLOAD_UNKNOWN errors</a></li>
+        
+        </ul>
+    
+
+    </ul>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Makisu</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Registry configuration</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="registry-configuration">Registry configuration</h1>
+<h2 id="general-info">General info</h2>
+<p>Makisu supports TLS and Basic Auth with Docker registry (Docker Hub, GCR, and private registries).
+By default, TLS is enabled and makisu uses a list of common root CA certs to authenticate registry.</p>
+<pre><code class="go">// Config contains Docker registry client configuration.
+type Config struct {
+  Concurrency int           `yaml:&quot;concurrency&quot;`
+  Timeout     time.Duration `yaml:&quot;timeout&quot;`
+  Retries     int           `yaml:&quot;retries&quot;`
+  PushRate    float64       `yaml:&quot;push_rate&quot;`
+  // If not specify, a default chunk size will be used.
+  // Set it to -1 to turn off chunk upload.
+  // NOTE: gcr does not support chunked upload.
+  PushChunk int64           `yaml:&quot;push_chunk&quot;`
+  Security  security.Config{
+    TLS       *httputil.TLSConfig `yaml:&quot;tls&quot;`
+    BasicAuth *types.AuthConfig   `yaml:&quot;basic&quot;`
+  }`yaml:&quot;security&quot;`
+}
+</code></pre>
+
+<p>Configs can be passed in through the <code>--registry-config</code> flag, either as filepath, or as a raw json blob :</p>
+<pre><code>--registry-config='{&quot;gcr.io&quot;: {&quot;makisu-project/*&quot;: {&quot;push_chunk&quot;: -1, &quot;security&quot;: {&quot;basic&quot;: {&quot;username&quot;: &quot;_json_key&quot;, &quot;password&quot;: &quot;&lt;escaped key here&gt;&quot;}}}}}'
+</code></pre>
+
+<p>Consider using the great tool <a href="https://github.com/kislyuk/yq">yq</a> to convert your yaml configuration into the blob that can be passed in.</p>
+<h2 id="examples">Examples</h2>
+<p>For the convenience to work with all public Docker Hub repositories including library/.*, a default config is provided:</p>
+<pre><code class="yaml">index.docker.io:
+  .*:
+    security:
+      tls:
+        client:
+          disabled: false
+      // Docker Hub requires basic auth with empty username and password for all public repositories.
+      basic:
+        username: &quot;&quot;
+        password: &quot;&quot;
+</code></pre>
+
+<p>Example config for GCR:</p>
+<pre><code class="yaml">&quot;gcr.io&quot;:
+  &quot;makisu-project/*&quot;:
+    push_chunk: -1
+    security:
+      basic:
+        username: _json_key
+        password: |-
+            {
+                &lt;json here&gt;
+            }
+</code></pre>
+
+<p>To configure your own registry endpoint, pass a custom configuration file to Makisu with <code>--registry-config=${PATH_TO_CONFIG}</code>.:</p>
+<pre><code class="yaml">[registry]:
+  [repo]:
+    security:
+      tls:
+        client:
+          disabled: false
+          cert:
+            path: &lt;path to cert&gt;
+          key:
+            path: &lt;path to key&gt;
+          passphrase
+            path: &lt;path to passphrase&gt;
+        ca:
+          cert:
+            path: &lt;path to ca certs, appends to system certs. A list of common ca certs are used if empty&gt;
+      basic:
+        username: &lt;username&gt;
+        password: &lt;password&gt;
+</code></pre>
+
+<p>Note: For the cert path, you can point to a directory containing your certificates. Makisu will then use all of the certs in that
+directory for TLS verification.</p>
+<h2 id="cred-helper">Cred helper</h2>
+<p>Makisu images (&gt;= 0.1.8) contains <a href="https://github.com/awslabs/amazon-ecr-credential-helper">ECR</a> and <a href="https://github.com/GoogleCloudPlatform/docker-credential-gcr">GCR</a> cred helper binaries.
+For ECR, you can export the following <a href="https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-envvars.html">variables</a> and you might need to export <code>AWS_SDK_LOAD_CONFIG=true</code>.</p>
+<p>If you encounter a certificate validation errors (ex: <code>x509: certificate signed by unknown authority</code>) you might want to export the following variable <code>SSL_CERT_DIR=/makisu-internal/certs/</code>.</p>
+<p>Example AWS ECR config:</p>
+<pre><code class="yaml">&quot;someawsregistry&quot;:
+  &quot;my-project/*&quot;:
+    push_chunk: -1
+    security:
+      credsStore: ecr-login
+</code></pre>
+
+<p>Example GCR config:</p>
+<pre><code class="yaml">&quot;gcr.io&quot;:
+  &quot;my-project/*&quot;:
+    push_chunk: -1
+    security:
+      credsStore: gcr
+</code></pre>
+
+<p>NB: You need to put your config files (ex: aws config/credentials file) inside the /makisu-internal/ dir (and use env variable to specify their locations) in order for the helpers to find and use them when building your images.</p>
+<h3 id="using-another-cred-helper">Using another cred helper</h3>
+<p>For now makisu handles ECR and GCR as lib instead of calling their binaries.
+If you want to use another docker credentials helper, add its binary in the directory <code>/makisu-internal</code>, with a name matching <code>docker-credential-&lt;cred-helper-name&gt;</code>, then in your configuration:</p>
+<pre><code class="yaml">&quot;example.com&quot;:
+  &quot;my-project/*&quot;:
+    security:
+      credsStore: &lt;cred-helper-name&gt;
+</code></pre>
+
+<h2 id="handling-blob_upload_invalid-and-blob_upload_unknown-errors">Handling <code>BLOB_UPLOAD_INVALID</code> and <code>BLOB_UPLOAD_UNKNOWN</code> errors</h2>
+<p>If you encounter these errors when pushing your image to a registry, try to use the <code>push_chunk: -1</code> option (some registries, despite implementing registry v2 do not support chunked upload, ECR and GCR being one example).</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="../CONTRIBUTING/" class="btn btn-neutral" title="Contributing To Makisu"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../CONTRIBUTING/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+
+</body>
+</html>
