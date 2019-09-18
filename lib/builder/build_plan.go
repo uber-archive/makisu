@@ -23,6 +23,7 @@ import (
 	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/log"
 	"github.com/uber/makisu/lib/parser/dockerfile"
+	"github.com/uber/makisu/lib/utils/stringset"
 )
 
 type buildPlanOptions struct {
@@ -39,7 +40,7 @@ type BuildPlan struct {
 	replicas     []image.Name
 	cacheMgr     cache.Manager
 	stages       []*buildStage
-	stageAliases map[string]bool
+	stageAliases map[string]struct{}
 
 	opts *buildPlanOptions
 }
@@ -85,13 +86,30 @@ func NewBuildPlan(
 		plan.stages[i] = stage
 	}
 
+	if err := plan.handleCopyFromDirs(aliases); err != nil {
+		return nil, fmt.Errorf("handle cross refs: %s", err)
+	}
+
 	return plan, nil
+}
+
+// handleCopyFromDirs goes through all of the stages in the build plan and looks
+// at the `COPY --from` steps to make sure they are valid.
+func (plan *BuildPlan) handleCopyFromDirs(aliases map[string]struct{}) error {
+	for _, stage := range plan.stages {
+		for alias, dirs := range stage.copyFromDirs {
+			plan.copyFromDirs[alias] = stringset.FromSlice(
+				append(plan.copyFromDirs[alias], dirs...),
+			).ToSlice()
+		}
+	}
+	return nil
 }
 
 // buildAliases mutates the list of stages to assign default aliases.
 // Default aliases will be integers starting from 0.
-func buildAliases(stages dockerfile.Stages) (map[string]bool, error) {
-	aliases := make(map[string]bool)
+func buildAliases(stages dockerfile.Stages) (map[string]struct{}, error) {
+	aliases := make(map[string]struct{})
 	for i, parsedStage := range stages {
 		// Check for stage alias collision if alias isn't empty.
 		if parsedStage.From.Alias != "" {
@@ -104,7 +122,7 @@ func buildAliases(stages dockerfile.Stages) (map[string]bool, error) {
 		} else {
 			parsedStage.From.Alias = strconv.Itoa(i)
 		}
-		aliases[parsedStage.From.Alias] = true
+		aliases[parsedStage.From.Alias] = struct{}{}
 	}
 	return aliases, nil
 }
@@ -156,8 +174,10 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 }
 
 func (plan *BuildPlan) executeStage(stage *buildStage, lastStage, copiedFrom bool) error {
-	// Handle `COPY --from=<another_image>`. This case will not work if modifyfs
-	// is set to false, but that combination was rejected in NewPlan().
+	// Handle `COPY --from=<alias>` where alias is not a stage but an image.
+	// Create and execute an fake stage with only FROM. This case will not work
+	// if modifyfs is set to false, but that combination was rejected in
+	// NewPlan().
 	// TODO: This should be done at step level.
 	for alias, _ := range stage.copyFromDirs {
 		if _, ok := plan.stageAliases[alias]; !ok {
