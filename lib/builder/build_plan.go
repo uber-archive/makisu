@@ -195,11 +195,11 @@ func (plan *BuildPlan) executeStage(stage *buildStage, lastStage, copiedFrom boo
 				return fmt.Errorf("build stage %s: %s", stage.alias, err)
 			}
 
-			if err := stage.checkpoint(plan.copyFromDirs[alias]); err != nil {
+			if err := remoteImageStage.checkpoint(plan.copyFromDirs[alias]); err != nil {
 				return fmt.Errorf("checkpoint stage %s: %s", stage.alias, err)
 			}
 
-			if err := stage.cleanup(); err != nil {
+			if err := remoteImageStage.cleanup(); err != nil {
 				return fmt.Errorf("cleanup stage %s: %s", stage.alias, err)
 			}
 		}
