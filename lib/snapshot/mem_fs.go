@@ -258,8 +258,8 @@ func (fs *MemFS) AddLayerByScan(w *tar.Writer) error {
 
 // AddLayerByCopyOps creates an in-memory layer by performing copy operations
 // on the given src-dst pairs. The file system is not modified during this
-// operation. The resulting layer is merged in memory and written to the
-// tar writer.
+// operation. The resulting layer is merged in memory and written to the tar
+// writer.
 func (fs *MemFS) AddLayerByCopyOps(cs []*CopyOperation, w *tar.Writer) error {
 	fs.sync()
 	l := newMemLayer()

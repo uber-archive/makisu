@@ -62,7 +62,8 @@ func tarAndGzipDiffs(ctx *context.BuildContext, writeDiffs func(*tar.Writer) err
 	return gzipDigester, tarDigester, tempGzipTar.Name(), nil
 }
 
-// commitLayer commits a layer by either scan or copy operations, depending on the context.
+// commitLayer commits a layer by either scan or copy operations, depending on
+// the context.
 func commitLayer(ctx *context.BuildContext) ([]*image.DigestPair, error) {
 	var writeDiffs func(w *tar.Writer) error
 	if ctx.MustScan {
