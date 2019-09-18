@@ -51,7 +51,7 @@ func NewBuildPlan(
 	ctx *context.BuildContext, target image.Name, replicas []image.Name, cacheMgr cache.Manager,
 	parsedStages []*dockerfile.Stage, allowModifyFS, forceCommit bool) (*BuildPlan, error) {
 
-	aliases, err := c(parsedStages)
+	aliases, err := buildAliases(parsedStages)
 	if err != nil {
 		return nil, fmt.Errorf("build alias list: %s", err)
 	}
