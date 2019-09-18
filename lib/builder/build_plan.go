@@ -175,7 +175,7 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 
 func (plan *BuildPlan) executeStage(stage *buildStage, lastStage, copiedFrom bool) error {
 	// Handle `COPY --from=<alias>` where alias is not a stage but an image.
-	// Create and execute an fake stage with only FROM. This case will not work
+	// Create and execute a fake stage with only FROM. This case will not work
 	// if modifyfs is set to false, but that combination was rejected in
 	// NewPlan().
 	// TODO: This should be done at step level.
