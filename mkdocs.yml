@@ -1,2 +1,7 @@
 site_name: Makisu
+nav:
+  - Home: index.md
+  - Cache: CACHE.md
+  - Registry: REGISTRY.md
+  - Contributing: CONTRIBUTING.md
 theme: readthedocs
