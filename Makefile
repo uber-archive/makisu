@@ -140,3 +140,7 @@ clean:
 	git clean -fd
 	-rm -rf vendor ext-tools env
 	-rm bin/makisu/makisu
+
+.PHONY: docs
+docs:
+	@./scripts/mkdocs.sh -q serve

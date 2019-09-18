@@ -95,7 +95,7 @@ the build, using that volume as its build context.
 ### Creating registry configuration
 
 Makisu needs registry configuration mounted in to push to a secure registry.
-The config format is described in [documentation](docs/REGISTRY.md).
+The config format is described in [documentation](REGISTRY.md).
 After creating configuration file on local filesystem, run the following command to create the k8s secret:
 ```shell
 $ kubectl create secret generic docker-registry-config --from-file=./registry.yaml
@@ -121,7 +121,7 @@ Then connect Makisu to redis cache by passing `--redis-cache-addr=redis:6379` ar
 If the Redis server is password-protected, use `--redis-cache-password=password` argument.
 Cache has a 7 day TTL by default, which can be configured with `--local-cache-ttl=7d` argument.
 
-For more options on cache, please see [Cache](docs/CACHE.md).
+For more options on cache, please see [Cache](CACHE.md).
 
 ## Explicit commit and cache
 
@@ -170,7 +170,7 @@ Registry configs can be passed in through the `--registry-config` flag, either a
 ```
 --registry-config='{"gcr.io": {"makisu-project/*": {"push_chunk": -1, "security": {"basic": {"username": "_json_key", "password": "<escaped key here>"}}}}}'
 ```
-For more details on configuring Makisu to work with your registry client, see the [documentation](docs/REGISTRY.md).
+For more details on configuring Makisu to work with your registry client, see the [documentation](REGISTRY.md).
 
 # Comparison With Similar Tools
 
@@ -191,7 +191,7 @@ However, BuildKit and img still need seccomp and AppArmor to be disabled to laun
 
 # Contributing
 
-Please check out our [guide](docs/CONTRIBUTING.md).
+Please check out our [guide](CONTRIBUTING.md).
 
 # Contact
 

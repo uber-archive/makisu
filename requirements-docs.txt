@@ -1,0 +1,11 @@
+backports-abc==0.5
+Click==7.0
+Jinja2==2.10.1
+livereload==2.6.1
+Markdown==3.1.1
+MarkupSafe==1.1.1
+mkdocs==1.0.4
+PyYAML==5.1.2
+singledispatch==3.4.0.3
+six==1.12.0
+tornado==5.1.1

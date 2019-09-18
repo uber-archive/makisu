@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="None">
+  
+  <link rel="shortcut icon" href="img/favicon.ico">
+  <title>Home - Makisu</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Home";
+    var mkdocs_page_input_path = "index.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="js/jquery-2.1.1.min.js" defer></script>
+  <script src="js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="." class="icon icon-home"> Makisu</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1 current">
+		
+    <a class="current" href=".">Home</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l2"><a href="#building-makisu">Building Makisu</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#building-makisu-image">Building Makisu image</a></li>
+        
+            <li><a class="toctree-l3" href="#building-makisu-binary-and-build-simple-images">Building Makisu binary and build simple images</a></li>
+        
+        </ul>
+    
+
+    <li class="toctree-l2"><a href="#running-makisu">Running Makisu</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#makisu-anywhere">Makisu anywhere</a></li>
+        
+            <li><a class="toctree-l3" href="#makisu-on-kubernetes">Makisu on Kubernetes</a></li>
+        
+        </ul>
+    
+
+    <li class="toctree-l2"><a href="#using-cache">Using cache</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#configuring-distributed-cache">Configuring distributed cache</a></li>
+        
+            <li><a class="toctree-l3" href="#explicit-commit-and-cache">Explicit commit and cache</a></li>
+        
+        </ul>
+    
+
+    <li class="toctree-l2"><a href="#configuring-docker-registry">Configuring Docker Registry</a></li>
+    
+
+    <li class="toctree-l2"><a href="#comparison-with-similar-tools">Comparison With Similar Tools</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#bazel">Bazel</a></li>
+        
+            <li><a class="toctree-l3" href="#kaniko">Kaniko</a></li>
+        
+            <li><a class="toctree-l3" href="#buildkit-img">BuildKit / img</a></li>
+        
+        </ul>
+    
+
+    <li class="toctree-l2"><a href="#contributing">Contributing</a></li>
+    
+
+    <li class="toctree-l2"><a href="#contact">Contact</a></li>
+    
+
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="CACHE/">Cache Configuration</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="CONTRIBUTING/">Contributing To Makisu</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="REGISTRY/">Registry configuration</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href=".">Makisu</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Home</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <p><img alt="Makisu" src="assets/logo/Lockup.svg" title="Makisu Logo" /></p>
+<p><a href="https://travis-ci.com/uber/makisu"><img alt="Build Status" src="https://travis-ci.com/uber/makisu.svg?branch=master" /></a>
+<a href="https://goreportcard.com/report/github.com/uber/makisu"><img alt="GoReportCard" src="https://goreportcard.com/badge/github.com/uber/makisu" /></a>
+<a href="https://github.com/uber/makisu/releases"><img alt="Github Release" src="https://img.shields.io/github/release/uber/makisu.svg" /></a></p>
+<p>Makisu is a fast and flexible Docker image build tool designed for unprivileged containerized environments such as Mesos or Kubernetes.</p>
+<p>Some highlights of makisu:
+* Requires no elevated privileges or containerd/Docker daemon, making the build process portable.
+* Uses a distributed layer cache to improve performance across a build cluster.
+* Provides control over generated layers with a new optional keyword <a href="#explicit-commit-and-cache"><code>#!COMMIT</code></a>, reducing the number of layers in images.
+* Is Docker compatible. Note, the Dockerfile parser in Makisu is opinionated in some scenarios. More details can be found <a href="lib/parser/dockerfile/README.md">here</a>.</p>
+<p>Makisu has been in use at Uber since early 2018, building thousands of images every day across 4
+different languages. The motivation and mechanism behind it are explained in https://eng.uber.com/makisu/.</p>
+<ul>
+<li><a href="#building-makisu">Building Makisu</a></li>
+<li><a href="#running-makisu">Running Makisu</a></li>
+<li><a href="#makisu-anywhere">Makisu anywhere</a></li>
+<li><a href="#makisu-on-kubernetes">Makisu on Kubernetes</a></li>
+<li><a href="#using-cache">Using Cache</a></li>
+<li><a href="#configuring-distributed-cache">Configuring distributed cache</a></li>
+<li><a href="#explicit-commit-and-cache">Explicit Commit and Cache</a></li>
+<li><a href="#configuring-docker-registry">Configuring Docker Registry</a></li>
+<li><a href="#comparison-with-similar-tools">Comparison With Similar Tools</a></li>
+<li><a href="#contributing">Contributing</a></li>
+<li><a href="#contact">Contact</a></li>
+</ul>
+<h1 id="building-makisu">Building Makisu</h1>
+<h2 id="building-makisu-image">Building Makisu image</h2>
+<p>To build a Docker image that can perform builds inside a container:</p>
+<pre><code>make images
+</code></pre>
+
+<h2 id="building-makisu-binary-and-build-simple-images">Building Makisu binary and build simple images</h2>
+<p>To get the makisu binary locally:</p>
+<pre><code>go get github.com/uber/makisu/bin/makisu
+</code></pre>
+
+<p>For a Dockerfile that doesn't have RUN, makisu can build it without Docker daemon, containerd or runc:</p>
+<pre><code>makisu build -t ${TAG} --dest ${TAR_PATH} ${CONTEXT}
+</code></pre>
+
+<h1 id="running-makisu">Running Makisu</h1>
+<p>For a full list of flags, run <code>makisu build --help</code> or refer to the README <a href="bin/makisu/README.md">here</a>.</p>
+<h2 id="makisu-anywhere">Makisu anywhere</h2>
+<p>To build Dockerfiles that contain RUN, Makisu needs to run in a container.
+To try it locally, the following snippet can be placed inside your <code>~/.bashrc</code> or <code>~/.zshrc</code>:</p>
+<pre><code class="shell">function makisu_build() {
+    makisu_version=${MAKISU_VERSION:-v0.1.11}
+    cd ${@: -1}
+    docker run -i --rm --net host \
+        -v /var/run/docker.sock:/docker.sock \
+        -e DOCKER_HOST=unix:///docker.sock \
+        -v $(pwd):/makisu-context \
+        -v /tmp/makisu-storage:/makisu-storage \
+        gcr.io/makisu-project/makisu:$makisu_version build \
+            --commit=explicit \
+            --modifyfs=true \
+            --load \
+            ${@:1:${#@}-1} /makisu-context
+    cd -
+}
+</code></pre>
+
+<p>Now you can use <code>makisu_build</code> like you would use <code>docker build</code>:</p>
+<pre><code class="shell">$ makisu_build -t myimage .
+</code></pre>
+
+<p>Note:
+* Docker socket mount is optional. It's used together with <code>--load</code> for loading images back into Docker daemon for convenience of local development. So does the mount to /makisu-storage, which is used for local cache. If the image would be pushed to registry directly, please remove <code>--load</code> for better performance.
+* The <code>--modifyfs-true</code> option let Makisu assume ownership of the filesystem inside the container. Files in the container that don't belong to the base image will be overwritten at the beginning of build.
+* The <code>--commit=explicit</code> option let Makisu only commit layer when it sees <code>#COMMIT</code> and at the end of the Dockerfile. See <a href="#explicit-commit-and-cache">"Explicit Commit and Cache"</a> for more details.</p>
+<h2 id="makisu-on-kubernetes">Makisu on Kubernetes</h2>
+<p>Makisu makes it easy to build images from a GitHub repository inside Kubernetes. A single pod (or job) is
+created with an init container, which will fetch the build context through git or other means, and place
+that context in a designated volume. Once it completes, the Makisu container will be created and executes
+the build, using that volume as its build context.</p>
+<h3 id="creating-registry-configuration">Creating registry configuration</h3>
+<p>Makisu needs registry configuration mounted in to push to a secure registry.
+The config format is described in <a href="REGISTRY/">documentation</a>.
+After creating configuration file on local filesystem, run the following command to create the k8s secret:</p>
+<pre><code class="shell">$ kubectl create secret generic docker-registry-config --from-file=./registry.yaml
+secret/docker-registry-config created
+</code></pre>
+
+<h3 id="creating-kubernetes-job-spec">Creating Kubernetes job spec</h3>
+<p>To setup a Kubernetes job to build a GitHub repository and push to a secure registry, you can refer to our Kubernetes job spec <a href="examples/k8s/github-job-template.yaml">template</a> (and out of the box <a href="examples/k8s/github-job.yaml">example</a>) .</p>
+<p>With such a job spec, a simple <code>kubectl create -f job.yaml</code> will start the build.
+The job status will reflect whether the build succeeded or failed</p>
+<h1 id="using-cache">Using cache</h1>
+<h2 id="configuring-distributed-cache">Configuring distributed cache</h2>
+<p>Makisu supports distributed cache, which can significantly reduce build time, by up to 90% for some of Uber's code repos.
+Makisu caches docker image layers both locally and in docker registry (if --push parameter is provided), and uses a separate key-value store to map lines of a Dockerfile to names of the layers.</p>
+<p>For example, Redis can be setup as a distributed cache key-value store with this <a href="examples/k8s/redis.yaml">Kubernetes job spec</a>.
+Then connect Makisu to redis cache by passing <code>--redis-cache-addr=redis:6379</code> argument.
+If the Redis server is password-protected, use <code>--redis-cache-password=password</code> argument.
+Cache has a 7 day TTL by default, which can be configured with <code>--local-cache-ttl=7d</code> argument.</p>
+<p>For more options on cache, please see <a href="CACHE/">Cache</a>.</p>
+<h2 id="explicit-commit-and-cache">Explicit commit and cache</h2>
+<p>By default, Makisu will cache each directive in a Dockerfile. To avoid committing and caching everything, the layer cache can be further optimized via explicit caching with the <code>--commit=explicit</code> flag.
+Dockerfile directives may then be manually cached using the <code>#!COMMIT</code> annotation:</p>
+<pre><code class="Dockerfile">FROM node:8.1.3
+
+ADD package.json package.json
+ADD pre-build.sh
+
+# A bunch of pre-install steps here.
+...
+...
+...
+
+# A step to be cached. A single layer will be committed and cached here on top of base image.
+RUN npm install #!COMMIT
+
+...
+...
+...
+
+# The last step of the last stage always commit by default, generating and caching another layer.
+ENTRYPOINT [&quot;/bin/bash&quot;]
+</code></pre>
+
+<p>In this example, only 2 additional layers on top of base image will be generated and cached.</p>
+<h1 id="configuring-docker-registry">Configuring Docker Registry</h1>
+<p>For the convenience to work with any public Docker Hub repositories including library/.*, a default config is provided:</p>
+<pre><code>index.docker.io:
+  .*:
+    security:
+      tls:
+        client:
+          disabled: false
+      // Docker Hub requires basic auth with empty username and password for all public repositories.
+      basic:
+        username: &quot;&quot;
+        password: &quot;&quot;
+</code></pre>
+
+<p>Registry configs can be passed in through the <code>--registry-config</code> flag, either as a file path of as a raw json blob (converted to json using <a href="https://github.com/kislyuk/yq">yq</a>):</p>
+<pre><code>--registry-config='{&quot;gcr.io&quot;: {&quot;makisu-project/*&quot;: {&quot;push_chunk&quot;: -1, &quot;security&quot;: {&quot;basic&quot;: {&quot;username&quot;: &quot;_json_key&quot;, &quot;password&quot;: &quot;&lt;escaped key here&gt;&quot;}}}}}'
+</code></pre>
+
+<p>For more details on configuring Makisu to work with your registry client, see the <a href="REGISTRY/">documentation</a>.</p>
+<h1 id="comparison-with-similar-tools">Comparison With Similar Tools</h1>
+<h3 id="bazel">Bazel</h3>
+<p>We were inspired by the Bazel project in early 2017. It is one of the first few tools that could build Docker compatible images without using Docker or any form of containerizer.
+It works very well with a subset of Docker build scenarios given a Bazel build file. However, it does not support <code>RUN</code>, making it hard to replace most docker build workflows.</p>
+<h3 id="kaniko">Kaniko</h3>
+<p>Kaniko provides good compatibility with Docker and executes build commands in userspace without the need for Docker daemon, although it must still run inside a container. Kaniko offers smooth integration with Kubernetes, making it a competent tool for Kubernetes users.
+On the other hand, Makisu has some performance tweaks for large images (especially those with node_modules), allows cache to expire, and offers more control over cache generation through #!COMMIT, make it optimal for complex workflows.</p>
+<h3 id="buildkit-img">BuildKit / img</h3>
+<p>BuildKit and img depend on runc/containerd and supports parallel stage executions, whereas Makisu and most other tools execute Dockefile in order.
+However, BuildKit and img still need seccomp and AppArmor to be disabled to launch nested containers, which is not ideal and may not be doable in some production environments.</p>
+<h1 id="contributing">Contributing</h1>
+<p>Please check out our <a href="CONTRIBUTING/">guide</a>.</p>
+<h1 id="contact">Contact</h1>
+<p>To contact us, please join our <a href="https://join.slack.com/t/uber-container-tools/shared_invite/enQtNTIxODAwMDEzNjM1LWIyNzUyMTk3NTAzZGY0MDkzMzQ1YTlmMTUwZmIwNDk3YTA0ZjZjZGRhMTM2NzI0OGM3OGNjMDZiZTI2ZTY5NWY">Slack channel</a>.</p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="CACHE/" class="btn btn-neutral float-right" title="Cache Configuration">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+      
+        <span style="margin-left: 15px"><a href="CACHE/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '.';</script>
+    <script src="js/theme.js" defer></script>
+      <script src="search/main.js" defer></script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.0.4
+Build Date UTC : 2019-09-13 23:23:32
+-->
