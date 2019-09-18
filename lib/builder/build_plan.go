@@ -51,7 +51,7 @@ func NewBuildPlan(
 	ctx *context.BuildContext, target image.Name, replicas []image.Name, cacheMgr cache.Manager,
 	parsedStages []*dockerfile.Stage, allowModifyFS, forceCommit bool) (*BuildPlan, error) {
 
-	aliases, err := buildAliases(parsedStages)
+	aliases, err := c(parsedStages)
 	if err != nil {
 		return nil, fmt.Errorf("build alias list: %s", err)
 	}
@@ -86,7 +86,7 @@ func NewBuildPlan(
 		plan.stages[i] = stage
 	}
 
-	if err := plan.handleCopyFromDirs(aliases); err != nil {
+	if err := plan.handleCopyFromDirs(); err != nil {
 		return nil, fmt.Errorf("handle cross refs: %s", err)
 	}
 
@@ -95,7 +95,7 @@ func NewBuildPlan(
 
 // handleCopyFromDirs goes through all of the stages in the build plan and looks
 // at the `COPY --from` steps to make sure they are valid.
-func (plan *BuildPlan) handleCopyFromDirs(aliases map[string]struct{}) error {
+func (plan *BuildPlan) handleCopyFromDirs() error {
 	for _, stage := range plan.stages {
 		for alias, dirs := range stage.copyFromDirs {
 			plan.copyFromDirs[alias] = stringset.FromSlice(
