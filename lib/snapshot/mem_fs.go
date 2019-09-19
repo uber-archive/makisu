@@ -88,6 +88,10 @@ func (fs *MemFS) Reset() {
 
 // Checkpoint relocates the given src files & directories to the given newRoot.
 func (fs *MemFS) Checkpoint(newRoot string, sources []string) error {
+	if len(sources) == 0 {
+		return nil
+	}
+
 	resolvedSources := []string{}
 	for _, src := range sources {
 		if matches, err := filepath.Glob(src); err != nil || len(matches) == 0 {

@@ -40,6 +40,11 @@ type BuildPlan struct {
 	replicas     []image.Name
 	cacheMgr     cache.Manager
 	stages       []*buildStage
+
+	// Aliases of stages. For stages missing `AS`, an index number will be used
+	// as alias.
+	// Note: this doesn't include those `COPY --from=<alias>` if that alias is
+	// name of another image.
 	stageAliases map[string]struct{}
 
 	opts *buildPlanOptions
