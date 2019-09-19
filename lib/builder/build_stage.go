@@ -92,6 +92,11 @@ func newRemoteImageStage(
 	if err != nil {
 		return nil, fmt.Errorf("new from step: %s", err)
 	}
+	checksum := crc32.ChecksumIEEE([]byte(utils.BuildHash + fmt.Sprintf("%v", *planOpts)))
+	seed := fmt.Sprintf("%x", checksum)
+	if err := from.SetCacheID(ctx, seed); err != nil {
+		return nil, fmt.Errorf("set cache id: %s", err)
+	}
 	steps := []step.BuildStep{from}
 
 	// Set forceCommit to false.
