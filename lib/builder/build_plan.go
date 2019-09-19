@@ -192,6 +192,7 @@ func (plan *BuildPlan) executeStage(stage *buildStage, lastStage, copiedFrom boo
 	// Handle `COPY --from=<alias>` where alias is not a stage but an image.
 	// Create and execute a fake stage with only FROM.
 	// TODO: This should be done at step level.
+	// TODO: This step prints `* Step 1/1 ...` which is misleading.
 	for alias, _ := range stage.copyFromDirs {
 		if _, ok := plan.stageAliases[alias]; !ok {
 			name, err := image.ParseNameForPull(alias)
