@@ -179,10 +179,18 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 }
 
 func (plan *BuildPlan) executeStage(stage *buildStage, lastStage, copiedFrom bool) error {
+	if !plan.opts.allowModifyFS {
+		// Note: The rest of this function mostly deal with `COPY --from`
+		// related logic, and currently `COPY --from` cannot be supported with
+		// modifyfs=false. That combination was rejected in NewPlan().
+		if err := stage.build(plan.cacheMgr, lastStage, copiedFrom); err != nil {
+			return fmt.Errorf("build stage %s: %s", stage.alias, err)
+		}
+		return nil
+	}
+
 	// Handle `COPY --from=<alias>` where alias is not a stage but an image.
-	// Create and execute a fake stage with only FROM. This case will not work
-	// if modifyfs is set to false, but that combination was rejected in
-	// NewPlan().
+	// Create and execute a fake stage with only FROM.
 	// TODO: This should be done at step level.
 	for alias, _ := range stage.copyFromDirs {
 		if _, ok := plan.stageAliases[alias]; !ok {
@@ -196,7 +204,7 @@ func (plan *BuildPlan) executeStage(stage *buildStage, lastStage, copiedFrom boo
 				return fmt.Errorf("new image stage: %s", err)
 			}
 
-			if err := remoteImageStage.build(plan.cacheMgr, lastStage, copiedFrom); err != nil {
+			if err := remoteImageStage.build(plan.cacheMgr, false, true); err != nil {
 				return fmt.Errorf("build stage %s: %s", stage.alias, err)
 			}
 
@@ -212,12 +220,6 @@ func (plan *BuildPlan) executeStage(stage *buildStage, lastStage, copiedFrom boo
 
 	if err := stage.build(plan.cacheMgr, lastStage, copiedFrom); err != nil {
 		return fmt.Errorf("build stage %s: %s", stage.alias, err)
-	}
-
-	// Note: returning before checkpoint() would create problems for
-	// `COPY --from`. That combination was rejected in NewPlan().
-	if !plan.opts.allowModifyFS {
-		return nil
 	}
 
 	if err := stage.checkpoint(plan.copyFromDirs[stage.alias]); err != nil {
