@@ -88,6 +88,10 @@ func (fs *MemFS) Reset() {
 
 // Checkpoint relocates the given src files & directories to the given newRoot.
 func (fs *MemFS) Checkpoint(newRoot string, sources []string) error {
+	if len(sources) == 0 {
+		return nil
+	}
+
 	resolvedSources := []string{}
 	for _, src := range sources {
 		if matches, err := filepath.Glob(src); err != nil || len(matches) == 0 {
@@ -258,8 +262,8 @@ func (fs *MemFS) AddLayerByScan(w *tar.Writer) error {
 
 // AddLayerByCopyOps creates an in-memory layer by performing copy operations
 // on the given src-dst pairs. The file system is not modified during this
-// operation. The resulting layer is merged in memory and written to the
-// tar writer.
+// operation. The resulting layer is merged in memory and written to the tar
+// writer.
 func (fs *MemFS) AddLayerByCopyOps(cs []*CopyOperation, w *tar.Writer) error {
 	fs.sync()
 	l := newMemLayer()

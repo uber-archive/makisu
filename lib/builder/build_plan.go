@@ -34,13 +34,18 @@ type buildPlanOptions struct {
 // BuildPlan describes a list of named buildStages, that can copy files between
 // one another.
 type BuildPlan struct {
-	baseCtx           *context.BuildContext
-	copyFromDirs      map[string][]string
-	target            image.Name
-	replicas          []image.Name
-	cacheMgr          cache.Manager
-	stages            []*buildStage
-	remoteImageStages map[string]*buildStage
+	baseCtx      *context.BuildContext
+	copyFromDirs map[string][]string
+	target       image.Name
+	replicas     []image.Name
+	cacheMgr     cache.Manager
+	stages       []*buildStage
+
+	// Aliases of stages. For stages missing `AS`, an index number will be used
+	// as alias.
+	// Note: this doesn't include those `COPY --from=<alias>` if that alias is
+	// name of another image.
+	stageAliases map[string]struct{}
 
 	opts *buildPlanOptions
 }
@@ -51,23 +56,23 @@ func NewBuildPlan(
 	ctx *context.BuildContext, target image.Name, replicas []image.Name, cacheMgr cache.Manager,
 	parsedStages []*dockerfile.Stage, allowModifyFS, forceCommit bool) (*BuildPlan, error) {
 
+	aliases, err := buildAliases(parsedStages)
+	if err != nil {
+		return nil, fmt.Errorf("build alias list: %s", err)
+	}
+
 	plan := &BuildPlan{
-		baseCtx:           ctx,
-		copyFromDirs:      make(map[string][]string),
-		target:            target,
-		replicas:          replicas,
-		cacheMgr:          cacheMgr,
-		stages:            make([]*buildStage, len(parsedStages)),
-		remoteImageStages: make(map[string]*buildStage),
+		baseCtx:      ctx,
+		copyFromDirs: make(map[string][]string),
+		target:       target,
+		replicas:     replicas,
+		cacheMgr:     cacheMgr,
+		stages:       make([]*buildStage, len(parsedStages)),
+		stageAliases: aliases,
 		opts: &buildPlanOptions{
 			forceCommit:   forceCommit,
 			allowModifyFS: allowModifyFS,
 		},
-	}
-
-	aliases, err := buildAliases(parsedStages)
-	if err != nil {
-		return nil, fmt.Errorf("build alias list: %s", err)
 	}
 
 	for i, parsedStage := range parsedStages {
@@ -80,40 +85,24 @@ func NewBuildPlan(
 
 		if len(stage.copyFromDirs) > 0 && !plan.opts.allowModifyFS {
 			// TODO(pourchet): Support this at some point.
+			// TODO: have a centralized place for these validations.
 			return nil, fmt.Errorf("must allow modifyfs for multi-stage dockerfiles with COPY --from")
 		}
 		plan.stages[i] = stage
 	}
 
-	if err := plan.handleCopyFromDirs(aliases); err != nil {
+	if err := plan.handleCopyFromDirs(); err != nil {
 		return nil, fmt.Errorf("handle cross refs: %s", err)
 	}
+
 	return plan, nil
 }
 
 // handleCopyFromDirs goes through all of the stages in the build plan and looks
-// at the `COPY --from` steps to make sure they are valid. If the --from source
-// is another image, we create a new image stage in the build plan.
-func (plan *BuildPlan) handleCopyFromDirs(aliases map[string]bool) error {
+// at the `COPY --from` steps to make sure they are valid.
+func (plan *BuildPlan) handleCopyFromDirs() error {
 	for _, stage := range plan.stages {
 		for alias, dirs := range stage.copyFromDirs {
-			if _, ok := aliases[alias]; !ok {
-				// If the alias of the cross referenced directory is an image
-				// name, prepend a fake stage to the build plan that will
-				// download that image directly into the cross referencing root
-				// for that alias.
-				name, err := image.ParseNameForPull(alias)
-				if err != nil || !name.IsValid() {
-					return fmt.Errorf("copy from nonexistent stage %s", alias)
-				}
-				remoteImageStage, err := newRemoteImageStage(
-					plan.baseCtx, alias, plan.opts)
-				if err != nil {
-					return fmt.Errorf("new image stage: %s", err)
-				}
-				plan.remoteImageStages[alias] = remoteImageStage
-				aliases[alias] = true
-			}
 			plan.copyFromDirs[alias] = stringset.FromSlice(
 				append(plan.copyFromDirs[alias], dirs...),
 			).ToSlice()
@@ -124,8 +113,8 @@ func (plan *BuildPlan) handleCopyFromDirs(aliases map[string]bool) error {
 
 // buildAliases mutates the list of stages to assign default aliases.
 // Default aliases will be integers starting from 0.
-func buildAliases(stages dockerfile.Stages) (map[string]bool, error) {
-	aliases := make(map[string]bool)
+func buildAliases(stages dockerfile.Stages) (map[string]struct{}, error) {
+	aliases := make(map[string]struct{})
 	for i, parsedStage := range stages {
 		// Check for stage alias collision if alias isn't empty.
 		if parsedStage.From.Alias != "" {
@@ -138,27 +127,13 @@ func buildAliases(stages dockerfile.Stages) (map[string]bool, error) {
 		} else {
 			parsedStage.From.Alias = strconv.Itoa(i)
 		}
-		aliases[parsedStage.From.Alias] = true
+		aliases[parsedStage.From.Alias] = struct{}{}
 	}
 	return aliases, nil
 }
 
 // Execute executes all build stages in order.
 func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
-	for alias, stage := range plan.remoteImageStages {
-		// Building that pseudo stage will unpack the image directly into the
-		// stage's cross stage directory.
-		name, err := image.ParseNameForPull(alias)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse cross stage reference name %s: %s", alias, err)
-		}
-		log.Infof("Pulling image %s for cross stage reference", name)
-
-		if err := plan.executeStage(stage, false, true); err != nil {
-			return nil, fmt.Errorf("execute cross referenced stage: %s", err)
-		}
-	}
-
 	var currStage *buildStage
 	for k := 0; k < len(plan.stages); k++ {
 		currStage = plan.stages[k]
@@ -175,8 +150,8 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 		}
 	}
 
-	// Wait for cache layers to be pushed. This will make them available to other
-	// builds ongoing on different machines.
+	// Wait for cache layers to be pushed. This will make them available to
+	// other builds ongoing on different machines.
 	if err := plan.cacheMgr.WaitForPush(); err != nil {
 		log.Errorf("Failed to push cache: %s", err)
 	}
@@ -204,17 +179,53 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 }
 
 func (plan *BuildPlan) executeStage(stage *buildStage, lastStage, copiedFrom bool) error {
-	if err := stage.build(plan.cacheMgr, lastStage, copiedFrom); err != nil {
-		return fmt.Errorf("build stage %s: %s", stage.alias, err)
+	if !plan.opts.allowModifyFS {
+		// Note: The rest of this function mostly deal with `COPY --from`
+		// related logic, and currently `COPY --from` cannot be supported with
+		// modifyfs=false. That combination was rejected in NewPlan().
+		if err := stage.build(plan.cacheMgr, lastStage, copiedFrom); err != nil {
+			return fmt.Errorf("build stage %s: %s", stage.alias, err)
+		}
+		return nil
 	}
 
-	if !plan.opts.allowModifyFS {
-		return nil
+	// Handle `COPY --from=<alias>` where alias is not a stage but an image.
+	// Create and execute a fake stage with only FROM.
+	// TODO: This should be done at step level.
+	for alias, _ := range stage.copyFromDirs {
+		if _, ok := plan.stageAliases[alias]; !ok {
+			name, err := image.ParseNameForPull(alias)
+			if err != nil || !name.IsValid() {
+				return fmt.Errorf("copy from nonexistent stage %s", alias)
+			}
+			remoteImageStage, err := newRemoteImageStage(
+				plan.baseCtx, alias, plan.opts)
+			if err != nil {
+				return fmt.Errorf("new image stage: %s", err)
+			}
+
+			if err := remoteImageStage.build(plan.cacheMgr, false, true); err != nil {
+				return fmt.Errorf("build stage %s: %s", stage.alias, err)
+			}
+
+			if err := remoteImageStage.checkpoint(plan.copyFromDirs[alias]); err != nil {
+				return fmt.Errorf("checkpoint stage %s: %s", stage.alias, err)
+			}
+
+			if err := remoteImageStage.cleanup(); err != nil {
+				return fmt.Errorf("cleanup stage %s: %s", stage.alias, err)
+			}
+		}
+	}
+
+	if err := stage.build(plan.cacheMgr, lastStage, copiedFrom); err != nil {
+		return fmt.Errorf("build stage %s: %s", stage.alias, err)
 	}
 
 	if err := stage.checkpoint(plan.copyFromDirs[stage.alias]); err != nil {
 		return fmt.Errorf("checkpoint stage %s: %s", stage.alias, err)
 	}
+
 	if err := stage.cleanup(); err != nil {
 		return fmt.Errorf("cleanup stage %s: %s", stage.alias, err)
 	}

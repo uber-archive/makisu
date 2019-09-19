@@ -111,8 +111,8 @@ func (s *addCopyStep) SetCacheID(ctx *context.BuildContext, seed string) error {
 			return fmt.Errorf("hash copy directive: %s", err)
 		}
 
-		// If the step args and the contents of sources are identical,
-		// we should be able to use the cache from the previous build.
+		// If the step args and the contents of sources are identical, we should
+		// be able to use the cache from the previous build.
 		if err := s.updateContextChecksum(ctx, checksum); err != nil {
 			return fmt.Errorf("hash context sources: %s", err)
 		}
@@ -149,7 +149,8 @@ func (s *addCopyStep) Execute(ctx *context.BuildContext, modifyFS bool) (err err
 	return nil
 }
 
-// Updates the checksum passed in with the data stored in the context on the filesystem.
+// Updates the checksum passed in with the data stored in the context on the
+// filesystem.
 func (s *addCopyStep) updateContextChecksum(ctx *context.BuildContext, checksum io.Writer) error {
 	if s.fromStage != "" {
 		return fmt.Errorf("not supported: the copy step has from stage flag")
