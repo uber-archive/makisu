@@ -43,6 +43,7 @@ func TestNewFromDirective(t *testing.T) {
 		{"bad 'as'", false, "from test_image:trusty sa test_alias", "", ""},
 		{"substitution", true, "from ${prefix}image:trusty as alias$suffix", "test_image:trusty", "alias_test"},
 		{"bad substitution", false, "from ${prefiximage:trusty as alias$suffix", "", ""},
+		{"empty substitution", false, "from ${0:+0}", "test_image", ""},
 	}
 
 	for _, test := range tests {

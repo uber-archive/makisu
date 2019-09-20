@@ -15,6 +15,7 @@
 package dockerfile
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -69,6 +70,9 @@ func (d *baseDirective) replaceVars(vars map[string]string) error {
 	replaced, err := replaceVariables(d.Args, vars)
 	if err != nil {
 		return d.err(fmt.Errorf("Failed to replace variables in input: %s", err))
+	}
+	if len(replaced) == 0 {
+		return d.err(errors.New("Empty args after replacing variables"))
 	}
 	d.Args = replaced
 	return nil
