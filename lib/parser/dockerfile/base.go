@@ -72,7 +72,7 @@ func (d *baseDirective) replaceVars(vars map[string]string) error {
 		return d.err(fmt.Errorf("Failed to replace variables in input: %s", err))
 	}
 	if len(replaced) == 0 {
-		return d.err(errors.New("Empty args after replacing variables: %s"))
+		return d.err(errors.New("Empty args after replacing variables"))
 	}
 	d.Args = replaced
 	return nil
