@@ -34,6 +34,7 @@ func TestNewCopyDirective(t *testing.T) {
 		chown     string
 	}{
 		{"missing args", false, "copy ", nil, "", "", ""},
+		{"missing args after replace", false, "copy \\", nil, "", "", ""},
 		{"shell single source", true, `copy src dst`, []string{"src"}, "dst", "", ""},
 		{"shell multi source", true, `copy src1 src2 dst`, []string{"src1", "src2"}, "dst", "", ""},
 		{"shell substitution", true, `copy src1 ${prefix}src2 dst$suffix`, []string{"src1", "test_src2"}, "dst_test", "", ""},
