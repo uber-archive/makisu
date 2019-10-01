@@ -27,7 +27,12 @@ func newAddDirective(base *baseDirective, state *parsingState) (Directive, error
 	if err := base.replaceVarsCurrStage(state); err != nil {
 		return nil, err
 	}
-	d, err := newAddCopyDirective(base, strings.Fields(base.Args))
+	args := strings.Fields(base.Args)
+	if len(args) == 0 {
+		return nil, base.err(errMissingArgs)
+	}
+
+	d, err := newAddCopyDirective(base, args)
 	if err != nil {
 		return nil, err
 	}
