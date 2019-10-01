@@ -32,7 +32,12 @@ func newExposeDirective(base *baseDirective, state *parsingState) (Directive, er
 	if err := base.replaceVarsCurrStage(state); err != nil {
 		return nil, err
 	}
-	return &ExposeDirective{base, strings.Fields(base.Args)}, nil
+	args := strings.Fields(base.Args)
+	if len(args) == 0 {
+		return nil, base.err(errMissingArgs)
+	}
+
+	return &ExposeDirective{base, args}, nil
 }
 
 // Add this command to the build stage.

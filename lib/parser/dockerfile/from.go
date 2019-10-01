@@ -37,6 +37,9 @@ func newFromDirective(base *baseDirective, state *parsingState) (Directive, erro
 		return nil, err
 	}
 	args := strings.Fields(base.Args)
+	if len(args) == 0 {
+		return nil, base.err(errMissingArgs)
+	}
 
 	var alias string
 	if len(args) > 1 {

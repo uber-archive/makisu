@@ -34,6 +34,9 @@ func newCopyDirective(base *baseDirective, state *parsingState) (Directive, erro
 		return nil, err
 	}
 	args := strings.Fields(base.Args)
+	if len(args) == 0 {
+		return nil, base.err(errMissingArgs)
+	}
 
 	var fromStage string
 	if val, ok, err := parseFlag(args[0], "from"); err != nil {

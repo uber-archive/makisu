@@ -31,6 +31,7 @@ func TestNewFromDirective(t *testing.T) {
 		image   string
 		alias   string
 	}{
+		{"missing args", false, "from ", "", ""},
 		{"no tag, no alias", true, "from test_image", "test_image", ""},
 		{"tag, no alias", true, "from test_image:trusty", "test_image:trusty", ""},
 		{"no tag, alias", true, "from test_image as test_alias", "test_image", "test_alias"},

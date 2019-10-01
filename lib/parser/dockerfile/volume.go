@@ -36,8 +36,12 @@ func newVolumeDirective(base *baseDirective, state *parsingState) (Directive, er
 	if volumes, ok := parseJSONArray(base.Args); ok {
 		return &VolumeDirective{base, volumes}, nil
 	}
+	args := strings.Fields(base.Args)
+	if len(args) == 0 {
+		return nil, base.err(errMissingArgs)
+	}
 
-	return &VolumeDirective{base, strings.Fields(base.Args)}, nil
+	return &VolumeDirective{base, args}, nil
 }
 
 // Add this command to the build stage.
