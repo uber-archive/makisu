@@ -66,7 +66,7 @@ func (c *TLSConfig) BuildClient() (*tls.Config, error) {
 	}
 
 	var insecureSkipVerify bool
-	if c.CA.Disabled || os.Getenv("SSL_CERT_DIR") == "" {
+	if c.CA.Disabled {
 		log.Infof("CA TLS is disabled")
 		insecureSkipVerify = true
 	}
