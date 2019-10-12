@@ -65,6 +65,11 @@ func (c *TLSConfig) BuildClient() (*tls.Config, error) {
 		return c.tls, nil
 	}
 
+	var insecureSkipVerify bool
+	if c.CA.Disabled || os.Getenv("SSL_CERT_DIR") == "" {
+		log.Infof("CA TLS is disabled")
+		insecureSkipVerify = true
+	}
 	var caPool *x509.CertPool
 	var certs []tls.Certificate
 	var err error
@@ -94,7 +99,7 @@ func (c *TLSConfig) BuildClient() (*tls.Config, error) {
 		RootCAs:                  caPool,
 		ServerName:               c.Name,
 		PreferServerCipherSuites: true,
-		InsecureSkipVerify:       false, // This is important to enforce verification of server.
+		InsecureSkipVerify:       insecureSkipVerify, // This is important to enforce verification of server.
 	}
 	return c.tls, nil
 }
