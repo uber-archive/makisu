@@ -143,12 +143,16 @@ func (plan *BuildPlan) processStagesAndAliases(
 
 				// Append to stage list and update cache id.
 				plan.stages = append(plan.stages, remoteImageStage)
+				// TODO: instead of chaining cache ID, it's better to calculate
+				// from scratch before executing a stage.
 				seedCacheID = remoteImageStage.nodes[len(remoteImageStage.nodes)-1].CacheID()
 			}
 		}
 
 		// Append to stage list and update cache id.
 		plan.stages = append(plan.stages, stage)
+		// TODO: instead of chaining cache ID, it's better to calculate from
+		// scratch before executing a stage.
 		seedCacheID = stage.nodes[len(stage.nodes)-1].CacheID()
 	}
 
