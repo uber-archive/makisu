@@ -70,7 +70,7 @@ func NewBuildPlan(
 		target:            target,
 		replicas:          replicas,
 		cacheMgr:          cacheMgr,
-		stages:            make([]*buildStage, len(parsedStages)),
+		stages:            make([]*buildStage, 0),
 		stageAliases:      make(map[string]struct{}),
 		stageIndexAliases: make(map[string]*buildStage),
 		opts: &buildPlanOptions{

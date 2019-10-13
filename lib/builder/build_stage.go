@@ -300,11 +300,13 @@ func (stage *buildStage) pullCacheLayers(cacheMgr cache.Manager) {
 	// Skip the first node since it's a FROM step. We do not want to try to pull
 	// from cache because the step itself will pull the right layers when it
 	// gets executed.
-	for _, node := range stage.nodes[1:] {
-		// Stop once the cache chain is broken.
-		if node.HasCommit() || stage.opts.forceCommit {
-			if !node.pullCacheLayer(cacheMgr) {
-				return
+	if len(stage.nodes) > 1 {
+		for _, node := range stage.nodes[1:] {
+			// Stop once the cache chain is broken.
+			if node.HasCommit() || stage.opts.forceCommit {
+				if !node.pullCacheLayer(cacheMgr) {
+					return
+				}
 			}
 		}
 	}
@@ -312,13 +314,17 @@ func (stage *buildStage) pullCacheLayers(cacheMgr cache.Manager) {
 
 func (stage *buildStage) latestFetched() int {
 	latest := -1
-	for i, node := range stage.nodes[1:] {
-		// Stop once the cache chain is broken.
-		if node.HasCommit() {
-			if len(node.digestPairs) != 0 {
-				latest = i + 1
-			} else {
-				return latest
+
+	if len(stage.nodes) > 1 {
+		// Skip FROM.
+		for i, node := range stage.nodes[1:] {
+			// Stop once the cache chain is broken.
+			if node.HasCommit() {
+				if len(node.digestPairs) != 0 {
+					latest = i + 1
+				} else {
+					return latest
+				}
 			}
 		}
 	}

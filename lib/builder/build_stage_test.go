@@ -123,7 +123,7 @@ func TestPullCacheLayers(t *testing.T) {
 				allowModifyFS: false,
 			}
 
-			stage, err := newBuildStage(ctx, alias, tc.stage, opts)
+			stage, err := newBuildStage(ctx, alias, tc.name, tc.stage, opts)
 			require.NoError(err)
 
 			kvStore := keyvalue.MockStore{}

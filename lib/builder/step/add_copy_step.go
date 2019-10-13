@@ -89,8 +89,9 @@ func (s *addCopyStep) ContextDirs() (string, []string) {
 }
 
 // SetCacheID sets the cache ID of the step given a seed SHA256 value.
-// Calculates the ID based on file contents. If the previous steps, step args
-// and the contents of sources are identical, cache ID should also be identical.
+// Calculates the ID based on content of files. If the previous steps, current
+// step args and the contents of sources are identical, cache ID should also be
+// identical.
 func (s *addCopyStep) SetCacheID(ctx *context.BuildContext, seed string) error {
 	// Initialize the checksum with the seed, directive and args.
 	checksum := crc32.NewIEEE()
@@ -98,10 +99,15 @@ func (s *addCopyStep) SetCacheID(ctx *context.BuildContext, seed string) error {
 	if err != nil {
 		return fmt.Errorf("hash copy directive: %s", err)
 	}
-
-	// Update checksum based on content of files to be copied.
-	if err := s.calculateContextChecksum(ctx, checksum); err != nil {
-		return fmt.Errorf("hash context sources: %s", err)
+	if s.fromStage != "" {
+		// It is copying from a previous stage, rely on the fact that cache IDs
+		// are chained between stages.
+		// TODO: Properly calculate cache ID based on content of files.
+	} else {
+		// Update checksum based on content of files to be copied.
+		if err := s.calculateContextChecksum(ctx, checksum); err != nil {
+			return fmt.Errorf("hash context sources: %s", err)
+		}
 	}
 	s.cacheID = fmt.Sprintf("%x", checksum.Sum32())
 
