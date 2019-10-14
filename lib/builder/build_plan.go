@@ -130,8 +130,8 @@ func (plan *BuildPlan) processStagesAndAliases(
 			).ToSlice()
 
 			if _, ok := existingAliases[alias]; !ok {
-				// If the alias is an image name, add a fake stage to download
-				// that image directly into the root for that alias.
+				// If the alias was an image name and not already handled,
+				// prepend a fake stage with the alias to download that image.
 				if name, err := image.ParseNameForPull(alias); err != nil || !name.IsValid() {
 					return fmt.Errorf("copy from nonexistent stage %s", alias)
 				}
