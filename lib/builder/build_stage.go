@@ -19,7 +19,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"hash/crc32"
 	"io/ioutil"
 	"os"
 	"path"
@@ -32,7 +31,6 @@ import (
 	"github.com/uber/makisu/lib/log"
 	"github.com/uber/makisu/lib/parser/dockerfile"
 	"github.com/uber/makisu/lib/storage"
-	"github.com/uber/makisu/lib/utils"
 )
 
 type buildStageOptions struct {
@@ -57,7 +55,7 @@ type buildStage struct {
 
 // newBuildStage initializes a buildStage.
 func newBuildStage(
-	baseCtx *context.BuildContext, alias string, parsedStage *dockerfile.Stage,
+	baseCtx *context.BuildContext, alias, seed string, parsedStage *dockerfile.Stage,
 	planOpts *buildPlanOptions) (*buildStage, error) {
 
 	// Create a new build context for the stage.
@@ -68,7 +66,7 @@ func newBuildStage(
 	}
 
 	// Create steps from parsed stage.
-	steps, err := createDockerfileSteps(ctx, parsedStage, planOpts)
+	steps, err := createDockerfileSteps(ctx, seed, parsedStage, planOpts)
 	if err != nil {
 		return nil, fmt.Errorf("new dockerfile steps: %s", err)
 	}
@@ -76,9 +74,10 @@ func newBuildStage(
 	return newBuildStageHelper(ctx, alias, steps, planOpts)
 }
 
-// newRemoteImageStage initializes a buildStage.
+// newRemoteImageStage initializes a buildStage used for `COPY --from=<image>`.
 func newRemoteImageStage(
-	baseCtx *context.BuildContext, alias string, planOpts *buildPlanOptions) (*buildStage, error) {
+	baseCtx *context.BuildContext, alias, seed string,
+	planOpts *buildPlanOptions) (*buildStage, error) {
 
 	// Create a new build context for the stage.
 	ctx, err := context.NewBuildContext(
@@ -92,8 +91,6 @@ func newRemoteImageStage(
 	if err != nil {
 		return nil, fmt.Errorf("new from step: %s", err)
 	}
-	checksum := crc32.ChecksumIEEE([]byte(utils.BuildHash + fmt.Sprintf("%v", *planOpts)))
-	seed := fmt.Sprintf("%x", checksum)
 	if err := from.SetCacheID(ctx, seed); err != nil {
 		return nil, fmt.Errorf("set cache id: %s", err)
 	}
@@ -153,11 +150,9 @@ func newBuildStageHelper(
 
 // createDockerfileSteps returns a list of build steps given a parsed stage.
 func createDockerfileSteps(
-	ctx *context.BuildContext, stage *dockerfile.Stage,
+	ctx *context.BuildContext, seed string, stage *dockerfile.Stage,
 	planOpts *buildPlanOptions) ([]step.BuildStep, error) {
 
-	checksum := crc32.ChecksumIEEE([]byte(utils.BuildHash + fmt.Sprintf("%v", *planOpts)))
-	seed := fmt.Sprintf("%x", checksum)
 	directives := append([]dockerfile.Directive{stage.From}, stage.Directives...)
 	var steps []step.BuildStep
 	for _, directive := range directives {
@@ -305,11 +300,13 @@ func (stage *buildStage) pullCacheLayers(cacheMgr cache.Manager) {
 	// Skip the first node since it's a FROM step. We do not want to try to pull
 	// from cache because the step itself will pull the right layers when it
 	// gets executed.
-	for _, node := range stage.nodes[1:] {
-		// Stop once the cache chain is broken.
-		if node.HasCommit() || stage.opts.forceCommit {
-			if !node.pullCacheLayer(cacheMgr) {
-				return
+	if len(stage.nodes) > 1 {
+		for _, node := range stage.nodes[1:] {
+			// Stop once the cache chain is broken.
+			if node.HasCommit() || stage.opts.forceCommit {
+				if !node.pullCacheLayer(cacheMgr) {
+					return
+				}
 			}
 		}
 	}
@@ -317,13 +314,17 @@ func (stage *buildStage) pullCacheLayers(cacheMgr cache.Manager) {
 
 func (stage *buildStage) latestFetched() int {
 	latest := -1
-	for i, node := range stage.nodes[1:] {
-		// Stop once the cache chain is broken.
-		if node.HasCommit() {
-			if len(node.digestPairs) != 0 {
-				latest = i + 1
-			} else {
-				return latest
+
+	if len(stage.nodes) > 1 {
+		// Skip FROM.
+		for i, node := range stage.nodes[1:] {
+			// Stop once the cache chain is broken.
+			if node.HasCommit() {
+				if len(node.digestPairs) != 0 {
+					latest = i + 1
+				} else {
+					return latest
+				}
 			}
 		}
 	}

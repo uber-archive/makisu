@@ -18,11 +18,9 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/uber/makisu/lib/context"
 	"github.com/uber/makisu/lib/pathutils"
@@ -91,33 +89,28 @@ func (s *addCopyStep) ContextDirs() (string, []string) {
 }
 
 // SetCacheID sets the cache ID of the step given a seed SHA256 value.
-// Calculates the ID randomly if copying from another stage, else checksums the
-// file contents.
+// Calculates the ID based on content of files. If the previous steps, current
+// step args and the contents of sources are identical, cache ID should also be
+// identical.
 func (s *addCopyStep) SetCacheID(ctx *context.BuildContext, seed string) error {
+	// Initialize the checksum with the seed, directive and args.
+	checksum := crc32.NewIEEE()
+	_, err := checksum.Write([]byte(seed + string(s.directive) + s.args))
+	if err != nil {
+		return fmt.Errorf("hash copy directive: %s", err)
+	}
 	if s.fromStage != "" {
-		// It is copying from a previous stage, return random bytes.
-		// TODO: support cache here by chaining stage sha.
-		b := make([]byte, 4)
-		r := rand.New(rand.NewSource(time.Now().UnixNano()))
-		if _, err := r.Read(b); err != nil {
-			return fmt.Errorf("read rand: %s", err)
-		}
-		s.cacheID = fmt.Sprintf("%x", b)
+		// It is copying from a previous stage, rely on the fact that cache IDs
+		// are chained between stages.
+		// TODO: Properly calculate cache ID based on content of files.
 	} else {
-		// Initialize the checksum with the seed, directive and args.
-		checksum := crc32.NewIEEE()
-		_, err := checksum.Write([]byte(seed + string(s.directive) + s.args))
-		if err != nil {
-			return fmt.Errorf("hash copy directive: %s", err)
-		}
-
-		// If the step args and the contents of sources are identical, we should
-		// be able to use the cache from the previous build.
-		if err := s.updateContextChecksum(ctx, checksum); err != nil {
+		// Update checksum based on content of files to be copied.
+		if err := s.calculateContextChecksum(ctx, checksum); err != nil {
 			return fmt.Errorf("hash context sources: %s", err)
 		}
-		s.cacheID = fmt.Sprintf("%x", checksum.Sum32())
 	}
+	s.cacheID = fmt.Sprintf("%x", checksum.Sum32())
+
 	return nil
 }
 
@@ -149,9 +142,8 @@ func (s *addCopyStep) Execute(ctx *context.BuildContext, modifyFS bool) (err err
 	return nil
 }
 
-// Updates the checksum passed in with the data stored in the context on the
-// filesystem.
-func (s *addCopyStep) updateContextChecksum(ctx *context.BuildContext, checksum io.Writer) error {
+// Updates the checksum passed in based on the content of files to be copied in.
+func (s *addCopyStep) calculateContextChecksum(ctx *context.BuildContext, checksum io.Writer) error {
 	if s.fromStage != "" {
 		return fmt.Errorf("not supported: the copy step has from stage flag")
 	}
@@ -191,6 +183,7 @@ func (s *addCopyStep) contextRootDir(ctx *context.BuildContext) string {
 	return ctx.ContextDir
 }
 
+// TODO: Consider file metadata?
 func checksumPathContents(
 	ctx *context.BuildContext, path string, fi os.FileInfo, checksum io.Writer) error {
 

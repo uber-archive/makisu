@@ -154,16 +154,17 @@ func TestCopyStepSetCacheID(t *testing.T) {
 		defer cleanup()
 
 		step := CopyStepFixture("", "stage", []string{"."}, "tmp", false)
-		err := step.SetCacheID(context, "")
+		err := step.SetCacheID(context, "seed")
 		hash1 := step.CacheID()
 		require.NoError(err)
 
-		err = step.SetCacheID(context, hash1)
+		err = step.SetCacheID(context, "seed")
 		hash2 := step.CacheID()
 		require.NoError(err)
 
-		// hash1 and hash2 should be generated randomly.
-		require.NotEqual(hash1, hash2)
+		// It used to be the case that cache ID will be randomly generated for
+		// `COPY --from=<>`, but now it should be the same.
+		require.Equal(hash1, hash2)
 	})
 }
 
