@@ -44,3 +44,13 @@ func TestContextDirs(t *testing.T) {
 	require.Equal("stage", stage)
 	require.Len(paths, 1)
 }
+
+func TestTrimmingPaths(t *testing.T) {
+	require := require.New(t)
+
+	ac, err := newAddCopyStep(Copy, "", "", "", []string{"\"/from/path\""}, "\"/to/path\"", false)
+	require.NoError(err)
+
+	require.Equal("/from/path", ac.fromPaths[0])
+	require.Equal("/to/path", ac.toPath)
+}

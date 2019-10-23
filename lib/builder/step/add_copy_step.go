@@ -64,6 +64,11 @@ func newAddCopyStep(
 	directive Directive, args, chown, fromStage string,
 	fromPaths []string, toPath string, commit bool) (*addCopyStep, error) {
 
+	toPath = strings.Trim(toPath, "\"'")
+	for i := range fromPaths {
+		fromPaths[i] = strings.Trim(fromPaths[i], "\"'")
+	}
+
 	if len(fromPaths) > 1 && !(strings.HasSuffix(toPath, "/") || toPath == "." || toPath == "..") {
 		return nil, fmt.Errorf("copying multiple source files, target must be a directory ending in \"/\"")
 	}
