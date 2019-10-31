@@ -33,7 +33,7 @@ func TestUntarFromPath(t *testing.T) {
 
 	tmpBase, err := ioutil.TempDir("/tmp", "makisu-test")
 	require.NoError(err)
-	// defer os.RemoveAll(tmpBase)
+	defer os.RemoveAll(tmpBase)
 
 	tmpRoot, err := ioutil.TempDir(tmpBase, "root")
 	require.NoError(err)
