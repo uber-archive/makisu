@@ -659,9 +659,6 @@ func (fs *MemFS) untarDirectory(path string, header *tar.Header) error {
 // untarSymlink creates the symlink specified by header at path.
 func (fs *MemFS) untarSymlink(path string, header *tar.Header) error {
 	target := header.Linkname
-	if filepath.IsAbs(header.Linkname) {
-		target = filepath.Join(fs.tree.src, target)
-	}
 	if err := os.Symlink(target, path); err != nil {
 		return fmt.Errorf("create symlink %s => %s: %s", path, target, err)
 	}
