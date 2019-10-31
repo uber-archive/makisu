@@ -33,7 +33,7 @@ func TestUntarFromPath(t *testing.T) {
 
 	tmpBase, err := ioutil.TempDir("/tmp", "makisu-test")
 	require.NoError(err)
-	defer os.RemoveAll(tmpBase)
+	// defer os.RemoveAll(tmpBase)
 
 	tmpRoot, err := ioutil.TempDir(tmpBase, "root")
 	require.NoError(err)
@@ -89,9 +89,9 @@ func TestUntarFromPath(t *testing.T) {
 	require.NoError(err)
 	require.False(fi.IsDir())
 
-	contents, err = ioutil.ReadFile(filepath.Join(tmpRoot, "mydir"))
+	target, err := os.Readlink(filepath.Join(tmpRoot, "mydir"))
 	require.NoError(err)
-	require.Equal([]byte("TARGET"), contents)
+	require.Equal("/target.txt", target)
 
 	require.Equal(7, fs.layers[len(fs.layers)-1].count())
 
