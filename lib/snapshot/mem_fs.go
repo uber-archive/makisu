@@ -577,12 +577,11 @@ func (fs *MemFS) untarOneItem(path string, header *tar.Header, r *tar.Reader) er
 			if err != nil {
 				return fmt.Errorf("read link %s: %s", linkTarget, err)
 			}
-
-			if filepath.IsAbs(linkTarget) {
-				linkTarget, err = pathutils.TrimRoot(linkTarget, fs.tree.src)
-				if err != nil {
-					return fmt.Errorf("trim link %s: %s", linkTarget, err)
-				}
+			if  filepath.IsAbs(linkTarget) && strings.HasPrefix(linkTarget, fs.tree.src) {
+			        linkTarget, err = pathutils.TrimRoot(linkTarget, fs.tree.src)
+                                if err != nil {
+                                        return fmt.Errorf("trim link %s: %s", linkTarget, err)
+                                }
 			}
 		}
 		localHeader, err := tar.FileInfoHeader(localInfo, linkTarget)

@@ -68,6 +68,8 @@ func TestUntarFromPath(t *testing.T) {
 	require.NoError(err)
 	err = os.Mkdir(filepath.Join(tmpRoot, "mydir"), os.ModePerm)
 	require.NoError(err)
+	err = os.Symlink(filepath.Join("/test1", "test1.txt"), filepath.Join(tmpRoot, "test1", "abs_symlink.txt"))
+	require.NoError(err)
 
 	clk := clock.NewMock()
 	fs, err := NewMemFS(clk, tmpRoot, pathutils.DefaultBlacklist)
