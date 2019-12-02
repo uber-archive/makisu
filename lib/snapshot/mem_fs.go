@@ -112,7 +112,7 @@ func (fs *MemFS) Checkpoint(newRoot string, sources []string) error {
 			return fmt.Errorf("trim src %s: %s", src, err)
 		}
 		dst := filepath.Join(newRoot, trimmedSrc)
-		sourceInfo, err := os.Stat(src)
+		sourceInfo, err := os.Lstat(src)
 		if err != nil {
 			return fmt.Errorf("stat %s: %s", src, err)
 		}
@@ -342,7 +342,7 @@ func (fs *MemFS) addToLayer(l *memLayer, c *CopyOperation) error {
 
 	if len(c.srcs) == 1 {
 		src := filepath.Join(c.srcRoot, c.srcs[0])
-		if fi, err := os.Stat(src); err != nil {
+		if fi, err := os.Lstat(src); err != nil {
 			return fmt.Errorf("stat src %s: %s", src, err)
 		} else if !fi.IsDir() {
 			// Case 1, no need to ensure dst exists explicitly.
@@ -576,13 +576,6 @@ func (fs *MemFS) untarOneItem(path string, header *tar.Header, r *tar.Reader) er
 			linkTarget, err = os.Readlink(path)
 			if err != nil {
 				return fmt.Errorf("read link %s: %s", linkTarget, err)
-			}
-
-			if filepath.IsAbs(linkTarget) {
-				linkTarget, err = pathutils.TrimRoot(linkTarget, fs.tree.src)
-				if err != nil {
-					return fmt.Errorf("trim link %s: %s", linkTarget, err)
-				}
 			}
 		}
 		localHeader, err := tar.FileInfoHeader(localInfo, linkTarget)

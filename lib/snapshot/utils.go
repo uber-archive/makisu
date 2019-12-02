@@ -148,8 +148,8 @@ func resolveSymlink(p string, fi os.FileInfo) (bool, string, error) {
 	return true, target, nil
 }
 
-// CreateTarFromDirectory creates a tar archive containing the contents of the given
-// directory. It also compresses the contents with given compression level.
+// CreateTarFromDirectory creates a tar archive containing the contents of the
+// given directory. It also compresses the content with given compression level.
 func CreateTarFromDirectory(target, dir string) error {
 	file, err := os.Create(target)
 	if err != nil {
@@ -178,7 +178,8 @@ func CreateTarFromDirectory(target, dir string) error {
 	})
 }
 
-// tarOneItem writes the header and (optionally) data corresponding to p to the tar writer.
+// tarOneItem writes the header and (optionally) data corresponding to p to the
+// tar writer.
 func tarOneItem(root, p string, fi os.FileInfo, tw *tar.Writer, inodes map[uint64]string) error {
 	var err error
 	link := fi.Name()
@@ -186,10 +187,6 @@ func tarOneItem(root, p string, fi os.FileInfo, tw *tar.Writer, inodes map[uint6
 		link, err = os.Readlink(p)
 		if err != nil {
 			return fmt.Errorf("read link: %s", err)
-		}
-		link, err = pathutils.TrimRoot(link, root)
-		if err != nil {
-			return fmt.Errorf("trim link: %s", err)
 		}
 	}
 	hdr, err := tar.FileInfoHeader(fi, link)

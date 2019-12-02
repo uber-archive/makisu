@@ -172,7 +172,7 @@ func (l *memLayer) createHeader(root, src, dst string, fi os.FileInfo) (*tar.Hea
 		} else if !ok {
 			return nil, fmt.Errorf("symlink in tar header but not on disk: %s", src)
 		} else {
-			if filepath.IsAbs(target) {
+			if filepath.IsAbs(target) && strings.HasPrefix(target, root) {
 				target, err = pathutils.TrimRoot(target, root)
 				if err != nil {
 					return nil, fmt.Errorf("trim symlink root: %s", err)

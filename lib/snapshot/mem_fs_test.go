@@ -55,18 +55,21 @@ func TestUntarFromPath(t *testing.T) {
 	require.NoError(err)
 	err = ioutil.WriteFile(filepath.Join(src, "target.txt"), []byte("TARGET"), 0677) // 6
 	require.NoError(err)
-	err = os.Symlink(filepath.Join(src, "target.txt"), filepath.Join(src, "mydir")) // 7
+	err = os.Symlink("/target.txt", filepath.Join(src, "mydir")) // 7
 	require.NoError(err)
 
 	err = CreateTarFromDirectory(filepath.Join(tmpBase, "archive1.tar"), src)
 	require.NoError(err)
 
-	// Files already existing under the memfs root.
+	// Files already exist under the memfs root.
 	err = os.Mkdir(filepath.Join(tmpRoot, "test1"), os.ModePerm)
 	require.NoError(err)
 	err = ioutil.WriteFile(filepath.Join(tmpRoot, "test1", "test1.txt"), []byte("TEST1"), 0677)
 	require.NoError(err)
 	err = os.Mkdir(filepath.Join(tmpRoot, "mydir"), os.ModePerm)
+	require.NoError(err)
+	err = os.Symlink(filepath.Join("/test1", "test1.txt"),
+		filepath.Join(tmpRoot, "test1", "abs_symlink.txt"))
 	require.NoError(err)
 
 	clk := clock.NewMock()
@@ -95,7 +98,7 @@ func TestUntarFromPath(t *testing.T) {
 
 	require.Equal(7, fs.layers[len(fs.layers)-1].count())
 
-	// Whiteout files already existing in the memfs.
+	// Whiteout files already exist in the memfs.
 	err = os.Mkdir(filepath.Join(src2, ".wh.test.txt"), os.ModePerm)
 	require.NoError(err)
 	err = os.Mkdir(filepath.Join(src2, ".wh.test1"), os.ModePerm)
