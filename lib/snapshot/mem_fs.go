@@ -337,7 +337,6 @@ func (fs *MemFS) createLayerByScan() (*memLayer, error) {
 //   - files copied to dir2
 //   - contents of dirs copied to dir2
 func (fs *MemFS) addToLayer(l *memLayer, c *CopyOperation) error {
-	var err error
 	createDst := true
 
 	if len(c.srcs) == 1 {
@@ -363,10 +362,6 @@ func (fs *MemFS) addToLayer(l *memLayer, c *CopyOperation) error {
 	}
 
 	for _, src := range c.srcs {
-		src, err = evalSymlinks(src, c.srcRoot)
-		if err != nil {
-			return fmt.Errorf("eval symlinks for %s: %s", src, err)
-		}
 		src = filepath.Join(c.srcRoot, src)
 		if err := walk(src, nil, func(currSrc string, fi os.FileInfo) error {
 			var currDst string

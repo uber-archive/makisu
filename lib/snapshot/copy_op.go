@@ -73,12 +73,7 @@ func NewCopyOperation(
 
 // Execute performs the actual copying of files specified by the CopyOperation.
 func (c *CopyOperation) Execute() error {
-	var err error
 	for _, src := range c.srcs {
-		src, err = evalSymlinks(src, c.srcRoot)
-		if err != nil {
-			return fmt.Errorf("eval symlinks for %s: %s", src, err)
-		}
 		src = filepath.Join(c.srcRoot, src)
 		fi, err := os.Lstat(src)
 		if err != nil {
