@@ -89,9 +89,9 @@ func TestUntarFromPath(t *testing.T) {
 	require.NoError(err)
 	require.False(fi.IsDir())
 
-	target, err := os.Readlink(filepath.Join(tmpRoot, "mydir"))
+	contents, err = ioutil.ReadFile(filepath.Join(tmpRoot, "mydir"))
 	require.NoError(err)
-	require.Equal("/target.txt", target)
+	require.Equal([]byte("TARGET"), contents)
 
 	require.Equal(7, fs.layers[len(fs.layers)-1].count())
 
