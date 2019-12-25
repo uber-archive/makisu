@@ -92,7 +92,7 @@ func NewDockerfileStep(
 	switch t := d.(type) {
 	case *dockerfile.AddDirective:
 		s, _ := d.(*dockerfile.AddDirective)
-		step, err = NewAddStep(s.Args, s.Chown, s.Srcs, s.Dst, s.Commit)
+		step, err = NewAddStep(s.Args, s.Chown, s.Srcs, s.Dst, s.Commit, s.PreserveOwner)
 	case *dockerfile.ArgDirective:
 		s, _ := d.(*dockerfile.ArgDirective)
 		step = NewArgStep(s.Args, s.Name, s.ResolvedVal, s.Commit)
@@ -101,7 +101,7 @@ func NewDockerfileStep(
 		step = NewCmdStep(s.Args, s.Cmd, s.Commit)
 	case *dockerfile.CopyDirective:
 		s, _ := d.(*dockerfile.CopyDirective)
-		step, err = NewCopyStep(s.Args, s.Chown, s.FromStage, s.Srcs, s.Dst, s.Commit)
+		step, err = NewCopyStep(s.Args, s.Chown, s.FromStage, s.Srcs, s.Dst, s.Commit, s.PreserveOwner)
 	case *dockerfile.EntrypointDirective:
 		s, _ := d.(*dockerfile.EntrypointDirective)
 		step = NewEntrypointStep(s.Args, s.Entrypoint, s.Commit)

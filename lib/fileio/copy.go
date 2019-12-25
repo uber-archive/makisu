@@ -310,6 +310,9 @@ func mkdirAll(dst string, mode os.FileMode, uid, gid int, preserveOwner bool) er
 			} else if err := os.Mkdir(absDir, mode); err != nil {
 				return fmt.Errorf("mkdir %s: %s", absDir, err)
 			}
+
+			// update file info
+			fi, _ = os.Lstat(absDir)
 			if preserveOwner {
 				uid, gid = fileOwners(fi)
 			}

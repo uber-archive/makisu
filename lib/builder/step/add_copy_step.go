@@ -53,16 +53,17 @@ import (
 type addCopyStep struct {
 	*baseStep
 
-	fromStage string
-	fromPaths []string
-	toPath    string
-	chown     string
+	fromStage     string
+	fromPaths     []string
+	toPath        string
+	chown         string
+	preserveOwner bool
 }
 
 // newAddCopyStep returns a BuildStep from given arguments.
 func newAddCopyStep(
 	directive Directive, args, chown, fromStage string,
-	fromPaths []string, toPath string, commit bool) (*addCopyStep, error) {
+	fromPaths []string, toPath string, commit, preserveOwner bool) (*addCopyStep, error) {
 
 	toPath = strings.Trim(toPath, "\"'")
 	for i := range fromPaths {
@@ -73,11 +74,12 @@ func newAddCopyStep(
 		return nil, fmt.Errorf("copying multiple source files, target must be a directory ending in \"/\"")
 	}
 	return &addCopyStep{
-		baseStep:  newBaseStep(directive, args, commit),
-		fromStage: fromStage,
-		fromPaths: fromPaths,
-		toPath:    toPath,
-		chown:     chown,
+		baseStep:      newBaseStep(directive, args, commit),
+		fromStage:     fromStage,
+		fromPaths:     fromPaths,
+		toPath:        toPath,
+		chown:         chown,
+		preserveOwner: preserveOwner,
 	}, nil
 }
 
@@ -135,7 +137,7 @@ func (s *addCopyStep) Execute(ctx *context.BuildContext, modifyFS bool) (err err
 	internal := s.fromStage != ""
 	blacklist := append(pathutils.DefaultBlacklist, ctx.ImageStore.RootDir)
 	copyOp, err := snapshot.NewCopyOperation(
-		relPaths, sourceRoot, s.workingDir, s.toPath, s.chown, blacklist, internal)
+		relPaths, sourceRoot, s.workingDir, s.toPath, s.chown, blacklist, internal, s.preserveOwner)
 	if err != nil {
 		return fmt.Errorf("invalid copy operation: %s", err)
 	}

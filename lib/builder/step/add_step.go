@@ -22,8 +22,8 @@ type AddStep struct {
 }
 
 // NewAddStep creates a new AddStep
-func NewAddStep(args, chown string, fromPaths []string, toPath string, commit bool) (*AddStep, error) {
-	s, err := newAddCopyStep(Add, args, chown, "", fromPaths, toPath, commit)
+func NewAddStep(args, chown string, fromPaths []string, toPath string, commit, preserverOwner bool) (*AddStep, error) {
+	s, err := newAddCopyStep(Add, args, chown, "", fromPaths, toPath, commit, preserverOwner)
 	if err != nil {
 		return nil, fmt.Errorf("new add/copy step: %s", err)
 	}

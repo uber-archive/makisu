@@ -34,15 +34,15 @@ func TestFixtures(t *testing.T) {
 
 	// Valid.
 	require.NotNil(FromStepFixture("", "image", "alias"))
-	require.NotNil(CopyStepFixture("", "", []string{"."}, "/", false))
-	require.NotNil(CopyStepFixtureNoChown("", "", []string{"."}, "/", false))
-	require.NotNil(AddStepFixture("", []string{"."}, "/", false))
-	require.NotNil(AddStepFixtureNoChown("", []string{"."}, "/", false))
+	require.NotNil(CopyStepFixture("", "", []string{"."}, "/", false, false))
+	require.NotNil(CopyStepFixtureNoChown("", "", []string{"."}, "/", false, false))
+	require.NotNil(AddStepFixture("", []string{"."}, "/", false, false))
+	require.NotNil(AddStepFixtureNoChown("", []string{"."}, "/", false, false))
 
 	// Invalid.
 	testAndRecover(t, func() { FromStepFixture("", "image:", "") }, "FROM bad image")
-	testAndRecover(t, func() { CopyStepFixture("", "", []string{".", "."}, "/file", false) }, "invalid COPY")
-	testAndRecover(t, func() { CopyStepFixtureNoChown("", "", []string{".", "."}, "/file", false) }, "invalid COPY")
-	testAndRecover(t, func() { AddStepFixture("", []string{".", "."}, "/file", false) }, "invalid COPY")
-	testAndRecover(t, func() { AddStepFixtureNoChown("", []string{".", "."}, "/file", false) }, "invalid COPY")
+	testAndRecover(t, func() { CopyStepFixture("", "", []string{".", "."}, "/file", false, false) }, "invalid COPY")
+	testAndRecover(t, func() { CopyStepFixtureNoChown("", "", []string{".", "."}, "/file", false, false) }, "invalid COPY")
+	testAndRecover(t, func() { AddStepFixture("", []string{".", "."}, "/file", false, false) }, "invalid COPY")
+	testAndRecover(t, func() { AddStepFixtureNoChown("", []string{".", "."}, "/file", false, false) }, "invalid COPY")
 }

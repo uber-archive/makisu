@@ -14,13 +14,17 @@
 
 package dockerfile
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type addCopyDirective struct {
 	*baseDirective
-	Chown string
-	Srcs  []string
-	Dst   string
+	Chown         string
+	PreserveOwner bool
+	Srcs          []string
+	Dst           string
 }
 
 // Variables:
@@ -28,17 +32,41 @@ type addCopyDirective struct {
 // Formats:
 //   ADD/COPY [--chown=<user>:<group>] ["<src>",... "<dest>"]
 //   ADD/COPY [--chown=<user>:<group>] <src>... <dest>
+//   ADD/COPY [--archive] <src>... <dest>
+//   ADD/COPY [--archive] ["<src>",... "<dest>"]
 func newAddCopyDirective(base *baseDirective, args []string) (*addCopyDirective, error) {
 	if len(args) == 0 {
 		return nil, base.err(errMissingArgs)
 	}
 
+	// check the flag numbers here since we only allow zero or  one flag here.
+	flagNums := 0
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "--"); strings.Contains(strings.TrimPrefix(arg, "--"), "chown") || strings.Contains(strings.TrimPrefix(arg, "--"), "archive") {
+			flagNums++
+		}
+	}
+
+	if flagNums > 1 {
+		return nil, base.err(fmt.Errorf("arguments shouldn't contain more than one flag [--chown or flag --archive]"))
+	}
+
 	var chown string
-	if val, ok, err := parseFlag(args[0], "chown"); err != nil {
-		return nil, base.err(err)
-	} else if ok {
-		chown = val
-		args = args[1:]
+	var preserveOwner bool
+	if strings.Contains(args[0], "chown") {
+		if val, ok, err := parseFlag(args[0], "chown"); err != nil {
+			return nil, base.err(err)
+		} else if ok {
+			chown = val
+			args = args[1:]
+		}
+	} else if strings.Contains(args[0], "archive") {
+		if err := parseNoValueFlag(args[0], "archive"); err != nil {
+			return nil, base.err(err)
+		} else {
+			args = args[1:]
+			preserveOwner = true
+		}
 	}
 
 	var parsed []string
@@ -53,5 +81,5 @@ func newAddCopyDirective(base *baseDirective, args []string) (*addCopyDirective,
 	srcs := parsed[:len(parsed)-1]
 	dst := parsed[len(parsed)-1]
 
-	return &addCopyDirective{base, chown, srcs, dst}, nil
+	return &addCopyDirective{base, chown, preserveOwner, srcs, dst}, nil
 }
