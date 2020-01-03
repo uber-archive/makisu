@@ -32,7 +32,7 @@ var (
 	errUnsupportedDirective = errors.New("Unsupported directive type")
 )
 
-func parseNoValueFlag(s string, name string) error {
+func parseBoolFlag(s string, name string) error {
 	flag := "--" + name
 	if !strings.EqualFold(s, flag) {
 		return fmt.Errorf("Wrong flag format for %s", flag)
@@ -40,7 +40,7 @@ func parseNoValueFlag(s string, name string) error {
 	return nil
 }
 
-func parseFlag(s string, name string) (string, bool, error) {
+func parseStringFlag(s string, name string) (string, bool, error) {
 	flag := "--" + name + "="
 	if !strings.HasPrefix(s, flag) {
 		return "", false, nil

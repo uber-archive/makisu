@@ -311,7 +311,7 @@ func mkdirAll(dst string, mode os.FileMode, uid, gid int, preserveOwner bool) er
 				return fmt.Errorf("mkdir %s: %s", absDir, err)
 			}
 
-			// update file info
+			// Update file info
 			fi, _ = os.Lstat(absDir)
 			if preserveOwner {
 				uid, gid = fileOwners(fi)

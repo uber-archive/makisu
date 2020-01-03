@@ -39,13 +39,13 @@ func newCopyDirective(base *baseDirective, state *parsingState) (Directive, erro
 	}
 
 	var fromStage string
-	if val, ok, err := parseFlag(args[0], "from"); err != nil {
+	if val, ok, err := parseStringFlag(args[0], "from"); err != nil {
 		return nil, base.err(err)
 	} else if ok {
 		fromStage = val
 		args = args[1:]
 	} else if len(args) >= 3 {
-		if val, ok, err := parseFlag(args[1], "from"); err != nil {
+		if val, ok, err := parseStringFlag(args[1], "from"); err != nil {
 			return nil, base.err(err)
 		} else if ok {
 			fromStage = val

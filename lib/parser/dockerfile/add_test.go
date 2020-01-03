@@ -46,7 +46,7 @@ func TestNewAddDirective(t *testing.T) {
 		{"json substitution", true, `add ["src1"$comma "src2${suffix}", "${prefix}dst"]`, []string{"src1", "src2_test"}, "test_dst", "", false},
 		{"json chown", true, `add --chown=user:group ["src", "dst"]`, []string{"src"}, "dst", "user:group", false},
 		{"json chown substitution", true, `add --chown=${prefix}user:group ["src1"$comma "src2${suffix}", "${prefix}dst"]`, []string{"src1", "src2_test"}, "test_dst", "test_user:group", false},
-		{"json multiple flags", false, `add --chown=user:group ["src", "dst"] --archive`, []string{"src"}, "dst", "user:group", true},
+		{"json multiple flags", false, `add --chown=user:group  --archive ["src", "dst"]`, []string{"src"}, "dst", "user:group", true},
 		{"json archive", true, `add --archive  ["src", "dst"]`, []string{"src"}, "dst", "", true},
 		{"json archive bad", false, `add --archive=ss  ["src", "dst"]`, []string{"src"}, "dst", "", true},
 	}
