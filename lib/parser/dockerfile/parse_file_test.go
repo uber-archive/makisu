@@ -610,6 +610,7 @@ func integration() []*test {
 		&addCopyDirective{
 			&baseDirective{"copy", "--from=digest --chown=user:group src1 src2 src3 dst/", true},
 			"user:group",
+			false,
 			[]string{"src1", "src2", "src3"},
 			"dst/",
 		},
@@ -633,6 +634,7 @@ func integration() []*test {
 		&addCopyDirective{
 			&baseDirective{"add", `--chown=user:group ["src1", "src2", "src3", "dst/"]`, true},
 			"user:group",
+			false,
 			[]string{"src1", "src2", "src3"},
 			"dst/",
 		},

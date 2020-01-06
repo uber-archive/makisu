@@ -62,7 +62,7 @@ func newHealthcheckDirective(base *baseDirective, state *parsingState) (Directiv
 	var interval, timeout, startPeriod time.Duration
 	var retries int
 	for _, flag := range flags {
-		if val, ok, err := parseFlag(flag, "interval"); err != nil {
+		if val, ok, err := parseStringFlag(flag, "interval"); err != nil {
 			return nil, base.err(err)
 		} else if ok {
 			interval, err = time.ParseDuration(val)
@@ -72,7 +72,7 @@ func newHealthcheckDirective(base *baseDirective, state *parsingState) (Directiv
 			continue
 		}
 
-		if val, ok, err := parseFlag(flag, "timeout"); err != nil {
+		if val, ok, err := parseStringFlag(flag, "timeout"); err != nil {
 			return nil, base.err(err)
 		} else if ok {
 			timeout, err = time.ParseDuration(val)
@@ -82,7 +82,7 @@ func newHealthcheckDirective(base *baseDirective, state *parsingState) (Directiv
 			continue
 		}
 
-		if val, ok, err := parseFlag(flag, "start-period"); err != nil {
+		if val, ok, err := parseStringFlag(flag, "start-period"); err != nil {
 			return nil, base.err(err)
 		} else if ok {
 			startPeriod, err = time.ParseDuration(val)
@@ -92,7 +92,7 @@ func newHealthcheckDirective(base *baseDirective, state *parsingState) (Directiv
 			continue
 		}
 
-		if val, ok, err := parseFlag(flag, "retries"); err != nil {
+		if val, ok, err := parseStringFlag(flag, "retries"); err != nil {
 			return nil, base.err(err)
 		} else if ok {
 			retries, err = strconv.Atoi(val)

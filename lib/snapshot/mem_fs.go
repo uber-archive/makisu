@@ -24,13 +24,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/andres-erbsen/clock"
 	"github.com/uber/makisu/lib/fileio"
 	"github.com/uber/makisu/lib/log"
 	"github.com/uber/makisu/lib/mountutils"
 	"github.com/uber/makisu/lib/pathutils"
 	"github.com/uber/makisu/lib/tario"
-
-	"github.com/andres-erbsen/clock"
 )
 
 // memFSNode represents one node of the directory tree in the merged fs view.
@@ -116,12 +115,13 @@ func (fs *MemFS) Checkpoint(newRoot string, sources []string) error {
 		if err != nil {
 			return fmt.Errorf("stat %s: %s", src, err)
 		}
+
 		if sourceInfo.IsDir() {
-			if err := copier.CopyDir(src, dst, 0, 0); err != nil {
+			if err := copier.CopyDirPreserveOwner(src, dst); err != nil {
 				return fmt.Errorf("copy dir %s: %s", src, err)
 			}
 		} else {
-			if err := copier.CopyFile(src, dst, 0, 0); err != nil {
+			if err := copier.CopyFilePreserveOwner(src, dst); err != nil {
 				return fmt.Errorf("copy file %s: %s", src, err)
 			}
 		}

@@ -44,7 +44,7 @@ func abs(path string) string {
 func TestNewCopyStep(t *testing.T) {
 	require := require.New(t)
 
-	_, err := NewCopyStep("", validChown, "", []string{"src", "src"}, "dst", false)
+	_, err := NewCopyStep("", validChown, "", []string{"src", "src"}, "dst", false, false)
 	require.Error(err)
 }
 
@@ -68,7 +68,7 @@ func TestCopyStepSetCacheID(t *testing.T) {
 		require.NoError(err)
 		defer sourceFileOne.Close()
 
-		step := CopyStepFixture("", "", []string{"."}, "tmp", false)
+		step := CopyStepFixture("", "", []string{"."}, "tmp", false, false)
 		err = step.SetCacheID(context, "")
 		hash1 := step.CacheID()
 		require.NoError(err)
@@ -98,7 +98,7 @@ func TestCopyStepSetCacheID(t *testing.T) {
 		require.NoError(err)
 		defer sourceFileOne.Close()
 
-		step := CopyStepFixture("", "", []string{"."}, "tmp", false)
+		step := CopyStepFixture("", "", []string{"."}, "tmp", false, false)
 		err = step.SetCacheID(context, "")
 		hash1 := step.CacheID()
 		require.NoError(err)
@@ -128,12 +128,12 @@ func TestCopyStepSetCacheID(t *testing.T) {
 		require.NoError(err)
 		defer sourceFileOne.Close()
 
-		step := CopyStepFixture("", "", []string{"."}, "tmp", false)
+		step := CopyStepFixture("", "", []string{"."}, "tmp", false, false)
 		err = step.SetCacheID(context, "")
 		hash1 := step.CacheID()
 		require.NoError(err)
 
-		step2 := CopyStepFixture("", "", []string{"."}, "tmp2", false)
+		step2 := CopyStepFixture("", "", []string{"."}, "tmp2", false, false)
 		err = step2.SetCacheID(context, hash1)
 		require.NoError(err)
 
@@ -153,7 +153,7 @@ func TestCopyStepSetCacheID(t *testing.T) {
 		context, cleanup := context.BuildContextFixture()
 		defer cleanup()
 
-		step := CopyStepFixture("", "stage", []string{"."}, "tmp", false)
+		step := CopyStepFixture("", "stage", []string{"."}, "tmp", false, false)
 		err := step.SetCacheID(context, "seed")
 		hash1 := step.CacheID()
 		require.NoError(err)
@@ -210,7 +210,7 @@ func TestCopyStepExecuteOnCriticalPath(t *testing.T) {
 		defer os.Remove(targetPath)
 
 		srcs := []string{sourceFileOneRelPath}
-		step := CopyStepFixture("", "", srcs, abs(targetPath), false)
+		step := CopyStepFixture("", "", srcs, abs(targetPath), false, false)
 		err = step.Execute(context, true)
 		require.NoError(err)
 
@@ -229,7 +229,7 @@ func TestCopyStepExecuteOnCriticalPath(t *testing.T) {
 		defer os.RemoveAll(targetPath)
 
 		srcs := []string{sourceFileOneRelPath}
-		step := CopyStepFixture("", "", srcs, abs(targetPath)+"/", false)
+		step := CopyStepFixture("", "", srcs, abs(targetPath)+"/", false, false)
 		err = step.Execute(context, true)
 		require.NoError(err)
 
@@ -250,7 +250,7 @@ func TestCopyStepExecuteOnCriticalPath(t *testing.T) {
 		defer os.RemoveAll(targetPath)
 
 		srcs := []string{sourceFileOneRelPath, sourceFileTwoRelPath}
-		step := CopyStepFixture("", "", srcs, abs(targetPath)+"/", false)
+		step := CopyStepFixture("", "", srcs, abs(targetPath)+"/", false, false)
 		err = step.Execute(context, true)
 		require.NoError(err)
 
@@ -271,7 +271,7 @@ func TestCopyStepExecuteOnCriticalPath(t *testing.T) {
 
 		// Copy to local path.
 		srcs := []string{path.Base(sourceDir)}
-		step := CopyStepFixture("", "", srcs, abs(targetDir)+"/", false)
+		step := CopyStepFixture("", "", srcs, abs(targetDir)+"/", false, false)
 		err = step.Execute(context, true)
 		require.NoError(err)
 
@@ -296,7 +296,7 @@ func TestCopyStepExecuteOnCriticalPath(t *testing.T) {
 
 		// Copy to local path.
 		srcs := []string{path.Base(sourceDir)}
-		step := CopyStepFixture("", "", srcs, abs(targetDir), false)
+		step := CopyStepFixture("", "", srcs, abs(targetDir), false, false)
 		err = step.Execute(context, true)
 		require.NoError(err)
 
@@ -324,7 +324,7 @@ func TestCopyStepExecuteOnCriticalPath(t *testing.T) {
 
 		// Copy to local path.
 		srcs := []string{path.Base(sourceDir), sourceDirOneRelPath}
-		step := CopyStepFixture("", "", srcs, abs(targetDir)+"/", false)
+		step := CopyStepFixture("", "", srcs, abs(targetDir)+"/", false, false)
 		err = step.Execute(context, true)
 		require.NoError(err)
 
@@ -378,7 +378,7 @@ func TestCopyStepCommitOnNonCriticalPath(t *testing.T) {
 		srcs := []string{sourceFileOneRelPath}
 
 		// Copy to layer tar store.
-		step := CopyStepFixture("", "", srcs, filepath.Join(workingDir, target), true)
+		step := CopyStepFixture("", "", srcs, filepath.Join(workingDir, target), true, false)
 		require.NoError(step.Execute(context, false))
 		digestPairs, err := step.Commit(context)
 		require.NoError(err)

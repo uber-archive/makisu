@@ -27,11 +27,12 @@ import (
 
 // CopyOperation defines a copy operation that occurred to generate a layer from.
 type CopyOperation struct {
-	srcRoot string
-	srcs    []string
-	dst     string
-	uid     int
-	gid     int
+	srcRoot       string
+	srcs          []string
+	dst           string
+	uid           int
+	gid           int
+	preserveOwner bool
 
 	blacklist []string
 	// Indicates if the copy op is used for copying from previous stages.
@@ -42,7 +43,7 @@ type CopyOperation struct {
 // specify if the copy op is used for copying from previous stages.
 func NewCopyOperation(
 	srcs []string, srcRoot, workDir, dst, chown string,
-	blacklist []string, internal bool) (*CopyOperation, error) {
+	blacklist []string, internal, preserveOwner bool) (*CopyOperation, error) {
 
 	if err := checkCopyParams(srcs, workDir, dst); err != nil {
 		return nil, fmt.Errorf("check copy param: %s", err)
@@ -61,13 +62,14 @@ func NewCopyOperation(
 	dst = resolveDestination(workDir, dst)
 
 	return &CopyOperation{
-		srcRoot:   srcRoot,
-		srcs:      relSources,
-		dst:       dst,
-		uid:       uid,
-		gid:       gid,
-		blacklist: blacklist,
-		internal:  internal,
+		srcRoot:       srcRoot,
+		srcs:          relSources,
+		dst:           dst,
+		uid:           uid,
+		gid:           gid,
+		preserveOwner: preserveOwner,
+		blacklist:     blacklist,
+		internal:      internal,
 	}, nil
 }
 
@@ -92,20 +94,40 @@ func (c *CopyOperation) Execute() error {
 		}
 		if fi.IsDir() {
 			// Dir to dir
-			if err := copier.CopyDir(src, c.dst, c.uid, c.gid); err != nil {
-				return fmt.Errorf("copy dir %s to dir %s: %s", src, c.dst, err)
+			if c.preserveOwner {
+				if err := copier.CopyDirPreserveOwner(src, c.dst); err != nil {
+					return fmt.Errorf("copy dir %s to dir %s: %s", src, c.dst, err)
+				}
+			} else {
+				if err := copier.CopyDir(src, c.dst, c.uid, c.gid); err != nil {
+					return fmt.Errorf("copy dir %s to dir %s: %s", src, c.dst, err)
+				}
 			}
 		} else if isDirFormat(c.dst) {
 			// File to dir
 			targetFilePath := filepath.Join(c.dst, filepath.Base(src))
-			if err := copier.CopyFile(src, targetFilePath, c.uid, c.gid); err != nil {
-				return fmt.Errorf("copy file %s to dir %s: %s", src, targetFilePath, err)
+			if c.preserveOwner {
+				if err := copier.CopyFilePreserveOwner(src, targetFilePath); err != nil {
+					return fmt.Errorf("copy file %s to dir %s: %s", src, targetFilePath, err)
+				}
+			} else {
+				if err := copier.CopyFile(src, targetFilePath, c.uid, c.gid); err != nil {
+					return fmt.Errorf("copy file %s to dir %s: %s", src, targetFilePath, err)
+				}
 			}
+
 		} else {
 			// File to file
-			if err := copier.CopyFile(src, c.dst, c.uid, c.gid); err != nil {
-				return fmt.Errorf("copy file %s to file %s: %s", src, c.dst, err)
+			if c.preserveOwner {
+				if err := copier.CopyFilePreserveOwner(src, c.dst); err != nil {
+					return fmt.Errorf("copy file %s to dir %s: %s", src, c.dst, err)
+				}
+			} else {
+				if err := copier.CopyFile(src, c.dst, c.uid, c.gid); err != nil {
+					return fmt.Errorf("copy file %s to file %s: %s", src, c.dst, err)
+				}
 			}
+
 		}
 	}
 	return nil

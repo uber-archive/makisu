@@ -710,7 +710,7 @@ func TestCreateLayerByCopy(t *testing.T) {
 		workDir := ""
 		dst := "/test2/test.txt"
 		c, err := NewCopyOperation(
-			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false)
+			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
 		require.NoError(err)
 		err = fs.addToLayer(newMemLayer(), c)
 		require.NoError(err)
@@ -750,7 +750,7 @@ func TestCreateLayerByCopy(t *testing.T) {
 		workDir := ""
 		dst := "/dst/"
 		c, err := NewCopyOperation(
-			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false)
+			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
 		require.NoError(err)
 		err = fs.addToLayer(newMemLayer(), c)
 		require.NoError(err)
@@ -792,7 +792,7 @@ func TestCreateLayerByCopy(t *testing.T) {
 		workDir := ""
 		dst := "/dst/"
 		c, err := NewCopyOperation(
-			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false)
+			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
 		require.NoError(err)
 		err = fs.addToLayer(newMemLayer(), c)
 		require.NoError(err)
@@ -839,7 +839,7 @@ func TestCreateLayerByCopy(t *testing.T) {
 		workDir := ""
 		dst := "/dst/"
 		c, err := NewCopyOperation(
-			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false)
+			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
 		require.NoError(err)
 		err = fs.addToLayer(newMemLayer(), c)
 		require.NoError(err)
@@ -887,7 +887,7 @@ func TestCreateLayerByCopy(t *testing.T) {
 		workDir := ""
 		dst := "/dst/"
 		c, err := NewCopyOperation(
-			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false)
+			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
 		require.NoError(err)
 		err = fs.addToLayer(newMemLayer(), c)
 		require.NoError(err)
@@ -945,7 +945,7 @@ func TestCreateLayerByCopy(t *testing.T) {
 		workDir := ""
 		dst := "/dst/"
 		c, err := NewCopyOperation(
-			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false)
+			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
 		require.NoError(err)
 		err = fs.addToLayer(newMemLayer(), c)
 		require.NoError(err)
@@ -1003,7 +1003,7 @@ func TestCreateLayerByCopy(t *testing.T) {
 		workDir := "/wrk"
 		dst := "dst/"
 		c, err := NewCopyOperation(
-			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false)
+			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
 		require.NoError(err)
 		err = fs.addToLayer(newMemLayer(), c)
 		require.NoError(err)
@@ -1159,7 +1159,7 @@ func TestAddLayersEqual(t *testing.T) {
 	workDir := "/wrk"
 	dst := "dst/"
 	c, err := NewCopyOperation(
-		srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false)
+		srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
 	require.NoError(err)
 	err = fs1.AddLayerByCopyOps([]*CopyOperation{c}, w1)
 	require.NoError(err)

@@ -51,6 +51,7 @@ func CopyDirectiveFixture(args, chown, fromStage string, srcs []string, dst stri
 		&addCopyDirective{
 			&baseDirective{"copy", args, false},
 			chown,
+			false,
 			srcs,
 			dst,
 		},
@@ -89,6 +90,7 @@ func AddDirectiveFixture(args, chown string, srcs []string, dst string) *AddDire
 		&addCopyDirective{
 			&baseDirective{"add", args, false},
 			chown,
+			false,
 			srcs,
 			dst,
 		},

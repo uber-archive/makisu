@@ -14,18 +14,24 @@
 
 package dockerfile
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type addCopyDirective struct {
 	*baseDirective
-	Chown string
-	Srcs  []string
-	Dst   string
+	Chown         string
+	PreserveOwner bool
+	Srcs          []string
+	Dst           string
 }
 
 // Variables:
 //   Replaced from ARGs and ENVs from within our stage.
 // Formats:
+//   ADD/COPY [--archive] <src>... <dest>
+//   ADD/COPY [--archive] ["<src>",... "<dest>"]
 //   ADD/COPY [--chown=<user>:<group>] ["<src>",... "<dest>"]
 //   ADD/COPY [--chown=<user>:<group>] <src>... <dest>
 func newAddCopyDirective(base *baseDirective, args []string) (*addCopyDirective, error) {
@@ -33,11 +39,34 @@ func newAddCopyDirective(base *baseDirective, args []string) (*addCopyDirective,
 		return nil, base.err(errMissingArgs)
 	}
 
+	// Check the flag numbers here since we only allow zero or one flag here.
+	var chownCount, archiveCount int
 	var chown string
-	if val, ok, err := parseFlag(args[0], "chown"); err != nil {
-		return nil, base.err(err)
-	} else if ok {
-		chown = val
+	var preserveOwner bool
+	for _, arg := range args[:len(args)-1] {
+		if strings.HasPrefix(arg, "--chown") {
+			if val, ok, err := parseStringFlag(arg, "chown"); err != nil {
+				return nil, base.err(err)
+			} else if ok {
+				chown = val
+				chownCount++
+				continue
+			}
+		}
+
+		if strings.HasPrefix(arg, "--archive") {
+			if err := parseBoolFlag(arg, "archive"); err == nil {
+				archiveCount++
+				preserveOwner = true
+			} else {
+				return nil, fmt.Errorf("archive flag format is wrong")
+			}
+		}
+	}
+
+	if archiveCount+chownCount >= 2 {
+		return nil, base.err(fmt.Errorf("argument shouldn't contain more than one flag [--chown or --archive]"))
+	} else if archiveCount+chownCount == 1 {
 		args = args[1:]
 	}
 
@@ -52,6 +81,5 @@ func newAddCopyDirective(base *baseDirective, args []string) (*addCopyDirective,
 	}
 	srcs := parsed[:len(parsed)-1]
 	dst := parsed[len(parsed)-1]
-
-	return &addCopyDirective{base, chown, srcs, dst}, nil
+	return &addCopyDirective{base, chown, preserveOwner, srcs, dst}, nil
 }

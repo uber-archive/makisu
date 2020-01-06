@@ -41,8 +41,8 @@ func FromStepFixture(args, image, alias string) *FromStep {
 }
 
 // AddStepFixture returns a AddStep, panicing if it fails, for testing purposes.
-func AddStepFixture(args string, srcs []string, dst string, commit bool) *AddStep {
-	c, err := NewAddStep(args, validChown, srcs, dst, commit)
+func AddStepFixture(args string, srcs []string, dst string, commit, preserveOwner bool) *AddStep {
+	c, err := NewAddStep(args, validChown, srcs, dst, commit, preserveOwner)
 	if err != nil {
 		panic(err)
 	}
@@ -50,8 +50,8 @@ func AddStepFixture(args string, srcs []string, dst string, commit bool) *AddSte
 }
 
 // AddStepFixtureNoChown returns a AddStep, panicing if it fails, for testing purposes.
-func AddStepFixtureNoChown(args string, srcs []string, dst string, commit bool) *AddStep {
-	c, err := NewAddStep(args, "", srcs, dst, commit)
+func AddStepFixtureNoChown(args string, srcs []string, dst string, commit, preserveOwner bool) *AddStep {
+	c, err := NewAddStep(args, "", srcs, dst, commit, preserveOwner)
 	if err != nil {
 		panic(err)
 	}
@@ -59,8 +59,8 @@ func AddStepFixtureNoChown(args string, srcs []string, dst string, commit bool) 
 }
 
 // CopyStepFixture returns a CopyStep, panicing if it fails, for testing purposes.
-func CopyStepFixture(args, fromStage string, srcs []string, dst string, commit bool) *CopyStep {
-	c, err := NewCopyStep(args, validChown, fromStage, srcs, dst, commit)
+func CopyStepFixture(args, fromStage string, srcs []string, dst string, commit, preserveOwner bool) *CopyStep {
+	c, err := NewCopyStep(args, validChown, fromStage, srcs, dst, commit, preserveOwner)
 	if err != nil {
 		panic(err)
 	}
@@ -68,8 +68,8 @@ func CopyStepFixture(args, fromStage string, srcs []string, dst string, commit b
 }
 
 // CopyStepFixtureNoChown returns a CopyStep, panicing if it fails, for testing purposes.
-func CopyStepFixtureNoChown(args, fromStage string, srcs []string, dst string, commit bool) *CopyStep {
-	c, err := NewCopyStep(args, "", fromStage, srcs, dst, commit)
+func CopyStepFixtureNoChown(args, fromStage string, srcs []string, dst string, commit, preserveOwner bool) *CopyStep {
+	c, err := NewCopyStep(args, "", fromStage, srcs, dst, commit, preserveOwner)
 	if err != nil {
 		panic(err)
 	}
