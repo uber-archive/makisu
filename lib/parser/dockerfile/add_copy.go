@@ -65,7 +65,7 @@ func newAddCopyDirective(base *baseDirective, args []string) (*addCopyDirective,
 	}
 
 	if archiveCount+chownCount >= 2 {
-		return nil, base.err(fmt.Errorf("arguments shouldn't contain more than one flag [--chown or --archive]"))
+		return nil, base.err(fmt.Errorf("argument shouldn't contain more than one flag [--chown or --archive]"))
 	} else if archiveCount+chownCount == 1 {
 		args = args[1:]
 	}
