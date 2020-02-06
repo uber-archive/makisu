@@ -105,7 +105,7 @@ func (cmd *pushCmd) Push(imageTarPath string) error {
 		return fmt.Errorf("unable to create internal store: %s", err)
 	}
 
-	if err := cmd.loadImageTarIntoStore(store, imageName, imageTarPath); err != nil {
+	if err := cmd.loadImageTarIntoStore(store, imageName, cmd.replicas, imageTarPath); err != nil {
 		return fmt.Errorf("unable to import image: %s", err)
 	}
 
@@ -137,9 +137,9 @@ func (cmd *pushCmd) getTargetImageName() (image.Name, error) {
 }
 
 func (cmd *pushCmd) loadImageTarIntoStore(
-	store *storage.ImageStore, imageName image.Name, imageTarPath string) error {
+	store *storage.ImageStore, imageName image.Name, replicas []string, imageTarPath string) error {
 
-	if err := cmd.ImportTar(store, imageName, imageTarPath); err != nil {
+	if err := cmd.importTar(store, imageName, replicas, imageTarPath); err != nil {
 		return fmt.Errorf("import image tar: %s", err)
 	}
 
@@ -155,9 +155,9 @@ func (cmd *pushCmd) pushImage(store *storage.ImageStore, imageName image.Name) e
 	return nil
 }
 
-// ImportTar imports an image, as a tar, to the image store.
-func (cmd *pushCmd) ImportTar(
-	store *storage.ImageStore, imageName image.Name, tarPath string) error {
+// importTar imports an image, as a tar, to the image store.
+func (cmd *pushCmd) importTar(
+	store *storage.ImageStore, imageName image.Name, replicas []string, tarPath string) error {
 
 	repo, tag := imageName.GetRepository(), imageName.GetTag()
 
@@ -253,27 +253,11 @@ func (cmd *pushCmd) ImportTar(
 			},
 			Layers: layers,
 		}
-		distManifestJSON, err := json.Marshal(distManifest)
-		if err != nil {
-			return fmt.Errorf("marshal manifest to JSON: %s", err)
-		}
+		store.SaveManifest(distManifest, imageName)
 
-		distManifestFile, err := ioutil.TempFile(store.SandboxDir, "")
-		if err != nil {
-			return fmt.Errorf("create tmp manifest file: %s", err)
-		}
-		if _, err := distManifestFile.Write(distManifestJSON); err != nil {
-			return fmt.Errorf("write manifest file: %s", err)
-		}
-		if err := distManifestFile.Close(); err != nil {
-			return fmt.Errorf("close manifest file: %s", err)
-		}
-
-		distManifestPath := distManifestFile.Name()
-		if err := store.Manifests.LinkStoreFileFrom(
-			repo, tag, distManifestPath); err != nil && !os.IsExist(err) {
-
-			return fmt.Errorf("commit manifest to store: %s", err)
+		for _, replica := range replicas {
+			parsed := image.MustParseName(replica)
+			store.SaveManifest(distManifest, parsed)
 		}
 	}
 

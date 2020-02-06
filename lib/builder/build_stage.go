@@ -279,7 +279,7 @@ func (stage *buildStage) saveManifest(
 	}
 
 	manifestPath := manifestFile.Name()
-	// Remove temp file after hard-linked to manifest store
+	// Remove temp file after hard-linked to manifest store.
 	defer os.Remove(manifestPath)
 
 	if err := ioutil.WriteFile(manifestPath, manifestJSON, 0755); err != nil {
