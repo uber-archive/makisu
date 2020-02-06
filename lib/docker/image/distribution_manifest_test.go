@@ -15,9 +15,6 @@
 package image
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -47,25 +44,4 @@ func TestUnmarshalDistributionManifest(t *testing.T) {
 		MediaTypeManifest, []byte(busyboxDistManifest))
 	require.NoError(err)
 	require.Equal(1, len(manifest.GetLayerDigests()))
-}
-
-func TestNewDistributionManifestFromExport(t *testing.T) {
-	require := require.New(t)
-
-	testFileDirBusybox := "../../../testdata/files/busybox"
-	exportManifestPath := filepath.Join(testFileDirBusybox, "manifest.json")
-	exportManifestData, err := ioutil.ReadFile(exportManifestPath)
-	require.NoError(err)
-	var exportManifests []ExportManifest
-	require.NoError(json.Unmarshal(exportManifestData, &exportManifests))
-
-	require.Equal(1, len(exportManifests))
-
-	distManifest, err := NewDistributionManifestFromExport(exportManifests[0], testFileDirBusybox)
-	require.NoError(err)
-
-	expectdataManifest, _, err := UnmarshalDistributionManifest(
-		MediaTypeManifest, []byte(busyboxDistManifest))
-	require.NoError(err)
-	require.Equal(expectdataManifest, distManifest)
 }

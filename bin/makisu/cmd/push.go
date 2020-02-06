@@ -191,10 +191,67 @@ func (cmd *pushCmd) ImportTar(
 	}
 
 	for _, exportManifest := range exportManifests {
-		// Import extracted dir content into image store -- manifest.json.
-		distManifest, err := image.NewDistributionManifestFromExport(exportManifest, dir)
+		// Import extracted dir content into image store -- {sha}.json.
+		configPath := filepath.Join(dir, exportManifest.Config.String())
+
+		configInfo, err := os.Stat(configPath)
 		if err != nil {
-			return fmt.Errorf("create distribution manifest: %s", err)
+			return fmt.Errorf("lookup config file info: %s", err)
+		}
+
+		configReader, err := os.Open(configPath)
+		if err != nil {
+			return fmt.Errorf("open config json: %s", err)
+		}
+		defer configReader.Close()
+		configDigest, err := image.NewDigester().FromReader(configReader)
+
+		if err := store.Layers.LinkStoreFileFrom(
+			configDigest.Hex(), configPath); err != nil && !os.IsExist(err) {
+
+			return fmt.Errorf("commit config to store: %s", err)
+		}
+
+		// Import extracted dir content into image store -- {sha}/layer.tar.
+		var layers []image.Descriptor
+		for _, layer := range exportManifest.Layers {
+			layerPath := path.Join(dir, layer.String())
+
+			layerInfo, err := os.Stat(layerPath)
+			if err != nil {
+				return fmt.Errorf("lookup layer file info: %s", err)
+			}
+
+			layerReader, err := os.Open(layerPath)
+			if err != nil {
+				return fmt.Errorf("open layer tar: %s", err)
+			}
+			defer layerReader.Close()
+			layerDigest, err := image.NewDigester().FromReader(layerReader)
+
+			if err := store.Layers.LinkStoreFileFrom(
+				layerDigest.Hex(), layerPath); err != nil && !os.IsExist(err) {
+
+				return fmt.Errorf("commit layer to store: %s", err)
+			}
+
+			layers = append(layers, image.Descriptor{
+				MediaType: image.MediaTypeLayer,
+				Size:      layerInfo.Size(),
+				Digest:    layerDigest,
+			})
+		}
+
+		// Import extracted dir content into image store -- manifest.json.
+		distManifest := image.DistributionManifest{
+			SchemaVersion: 2,
+			MediaType:     image.MediaTypeManifest,
+			Config: image.Descriptor{
+				MediaType: image.MediaTypeConfig,
+				Size:      configInfo.Size(),
+				Digest:    configDigest,
+			},
+			Layers: layers,
 		}
 		distManifestJSON, err := json.Marshal(distManifest)
 		if err != nil {
@@ -213,27 +270,10 @@ func (cmd *pushCmd) ImportTar(
 		}
 
 		distManifestPath := distManifestFile.Name()
-		if err = store.Manifests.LinkStoreFileFrom(
+		if err := store.Manifests.LinkStoreFileFrom(
 			repo, tag, distManifestPath); err != nil && !os.IsExist(err) {
 
 			return fmt.Errorf("commit manifest to store: %s", err)
-		}
-
-		// Import extracted dir content into image store -- {sha}.json.
-		configPath := filepath.Join(dir, exportManifest.Config.String())
-		configID := exportManifest.Config.ID()
-		if err = store.Layers.LinkStoreFileFrom(configID, configPath); err != nil && !os.IsExist(err) {
-			return fmt.Errorf("commit config to store: %s", err)
-		}
-
-		// Import extracted dir content into image store -- {sha}/layer.tar.
-		// TODO: layer IDs might be incorrect if it's from "docker save".
-		for _, layer := range exportManifest.Layers {
-			layerPath := path.Join(dir, layer.String())
-			layerID := layer.ID()
-			if err = store.Layers.LinkStoreFileFrom(layerID, layerPath); err != nil && !os.IsExist(err) {
-				return fmt.Errorf("commit layer to store: %s", err)
-			}
 		}
 	}
 

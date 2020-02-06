@@ -18,8 +18,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"mime"
-	"os"
-	"path/filepath"
 )
 
 const (
@@ -118,41 +116,4 @@ func (manifest DistributionManifest) GetConfigDigest() Digest {
 // NewEmptyDescriptor returns a 0 value descriptor.
 func NewEmptyDescriptor() Descriptor {
 	return Descriptor{Digest: Digest("")}
-}
-
-// NewDistributionManifestFromExport converts an ExportManifest to a
-// DistributionManifest.
-// imageDir must contain the unpacked exported image.
-func NewDistributionManifestFromExport(
-	export ExportManifest, imageDir string) (DistributionManifest, error) {
-
-	var layers []Descriptor
-	for _, exportLayer := range export.Layers {
-		fileinfo, err := os.Stat(filepath.Join(imageDir, exportLayer.String()))
-		if err != nil {
-			return DistributionManifest{}, fmt.Errorf("lookup layer file info: %s", err)
-		}
-
-		layers = append(layers, Descriptor{
-			MediaType: MediaTypeLayer,
-			Size:      fileinfo.Size(),
-			Digest:    Digest(exportLayer.ID()),
-		})
-	}
-
-	fileinfo, err := os.Stat(filepath.Join(imageDir, export.Config.String()))
-	if err != nil {
-		return DistributionManifest{}, fmt.Errorf("lookup config file info: %s", err)
-	}
-
-	return DistributionManifest{
-		SchemaVersion: 2,
-		MediaType:     MediaTypeManifest,
-		Config: Descriptor{
-			MediaType: MediaTypeConfig,
-			Size:      fileinfo.Size(),
-			Digest:    Digest(export.Config.ID()),
-		},
-		Layers: layers,
-	}, nil
 }
