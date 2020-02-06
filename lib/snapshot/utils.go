@@ -178,37 +178,6 @@ func CreateTarFromDirectory(target, dir string) error {
 	})
 }
 
-// CreateDirectoryFromTar creates a directory containing the contents of the given
-// tar archive.
-func CreateDirectoryFromTar(target, tar string) error {
-	// TODO
-	file, err := os.Create(target)
-	if err != nil {
-		return fmt.Errorf("open target file: %s", err)
-	}
-	defer file.Close()
-
-	var tw *tar.Writer
-	gw, err := tario.NewGzipWriter(file)
-	if err != nil {
-		return fmt.Errorf("new gzip writer: %s", err)
-	}
-	defer gw.Close()
-	tw = tar.NewWriter(gw)
-	defer tw.Close()
-
-	inodes := make(map[uint64]string)
-	return filepath.Walk(dir, func(p string, fi os.FileInfo, err error) error {
-		if err != nil {
-			return fmt.Errorf("walk: %s", err)
-		}
-		if dir == p {
-			return nil
-		}
-		return tarOneItem(dir, p, fi, tw, inodes)
-	})
-}
-
 // tarOneItem writes the header and (optionally) data corresponding to p to the tar writer.
 func tarOneItem(root, p string, fi os.FileInfo, tw *tar.Writer, inodes map[uint64]string) error {
 	var err error

@@ -72,9 +72,9 @@ type buildCmd struct {
 func getBuildCmd() *buildCmd {
 	buildCmd := &buildCmd{
 		Command: &cobra.Command{
-			Use: "build -t=<image_tag> [flags] <context_path>",
+			Use:                   "build -t=<image_tag> [flags] <context_path>",
 			DisableFlagsInUseLine: true,
-			Short: "Build docker image, optionally push to registries and/or load into docker daemon",
+			Short:                 "Build docker image, optionally push to registries and/or load into docker daemon",
 		},
 	}
 	buildCmd.Args = func(cmd *cobra.Command, args []string) error {
@@ -151,7 +151,7 @@ func (cmd *buildCmd) processFlags() error {
 		return fmt.Errorf("invalid commit option: %s", cmd.commit)
 	}
 
-	if err := cmd.initRegistryConfig(); err != nil {
+	if err := initRegistryConfig(cmd.registryConfig); err != nil {
 		return fmt.Errorf("failed to initialize registry configuration: %s", err)
 	}
 

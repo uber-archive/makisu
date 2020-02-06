@@ -16,6 +16,7 @@ package cmd
 
 import (
 	ctx "context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -37,12 +38,12 @@ import (
 	"github.com/uber/makisu/lib/utils/stringset"
 )
 
-func (cmd *buildCmd) initRegistryConfig() error {
-	if cmd.registryConfig == "" {
+func initRegistryConfig(registryConfig string) error {
+	if registryConfig == "" {
 		return nil
 	}
-	cmd.registryConfig = os.ExpandEnv(cmd.registryConfig)
-	if err := registry.UpdateGlobalConfig(cmd.registryConfig); err != nil {
+	registryConfig = os.ExpandEnv(registryConfig)
+	if err := registry.UpdateGlobalConfig(registryConfig); err != nil {
 		return fmt.Errorf("init registry config: %s", err)
 	}
 	return nil
@@ -89,7 +90,7 @@ func (cmd *buildCmd) getDockerfile(contextDir string) ([]*dockerfile.Stage, erro
 func (cmd *buildCmd) getTargetImageName() (image.Name, error) {
 	if cmd.tag == "" {
 		msg := "please specify a target image name: makisu build -t=(<registry:port>/)<repo>:<tag> ./"
-		return image.Name{}, fmt.Errorf(msg)
+		return image.Name{}, errors.New(msg)
 	}
 
 	// Parse the target's image name into its components.

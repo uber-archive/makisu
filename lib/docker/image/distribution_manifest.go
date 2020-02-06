@@ -120,10 +120,12 @@ func NewEmptyDescriptor() Descriptor {
 	return Descriptor{Digest: Digest("")}
 }
 
-// NewDistributionManifestFromExport converts an ExportManifest to a DistributionManifest
-//
-// imageDir must contain the exported unpacked exported image
-func NewDistributionManifestFromExport(export ExportManifest, imageDir string) (DistributionManifest, error) {
+// NewDistributionManifestFromExport converts an ExportManifest to a
+// DistributionManifest.
+// imageDir must contain the unpacked exported image.
+func NewDistributionManifestFromExport(
+	export ExportManifest, imageDir string) (DistributionManifest, error) {
+
 	var layers []Descriptor
 	for _, exportLayer := range export.Layers {
 		fileinfo, err := os.Stat(filepath.Join(imageDir, exportLayer.String()))
@@ -146,11 +148,11 @@ func NewDistributionManifestFromExport(export ExportManifest, imageDir string) (
 	return DistributionManifest{
 		SchemaVersion: 2,
 		MediaType:     MediaTypeManifest,
-		Config:        Descriptor{
+		Config: Descriptor{
 			MediaType: MediaTypeConfig,
 			Size:      fileinfo.Size(),
 			Digest:    Digest(export.Config.ID()),
 		},
-		Layers:        layers,
+		Layers: layers,
 	}, nil
 }

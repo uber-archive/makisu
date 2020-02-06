@@ -21,12 +21,12 @@ import (
 )
 
 func TestExportManifest(t *testing.T) {
-	manifest, _, err := UnmarshalDistributionManifest(MediaTypeManifest, []byte(testManifest))
+	manifest, _, err := UnmarshalDistributionManifest(MediaTypeManifest, []byte(busyboxDistManifest))
 	require.NoError(t, err)
 	expManifest := NewExportManifestFromDistribution(Name{}, manifest)
 	require.Equal(t, 1, len(expManifest.Layers))
 	layer := expManifest.Layers[0]
-	require.Equal(t, "d660b1f15b9bfb8142f50b518156f2d364d9642fe05854538b060498e2f7928d", layer.ID())
-	require.Equal(t, "d660b1f15b9bfb8142f50b518156f2d364d9642fe05854538b060498e2f7928d/layer.tar", layer.String())
-	require.Equal(t, "79f4bda919894b2fe9a66f403337bdc0c547ac95183ec034a3a37869e17ee72e", expManifest.Config.ID())
+	require.Equal(t, "393ccd5c4dd90344c9d725125e13f636ce0087c62f5ca89050faaacbb9e3ed5b", layer.ID())
+	require.Equal(t, "393ccd5c4dd90344c9d725125e13f636ce0087c62f5ca89050faaacbb9e3ed5b/layer.tar", layer.String())
+	require.Equal(t, "411a417c1f6ef5b93fac71c92276013f45762dde0bb36a80a6148ca114d1b0fa", expManifest.Config.ID())
 }

@@ -15,30 +15,57 @@
 package image
 
 import (
+	"encoding/json"
+	"io/ioutil"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
-const testManifest = `{
-   "schemaVersion": 2,
-   "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
-   "config": {
-      "mediaType": "application/vnd.docker.container.image.v1+json",
-      "size": 1503,
-      "digest": "sha256:79f4bda919894b2fe9a66f403337bdc0c547ac95183ec034a3a37869e17ee72e"
+const busyboxDistManifest = `{
+   "schemaVersion":2,
+   "mediaType":"application/vnd.docker.distribution.manifest.v2+json",
+   "config":{
+      "mediaType":"application/vnd.docker.container.image.v1+json",
+      "size":1346,
+      "digest":"411a417c1f6ef5b93fac71c92276013f45762dde0bb36a80a6148ca114d1b0fa"
    },
-   "layers": [
+   "layers":[
       {
-         "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
-         "size": 54252125,
-         "digest": "sha256:d660b1f15b9bfb8142f50b518156f2d364d9642fe05854538b060498e2f7928d"
+         "mediaType":"application/vnd.docker.image.rootfs.diff.tar.gzip",
+         "size":1308672,
+         "digest":"393ccd5c4dd90344c9d725125e13f636ce0087c62f5ca89050faaacbb9e3ed5b"
       }
    ]
 }`
 
 func TestUnmarshalDistributionManifest(t *testing.T) {
-	manifest, _, err := UnmarshalDistributionManifest(MediaTypeManifest, []byte(testManifest))
-	require.NoError(t, err)
-	require.Equal(t, 1, len(manifest.GetLayerDigests()))
+	require := require.New(t)
+
+	manifest, _, err := UnmarshalDistributionManifest(
+		MediaTypeManifest, []byte(busyboxDistManifest))
+	require.NoError(err)
+	require.Equal(1, len(manifest.GetLayerDigests()))
+}
+
+func TestNewDistributionManifestFromExport(t *testing.T) {
+	require := require.New(t)
+
+	testFileDirBusybox := "../../../testdata/files/busybox"
+	exportManifestPath := filepath.Join(testFileDirBusybox, "manifest.json")
+	exportManifestData, err := ioutil.ReadFile(exportManifestPath)
+	require.NoError(err)
+	var exportManifests []ExportManifest
+	require.NoError(json.Unmarshal(exportManifestData, &exportManifests))
+
+	require.Equal(1, len(exportManifests))
+
+	distManifest, err := NewDistributionManifestFromExport(exportManifests[0], testFileDirBusybox)
+	require.NoError(err)
+
+	expectdataManifest, _, err := UnmarshalDistributionManifest(
+		MediaTypeManifest, []byte(busyboxDistManifest))
+	require.NoError(err)
+	require.Equal(expectdataManifest, distManifest)
 }

@@ -15,25 +15,20 @@
 package cmd
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
-	"runtime"
-	"time"
 
-	"github.com/uber/makisu/lib/builder"
-	"github.com/uber/makisu/lib/context"
-	"github.com/uber/makisu/lib/docker/cli"
 	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/log"
-	"github.com/uber/makisu/lib/pathutils"
 	"github.com/uber/makisu/lib/registry"
-	"github.com/uber/makisu/lib/snapshot"
 	"github.com/uber/makisu/lib/storage"
 	"github.com/uber/makisu/lib/tario"
 	"github.com/uber/makisu/lib/utils"
-	"github.com/uber/makisu/lib/utils/stringset"
 
 	"github.com/spf13/cobra"
 )
@@ -41,7 +36,7 @@ import (
 type pushCmd struct {
 	*cobra.Command
 
-	tag            string
+	tag string
 
 	pushRegistries []string
 	replicas       []string
@@ -51,9 +46,9 @@ type pushCmd struct {
 func getPushCmd() *pushCmd {
 	pushCmd := &pushCmd{
 		Command: &cobra.Command{
-			Use: "push -t=<image_tag> [flags] <image_tar_path>",
+			Use:                   "push -t=<image_tag> [flags] <image_tar_path>",
 			DisableFlagsInUseLine: true,
-			Short: "Push docker image to registries",
+			Short:                 "Push docker image to registries",
 		},
 	}
 	pushCmd.Args = func(cmd *cobra.Command, args []string) error {
@@ -88,14 +83,14 @@ func getPushCmd() *pushCmd {
 }
 
 func (cmd *pushCmd) processFlags() error {
-	if err := cmd.initRegistryConfig(); err != nil {
+	if err := initRegistryConfig(cmd.registryConfig); err != nil {
 		return fmt.Errorf("failed to initialize registry configuration: %s", err)
 	}
 
 	return nil
 }
 
-// Push image tar to docker registries
+// Push image tar to docker registries.
 func (cmd *pushCmd) Push(imageTarPath string) error {
 	log.Infof("Starting Makisu push (version=%s)", utils.BuildHash)
 
@@ -104,17 +99,17 @@ func (cmd *pushCmd) Push(imageTarPath string) error {
 		return err
 	}
 
-	store, err := storage.NewImageStore("/tmp/makisu-storage")  // TODO make configurable?
+	// TODO: make configurable?
+	store, err := storage.NewImageStore("/tmp/makisu-storage")
 	if err != nil {
 		return fmt.Errorf("unable to create internal store: %s", err)
 	}
 
-	if err := cmd.loadImageTarIntoStore(store, imageTarPath); err != nil {
+	if err := cmd.loadImageTarIntoStore(store, imageName, imageTarPath); err != nil {
 		return fmt.Errorf("unable to import image: %s", err)
 	}
 
 	// Push image to registries that were specified in the --push flag.
-	// TODO figure out where in the build process we map imageName X with the below names for push
 	for _, registry := range cmd.pushRegistries {
 		target := imageName.WithRegistry(registry)
 		if err := cmd.pushImage(store, target); err != nil {
@@ -134,16 +129,17 @@ func (cmd *pushCmd) Push(imageTarPath string) error {
 
 func (cmd *pushCmd) getTargetImageName() (image.Name, error) {
 	if cmd.tag == "" {
-		// TODO message
-		return image.Name{}, fmt.Errorf("please specify a target image name: makisu build -t=(<registry:port>/)<repo>:<tag> ./")
+		msg := "please specify a target image name: push -t=<image_tag> [flags] <image_tar_path>"
+		return image.Name{}, errors.New(msg)
 	}
 
 	return image.MustParseName(cmd.tag), nil
 }
 
-func (cmd *pushCmd) loadImageTarIntoStore(store *storage.ImageStore, imageTarPath string, repository string) error {
-	tarer := cli.NewDefaultImageTarer(store)
-	if err := tarer.WriteTar(imageTarPath, ...); err != nil {
+func (cmd *pushCmd) loadImageTarIntoStore(
+	store *storage.ImageStore, imageName image.Name, imageTarPath string) error {
+
+	if err := cmd.ImportTar(store, imageName, imageTarPath); err != nil {
 		return fmt.Errorf("import image tar: %s", err)
 	}
 
@@ -156,5 +152,93 @@ func (cmd *pushCmd) pushImage(store *storage.ImageStore, imageName image.Name) e
 		return fmt.Errorf("failed to push image: %s", err)
 	}
 	log.Infof("Successfully pushed %s to %s", imageName, imageName.GetRegistry())
+	return nil
+}
+
+// ImportTar imports an image, as a tar, to the image store.
+func (cmd *pushCmd) ImportTar(
+	store *storage.ImageStore, imageName image.Name, tarPath string) error {
+
+	repo, tag := imageName.GetRepository(), imageName.GetTag()
+
+	// Extract tar into temporary directory.
+	dir := filepath.Join(store.SandboxDir, repo, tag)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("create unpack directory: %s", err)
+	}
+	defer os.RemoveAll(dir)
+
+	reader, err := os.Open(tarPath)
+	if err != nil {
+		return fmt.Errorf("open tar file: %s", err)
+	}
+	defer reader.Close()
+	gzipReader, err := tario.NewGzipReader(reader)
+	if err != nil {
+		return fmt.Errorf("new gzip reader: %s", err)
+	}
+	if err := tario.Untar(gzipReader, dir); err != nil {
+		return fmt.Errorf("unpack tar: %s", err)
+	}
+
+	// Read manifest.
+	exportManifestPath := filepath.Join(dir, "manifest.json")
+	exportManifestData, err := ioutil.ReadFile(exportManifestPath)
+	if err != nil {
+		return fmt.Errorf("read export manifest: %s", err)
+	}
+
+	var exportManifests []image.ExportManifest
+	if err := json.Unmarshal(exportManifestData, &exportManifests); err != nil {
+		return fmt.Errorf("unmarshal export manifest: %s", err)
+	}
+
+	for _, exportManifest := range exportManifests {
+		// Import extracted dir content into image store -- manifest.json.
+		distManifest, err := image.NewDistributionManifestFromExport(exportManifest, dir)
+		if err != nil {
+			return fmt.Errorf("create distribution manifest: %s", err)
+		}
+		distManifestJSON, err := json.Marshal(distManifest)
+		if err != nil {
+			return fmt.Errorf("marshal manifest to JSON: %s", err)
+		}
+
+		distManifestFile, err := ioutil.TempFile(store.SandboxDir, "")
+		if err != nil {
+			return fmt.Errorf("create tmp manifest file: %s", err)
+		}
+		if _, err := distManifestFile.Write(distManifestJSON); err != nil {
+			return fmt.Errorf("write manifest file: %s", err)
+		}
+		if err := distManifestFile.Close(); err != nil {
+			return fmt.Errorf("close manifest file: %s", err)
+		}
+
+		distManifestPath := distManifestFile.Name()
+		if err = store.Manifests.LinkStoreFileFrom(
+			repo, tag, distManifestPath); err != nil && !os.IsExist(err) {
+
+			return fmt.Errorf("commit manifest to store: %s", err)
+		}
+
+		// Import extracted dir content into image store -- {sha}.json.
+		configPath := filepath.Join(dir, exportManifest.Config.String())
+		configID := exportManifest.Config.ID()
+		if err = store.Layers.LinkStoreFileFrom(configID, configPath); err != nil && !os.IsExist(err) {
+			return fmt.Errorf("commit config to store: %s", err)
+		}
+
+		// Import extracted dir content into image store -- {sha}/layer.tar.
+		// TODO: layer IDs might be incorrect if it's from "docker save".
+		for _, layer := range exportManifest.Layers {
+			layerPath := path.Join(dir, layer.String())
+			layerID := layer.ID()
+			if err = store.Layers.LinkStoreFileFrom(layerID, layerPath); err != nil && !os.IsExist(err) {
+				return fmt.Errorf("commit layer to store: %s", err)
+			}
+		}
+	}
+
 	return nil
 }
