@@ -15,10 +15,13 @@
 package storage
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/uber/makisu/lib/docker/image"
 )
 
 // ImageStore contains a manifeststore, a layertarstore, and a sandbox dir.
@@ -63,5 +66,34 @@ func CleanupSandbox(rootDir string) error {
 	if err := os.RemoveAll(sandboxParent); err != nil {
 		return fmt.Errorf("remove sandbox parent %s: %s", sandboxParent, err)
 	}
+	return nil
+}
+
+func (store *ImageStore) SaveManifest(
+	distManifest image.DistributionManifest, imageName image.Name) error {
+
+	distManifestJSON, err := json.Marshal(distManifest)
+	if err != nil {
+		return fmt.Errorf("marshal manifest to JSON: %s", err)
+	}
+
+	distManifestFile, err := ioutil.TempFile(store.SandboxDir, "")
+	if err != nil {
+		return fmt.Errorf("create tmp manifest file: %s", err)
+	}
+	if _, err := distManifestFile.Write(distManifestJSON); err != nil {
+		return fmt.Errorf("write manifest file: %s", err)
+	}
+	if err := distManifestFile.Close(); err != nil {
+		return fmt.Errorf("close manifest file: %s", err)
+	}
+
+	distManifestPath := distManifestFile.Name()
+	if err := store.Manifests.LinkStoreFileFrom(
+		imageName.GetRepository(), imageName.GetTag(), distManifestPath); err != nil && !os.IsExist(err) {
+
+		return fmt.Errorf("commit replica manifest to store: %s", err)
+	}
+
 	return nil
 }

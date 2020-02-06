@@ -1,8 +1,13 @@
 import json
 import os.path
+import random
 import requests
 import string
 import subprocess
+
+
+def new_image_name():
+    return "makisu-test:{}".format(random.randint(0, 1000000))
 
 
 def docker_image_exists(image):
@@ -46,6 +51,16 @@ def docker_delete_image(image):
         exit_code = subprocess.call(['docker', 'rmi', image])
         assert exit_code == 0
     assert not docker_image_exists(image)
+
+
+def docker_run_image(registry, image):
+    if registry:
+        image = '{}/{}'.format(registry, image)
+    proc = subprocess.Popen(
+        ["docker", "run", "-i", "--rm", image],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    _, err = proc.communicate()
+    return proc.returncode, err
 
 
 def registry_image_exists(image, registry):
@@ -92,8 +107,9 @@ def makisu_run_cmd(volumes, args):
 
 
 def makisu_build_image(
-    new_image, context_dir, storage_dir, cache_dir=None, volumes=None,
-    docker_args=None, load=False, registry=None, replicas=None, registry_cfg=None):
+        new_image_tag, context_dir, storage_dir, cache_dir=None, volumes=None,
+        docker_args=None, load=False, registry=None, replicas=None,
+        registry_cfg=None):
 
     volumes = volumes or {}
     volumes[storage_dir] = storage_dir  # Sandbox and file store
@@ -105,7 +121,7 @@ def makisu_build_image(
 
     args = [
         'build',
-        '-t', '{}'.format(new_image),
+        '-t', '{}'.format(new_image_tag),
         '--storage', storage_dir,
         '--modifyfs=true',
         '--commit=explicit',
@@ -114,7 +130,7 @@ def makisu_build_image(
         args.extend(['--build-arg', docker_arg])
 
     if registry:
-       args.extend([ '--push', registry])
+        args.extend(['--push', registry])
 
     if replicas:
         for replica in replicas:
@@ -135,14 +151,34 @@ def makisu_build_image(
     assert exit_code == 0
 
     if registry:
-        assert registry_image_exists(new_image, registry)
+        assert registry_image_exists(new_image_tag, registry)
 
 
-def docker_run_image(registry, image):
+def makisu_push_image(
+        new_image_tag, image_tar_path, registry=None, replicas=None,
+        registry_cfg=None):
+
+    volumes = {image_tar_path: image_tar_path}  # Mount image tar.
+
+    args = [
+        'push',
+        '-t', '{}'.format(new_image_tag),
+    ]
+
     if registry:
-        image = '{}/{}'.format(registry, image)
-    proc = subprocess.Popen(
-        ["docker", "run", "-i", "--rm", image],
-        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    _, err = proc.communicate()
-    return proc.returncode, err
+        args.extend(['--push', registry])
+
+    if replicas:
+        for replica in replicas:
+            args.extend(['--replica', replica])
+
+    if registry_cfg is not None:
+        args.extend(['--registry-config', json.dumps(registry_cfg)])
+
+    args.append(image_tar_path)
+
+    exit_code = makisu_run_cmd(volumes, args)
+    assert exit_code == 0
+
+    if registry:
+        assert registry_image_exists(new_image_tag, registry)

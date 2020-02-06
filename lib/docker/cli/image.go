@@ -29,13 +29,7 @@ import (
 	"github.com/uber/makisu/lib/stream"
 )
 
-// ImageTarer contains a Tar function that returns a reader to the resulting
-// tar file.
-type ImageTarer interface {
-	Tar(registry, repo, tag string) (io.Reader, error)
-}
-
-// DefaultImageTarer is the default implementation of the ImageTarer interface.
+// DefaultImageTarer exports/imports images from an ImageStore.
 type DefaultImageTarer struct {
 	store *storage.ImageStore
 }
@@ -48,8 +42,8 @@ func NewDefaultImageTarer(store *storage.ImageStore) DefaultImageTarer {
 	}
 }
 
-// CreateTarReadCloser creates a new tar from the inputs and returns a reader
-// that automatically closes on EOF.
+// CreateTarReadCloser exports an image from the image store as a tar, and
+// returns a reader for the tar that automatically closes on EOF.
 func (tarer DefaultImageTarer) CreateTarReadCloser(imageName image.Name) (io.Reader, error) {
 	dir, err := tarer.createTarDir(imageName)
 	if err != nil {
@@ -75,8 +69,8 @@ func (tarer DefaultImageTarer) CreateTarReadCloser(imageName image.Name) (io.Rea
 	return reader, nil
 }
 
-// CreateTarReader creates a new tar from the inputs and returns a simple reader
-// to that file.
+// CreateTarReader exports an image from the image store as a tar, and returns a
+// reader for the tar.
 func (tarer DefaultImageTarer) CreateTarReader(imageName image.Name) (io.Reader, error) {
 	dir, err := tarer.createTarDir(imageName)
 	if err != nil {
@@ -104,8 +98,8 @@ func (tarer DefaultImageTarer) createTarDir(imageName image.Name) (string, error
 		return "", err
 	}
 
-	repo, tag := imageName.GetRepository(), imageName.GetTag()
 	// Create tmp file for target tar.
+	repo, tag := imageName.GetRepository(), imageName.GetTag()
 	dir := filepath.Join(tarer.store.SandboxDir, repo, tag)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return "", err
