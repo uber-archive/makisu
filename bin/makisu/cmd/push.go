@@ -173,11 +173,8 @@ func (cmd *pushCmd) ImportTar(
 		return fmt.Errorf("open tar file: %s", err)
 	}
 	defer reader.Close()
-	gzipReader, err := tario.NewGzipReader(reader)
-	if err != nil {
-		return fmt.Errorf("new gzip reader: %s", err)
-	}
-	if err := tario.Untar(gzipReader, dir); err != nil {
+
+	if err := tario.Untar(reader, dir); err != nil {
 		return fmt.Errorf("unpack tar: %s", err)
 	}
 

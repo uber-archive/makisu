@@ -1,8 +1,21 @@
+//  Copyright (c) 2018 Uber Technologies, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package tario
 
 import (
 	"archive/tar"
-	"compress/gzip"
 	"fmt"
 	"io"
 	"log"
@@ -14,8 +27,9 @@ import (
 )
 
 // Note: This is copied from https://github.com/golang/build/blob/master/internal/untar/untar.go
+// Removed logic about gzip.
 
-// Untar reads the gzip-compressed tar file from r and writes it into dir.
+// Untar reads the tar file from r and writes it into dir.
 func Untar(r io.Reader, dir string) error {
 	return untar(r, dir)
 }
@@ -32,11 +46,7 @@ func untar(r io.Reader, dir string) (err error) {
 			log.Printf("error extracting tarball into %s after %d files, %d dirs, %v: %v", dir, nFiles, len(madeDir), td, err)
 		}
 	}()
-	zr, err := gzip.NewReader(r)
-	if err != nil {
-		return fmt.Errorf("requires gzip-compressed body: %v", err)
-	}
-	tr := tar.NewReader(zr)
+	tr := tar.NewReader(r)
 	loggedChtimesError := false
 	for {
 		f, err := tr.Next()

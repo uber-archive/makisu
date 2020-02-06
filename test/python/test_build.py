@@ -1,5 +1,4 @@
 import os
-import random
 import subprocess
 import tempfile
 import utils
@@ -7,13 +6,9 @@ import utils
 import image
 
 
-def new_image_name():
-    return "makisu-test:{}".format(random.randint(0, 1000000))
-
-
 def test_build_simple(registry1, registry2, storage_dir):
-    new_image = new_image_name()
-    replica_image = new_image_name()
+    new_image = utils.new_image_name()
+    replica_image = utils.new_image_name()
     context_dir = os.path.join(
         os.getcwd(), 'testdata/build-context/simple')
 
@@ -28,7 +23,7 @@ def test_build_simple(registry1, registry2, storage_dir):
 
 
 def test_build_symlink(registry1, storage_dir):
-    new_image = new_image_name()
+    new_image = utils.new_image_name()
     context_dir = os.path.join(
         os.getcwd(), 'testdata/build-context/symlink')
 
@@ -39,7 +34,7 @@ def test_build_symlink(registry1, storage_dir):
 
 
 def test_build_copy_glob(registry1, storage_dir, cache_dir):
-    new_image = new_image_name()
+    new_image = utils.new_image_name()
     context_dir = os.path.join(
         os.getcwd(), 'testdata/build-context/copy-glob')
 
@@ -51,7 +46,7 @@ def test_build_copy_glob(registry1, storage_dir, cache_dir):
 
 
 def test_build_copy_from(registry1, storage_dir):
-    new_image = new_image_name()
+    new_image = utils.new_image_name()
     context_dir = os.path.join(
         os.getcwd(), 'testdata/build-context/copy-from')
 
@@ -60,8 +55,9 @@ def test_build_copy_from(registry1, storage_dir):
     code, err = utils.docker_run_image(registry1.addr, new_image)
     assert code == 0, err
 
+
 def test_build_copy_add_chown(registry1, storage_dir):
-    new_image = new_image_name()
+    new_image = utils.new_image_name()
     context_dir = os.path.join(
         os.getcwd(), 'testdata/build-context/copy-add-chown')
 
@@ -70,17 +66,19 @@ def test_build_copy_add_chown(registry1, storage_dir):
     code, err = utils.docker_run_image(registry1.addr, new_image)
     assert code == 0, err
 
+
 def test_build_copy_archive(registry1, storage_dir):
-    new_image = new_image_name()
+    new_image = utils.new_image_name()
     context_dir = os.path.join(
             os.getcwd(), 'testdata/build-context/copy-archive')
     utils.makisu_build_image(
-    new_image, context_dir, storage_dir, registry=registry1.addr)
+        new_image, context_dir, storage_dir, registry=registry1.addr)
     code, err = utils.docker_run_image(registry1.addr, new_image)
     assert code == 0, err
 
+
 def test_build_arg_and_env(registry1, storage_dir):
-    new_image = new_image_name()
+    new_image = utils.new_image_name()
     context_dir = os.path.join(
         os.getcwd(), 'testdata/build-context/arg-and-env')
 
@@ -98,7 +96,7 @@ def test_build_arg_and_env(registry1, storage_dir):
 
 
 def test_user_change(registry1, storage_dir):
-    new_image = new_image_name()
+    new_image = utils.new_image_name()
     context_dir = os.path.join(
         os.getcwd(), 'testdata/build-context/user-change')
 
@@ -119,7 +117,7 @@ def test_user_change(registry1, storage_dir):
 # This is necessary in the k8s environment, because the default token is mounted
 # under `/var/run/secrets/kubernetes/serviceaccount`.
 def test_build_with_readonly_var_run_mnt(registry1, storage_dir, cache_dir):
-    new_image = new_image_name()
+    new_image = utils.new_image_name()
     context_dir = os.path.join(
         os.getcwd(), 'testdata/build-context/simple')
 
@@ -134,7 +132,7 @@ def test_build_with_readonly_var_run_mnt(registry1, storage_dir, cache_dir):
 
 
 def test_build_go_from_scratch(registry1, storage_dir):
-    new_image = new_image_name()
+    new_image = utils.new_image_name()
     context_dir = os.path.join(
         os.getcwd(), 'testdata/build-context/go-from-scratch')
 
@@ -145,8 +143,8 @@ def test_build_go_from_scratch(registry1, storage_dir):
 
 
 def test_build_with_distributed_cache(registry1, storage_dir, cache_dir, tmpdir):
-    new_image1 = new_image_name()
-    new_image2 = new_image_name()
+    new_image1 = utils.new_image_name()
+    new_image2 = utils.new_image_name()
     context_dir = os.path.join(
         os.getcwd(), 'testdata/build-context/mount')
     test_file = tmpdir.join("f1")
@@ -190,8 +188,8 @@ def test_build_with_distributed_cache(registry1, storage_dir, cache_dir, tmpdir)
 
 
 def test_build_with_local_cache(registry1, storage_dir, cache_dir, tmpdir):
-    new_image1 = new_image_name()
-    new_image2 = new_image_name()
+    new_image1 = utils.new_image_name()
+    new_image2 = utils.new_image_name()
     context_dir = os.path.join(
         os.getcwd(), 'testdata/build-context/mount')
     test_file = tmpdir.join("f1")
@@ -217,7 +215,7 @@ def test_build_with_local_cache(registry1, storage_dir, cache_dir, tmpdir):
 
 
 def test_build_go_with_debian_package(registry1, storage_dir):
-    new_image = new_image_name()
+    new_image = utils.new_image_name()
     context_dir = os.path.join(
         os.getcwd(), 'testdata/build-context/go-with-debian-package')
 
@@ -247,11 +245,12 @@ def test_build_go_with_debian_package(registry1, storage_dir):
     assert list(l2.get_tar_headers())[0].uname != "root"
     assert list(l2.get_tar_headers())[0].gname != "root"
 
-# A little bit of crazyness on this test but I didn't want to add more complex methods
-# to test the `--preserve-root` flag.
+
+# A little bit of crazyness on this test but I didn't want to add more complex
+# methods to test the `--preserve-root` flag.
 # See the [Dockerfile](../testdata/build-context/preserve-root/Dockerfile)
 def test_build_with_preserve_root(registry1, storage_dir):
-    new_image = new_image_name()
+    new_image = utils.new_image_name()
     context_dir = os.path.join(
         os.getcwd(), 'testdata/build-context/preserve-root')
 
@@ -263,7 +262,8 @@ def test_build_with_preserve_root(registry1, storage_dir):
         "BASE_IMAGE={}/{}".format(registry1.addr, utils.get_base_image()),
     ]
     utils.makisu_build_image(
-        new_image, context_dir, storage_dir, registry=registry1.addr, docker_args=docker_build_args, load=True)
+        new_image, context_dir, storage_dir, registry=registry1.addr,
+        docker_args=docker_build_args, load=True)
     code, err = utils.docker_run_image(registry1.addr, new_image)
 
     del os.environ["MAKISU_ALPINE"]
