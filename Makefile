@@ -33,7 +33,7 @@ BUILD_LDFLAGS = -X $(PACKAGE_NAME)/lib/utils.BuildHash=$(PACKAGE_VERSION)
 GO_FLAGS = -gcflags '-N -l' -ldflags "$(BUILD_LDFLAGS)"
 GO_VERSION = 1.12
 
-REGISTRY ?= gcr.io/makisu-project
+REGISTRY ?= gcr.io/uber-container-tools
 
 
 ### Targets to compile the makisu binaries.

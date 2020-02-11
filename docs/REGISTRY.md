@@ -23,7 +23,7 @@ type Config struct {
 
 Configs can be passed in through the `--registry-config` flag, either as filepath, or as a raw json blob :
 ```
---registry-config='{"gcr.io": {"makisu-project/*": {"push_chunk": -1, "security": {"basic": {"username": "_json_key", "password": "<escaped key here>"}}}}}'
+--registry-config='{"gcr.io": {"uber-container-tools/*": {"push_chunk": -1, "security": {"basic": {"username": "_json_key", "password": "<escaped key here>"}}}}}'
 ```
 Consider using the great tool [yq](https://github.com/kislyuk/yq) to convert your yaml configuration into the blob that can be passed in.
 
@@ -46,7 +46,7 @@ index.docker.io:
 Example config for GCR:
 ```yaml
 "gcr.io":
-  "makisu-project/*":
+  "uber-container-tools/*":
     push_chunk: -1
     security:
       basic:
