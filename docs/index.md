@@ -61,14 +61,14 @@ To build Dockerfiles that contain RUN, Makisu needs to run in a container.
 To try it locally, the following snippet can be placed inside your `~/.bashrc` or `~/.zshrc`:
 ```shell
 function makisu_build() {
-    makisu_version=${MAKISU_VERSION:-v0.1.11}
+    makisu_version=${MAKISU_VERSION:-latest}
     cd ${@: -1}
     docker run -i --rm --net host \
         -v /var/run/docker.sock:/docker.sock \
         -e DOCKER_HOST=unix:///docker.sock \
         -v $(pwd):/makisu-context \
         -v /tmp/makisu-storage:/makisu-storage \
-        gcr.io/makisu-project/makisu:$makisu_version build \
+        gcr.io/uber-container-tools/makisu:$makisu_version build \
             --commit=explicit \
             --modifyfs=true \
             --load \
@@ -168,7 +168,7 @@ index.docker.io:
 ```
 Registry configs can be passed in through the `--registry-config` flag, either as a file path of as a raw json blob (converted to json using [yq](https://github.com/kislyuk/yq)):
 ```
---registry-config='{"gcr.io": {"makisu-project/*": {"push_chunk": -1, "security": {"basic": {"username": "_json_key", "password": "<escaped key here>"}}}}}'
+--registry-config='{"gcr.io": {"uber-container-tools/*": {"push_chunk": -1, "security": {"basic": {"username": "_json_key", "password": "<escaped key here>"}}}}}'
 ```
 For more details on configuring Makisu to work with your registry client, see the [documentation](REGISTRY.md).
 
