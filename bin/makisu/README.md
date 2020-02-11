@@ -38,6 +38,25 @@ Global Flags:
       --log-level string    Verbose level of logs. Valid values are "debug", "info", "warn", "error" (default "info")
       --log-output string   The output file path for the logs. Set to "stdout" to output to stdout (default "stdout")
 
+$ makisu push --help
+Push docker image to registries
+
+Usage:
+  makisu push -t=<image_tag> [flags] <image_tar_path>
+
+Flags:
+  -t, --tag string               Image tag (required)
+      --push stringArray         Registry to push image to
+      --replica stringArray      Push targets with alternative full image names "<registry>/<repo>:<tag>"
+      --registry-config string   Set build-time variables
+  -h, --help                     help for push
+
+Global Flags:
+      --cpu-profile         Profile the application
+      --log-fmt string      The format of the logs. Valid values are "json" and "console" (default "json")
+      --log-level string    Verbose level of logs. Valid values are "debug", "info", "warn", "error" (default "info")
+      --log-output string   The output file path for the logs. Set to "stdout" to output to stdout (default "stdout")
+
 $ makisu version
-v0.1.11
+v0.1.14
 ```

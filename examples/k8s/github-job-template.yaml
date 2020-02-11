@@ -19,7 +19,7 @@ spec:
           mountPath: /makisu-context
       containers:
       - name: makisu
-        image: gcr.io/uber-container-tools/makisu:v0.1.11
+        image: gcr.io/uber-container-tools/makisu:latest
         imagePullPolicy: IfNotPresent
         args:
         - build
