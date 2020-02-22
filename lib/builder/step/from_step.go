@@ -78,9 +78,17 @@ func (s *FromStep) GetAlias() string {
 func (s *FromStep) SetCacheID(ctx *context.BuildContext, seed string) error {
 	manifest, err := s.getManifest(ctx.ImageStore)
 	if err != nil {
-		return fmt.Errorf("get manifest: %s", err)
+		log.Infof("Could not get manifest: %s. Using hash of from directive as cacheID.", err)
+		checksum := crc32.ChecksumIEEE([]byte(seed + string(s.directive)))
+		s.cacheID = fmt.Sprintf("%x", checksum)
+		return nil
 	}
-	checksum := crc32.ChecksumIEEE([]byte(seed + string(manifest.Config.Digest)))
+	layerDigest := ""
+	for _, layer := range manifest.Layers {
+		log.Infof("Layers digest " + layer.Digest.Hex())
+		layerDigest += string(layer.Digest)
+	}
+	checksum := crc32.ChecksumIEEE([]byte(seed + layerDigest))
 	s.cacheID = fmt.Sprintf("%x", checksum)
 	return nil
 }
