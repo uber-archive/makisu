@@ -85,7 +85,6 @@ func (s *FromStep) SetCacheID(ctx *context.BuildContext, seed string) error {
 	}
 	layerDigest := ""
 	for _, layer := range manifest.Layers {
-		log.Infof("Layers digest " + layer.Digest.Hex())
 		layerDigest += string(layer.Digest)
 	}
 	checksum := crc32.ChecksumIEEE([]byte(seed + layerDigest))
