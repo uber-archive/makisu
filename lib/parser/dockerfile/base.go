@@ -41,17 +41,16 @@ func newBaseDirective(line string) (*baseDirective, error) {
 	var commit bool
 	if commentIndex := strings.Index(line, "#"); commentIndex != -1 {
 		commit = commitRegexp.MatchString(strings.ToLower(line[commentIndex:]))
-		quotesCount := func(str string) int {return strings.Count(str, `'`)}
-		if quotesCount(line) == 0 {
+		if strings.Count(line, `'`) == 0 {
 			line = line[:commentIndex]
 		} else {
 			r := regexp.MustCompile("#")
 			for _, i := range r.FindAllStringIndex(line, -1) {
 				char := i[0]
-				if quotesCount(line[:char])%2 == 0 {
+				if strings.Count(line[:char], `'`)%2 == 0 {
 					line = line[:char]
 					break
-				} else if quotesCount(line[char:])%2 == 0 && char == strings.LastIndex(line, "#") {
+				} else if char == strings.LastIndex(line, "#") {
 					line = line[:commentIndex]
 					break
 				}
