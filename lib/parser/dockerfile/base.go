@@ -32,18 +32,6 @@ type baseDirective struct {
 	Commit bool
 }
 
-// uncomment the line
-func uncomment(line string) string {
-	r := regexp.MustCompile(`#`)
-	for _, i := range r.FindAllStringIndex(line, -1) {
-		char := i[0]
-		if c := strings.Count(line[:char], `'`); c % 2 == 0 {
-			return line[:char]
-		}
-	}
-	return line
-}
-
 // newBaseDirective strips and splits the input line. If the line contains only whitespace
 // or is empty, returns nil, nil. If the line doesn't contain a directive and arguments,
 // returns an error.
@@ -53,7 +41,22 @@ func newBaseDirective(line string) (*baseDirective, error) {
 	var commit bool
 	if commentIndex := strings.Index(line, "#"); commentIndex != -1 {
 		commit = commitRegexp.MatchString(strings.ToLower(line[commentIndex:]))
-		line = uncomment(line)
+		quotesCount := func(str string) int {return strings.Count(str, `'`)}
+		if quotesCount(line) == 0 {
+			line = line[:commentIndex]
+		} else {
+			r := regexp.MustCompile("#")
+			for _, i := range r.FindAllStringIndex(line, -1) {
+				char := i[0]
+				if quotesCount(line[:char])%2 == 0 {
+					line = line[:char]
+					break
+				} else if quotesCount(line[char:])%2 == 0 && char == strings.LastIndex(line, "#") {
+					line = line[:commentIndex]
+					break
+				}
+			}
+		}
 	}
 
 	trimmed := strings.TrimSpace(line)
