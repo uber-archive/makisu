@@ -103,18 +103,18 @@ func (c *CopyOperation) Execute() error {
 			}
 			defer reader.Close()
 
-			dstFi, err := os.Stat(c.dst)
-			if os.IsNotExist(err) {
-				if err := os.MkdirAll(c.dst, 0755); err != nil {
-					return fmt.Errorf("create untar directory: %s", err)
-				}
+			if err := os.MkdirAll(c.dst, 0755); err != nil {
+				return fmt.Errorf("create/validate untar dst: %s", err)
 			}
-			if !dstFi.IsDir() {
-				return fmt.Errorf("target untar path exists and is not directory: %s", c.dst)
+
+			gzipReader, err := tario.NewGzipReader(reader)
+			if err != nil {
+				return fmt.Errorf("unzip gz %s: %s", src, err)
 			}
-			if err := tario.Untar(reader, c.dst); err != nil {
-				return fmt.Errorf("untar tar: %s", err)
+			if err := tario.Untar(gzipReader, c.dst); err != nil {
+				return fmt.Errorf("untar %s to dst %s: %s", src, c.dst, err)
 			}
+			return nil
 		}
 
 		var copier fileio.Copier
