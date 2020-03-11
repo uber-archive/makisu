@@ -22,10 +22,10 @@ import (
 
 	"github.com/uber/makisu/lib/fileio"
 	"github.com/uber/makisu/lib/pathutils"
+	"github.com/uber/makisu/lib/tario"
 	"github.com/uber/makisu/lib/utils"
 )
 
-// CopyOperation defines a copy operation that occurred to generate a layer from.
 type CopyOperation struct {
 	srcRoot       string
 	srcs          []string
@@ -34,16 +34,20 @@ type CopyOperation struct {
 	gid           int
 	preserveOwner bool
 
-	blacklist []string
 	// Indicates if the copy op is used for copying from previous stages.
-	internal bool
+	// Blacklist is ignored in that case.
+	internal  bool
+	blacklist []string
+
+	// Set to true if the copy op was created by ADD step.
+	// Some functionalities are only available to ADD.
+	fromAdd bool
 }
 
 // NewCopyOperation initializes and validates a CopyOperation. Use "internal" to
 // specify if the copy op is used for copying from previous stages.
-func NewCopyOperation(
-	srcs []string, srcRoot, workDir, dst, chown string,
-	blacklist []string, internal, preserveOwner bool) (*CopyOperation, error) {
+func NewCopyOperation(srcs []string, srcRoot, workDir, dst, chown string,
+	preserveOwner, internal bool, blacklist []string, fromAdd bool) (*CopyOperation, error) {
 
 	if err := checkCopyParams(srcs, workDir, dst); err != nil {
 		return nil, fmt.Errorf("check copy param: %s", err)
@@ -70,6 +74,7 @@ func NewCopyOperation(
 		preserveOwner: preserveOwner,
 		blacklist:     blacklist,
 		internal:      internal,
+		fromAdd:       fromAdd,
 	}, nil
 }
 
@@ -86,6 +91,32 @@ func (c *CopyOperation) Execute() error {
 		if err != nil {
 			return fmt.Errorf("lstat %s: %s", src, err)
 		}
+
+		if strings.HasSuffix(src, ".tar.gz") && c.fromAdd {
+			// Special feature for ADD - Extract tar.gz into dst directory.
+			// If dst is an existing directory, untar.
+			// If dst doesn't exist, create it with root.
+			// If dst exists and is not a directory, fail.
+			reader, err := os.Open(src)
+			if err != nil {
+				return fmt.Errorf("open tar file: %s", err)
+			}
+			defer reader.Close()
+
+			if err := os.MkdirAll(c.dst, 0755); err != nil {
+				return fmt.Errorf("create/validate untar dst: %s", err)
+			}
+
+			gzipReader, err := tario.NewGzipReader(reader)
+			if err != nil {
+				return fmt.Errorf("unzip gz %s: %s", src, err)
+			}
+			if err := tario.Untar(gzipReader, c.dst); err != nil {
+				return fmt.Errorf("untar %s to dst %s: %s", src, c.dst, err)
+			}
+			return nil
+		}
+
 		var copier fileio.Copier
 		if c.internal {
 			copier = fileio.NewInternalCopier()
@@ -115,7 +146,6 @@ func (c *CopyOperation) Execute() error {
 					return fmt.Errorf("copy file %s to dir %s: %s", src, targetFilePath, err)
 				}
 			}
-
 		} else {
 			// File to file
 			if c.preserveOwner {

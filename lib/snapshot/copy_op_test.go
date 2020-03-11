@@ -15,13 +15,16 @@
 package snapshot
 
 import (
+	"archive/tar"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"testing"
 
 	"github.com/uber/makisu/lib/pathutils"
+	"github.com/uber/makisu/lib/tario"
 	"github.com/uber/makisu/lib/utils/testutil"
 
 	"github.com/stretchr/testify/require"
@@ -45,41 +48,41 @@ func TestNewCopyOperation(t *testing.T) {
 	workDir := ""
 	dst := "/test2/test.txt"
 	_, err = NewCopyOperation(
-		srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
+		srcs, srcRoot, workDir, dst, validChown, false, false, pathutils.DefaultBlacklist, false)
 	require.Error(err)
 
 	srcs = []string{"file", "dir/"}
 	workDir = ""
 	dst = "/target/test"
 	_, err = NewCopyOperation(
-		srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
+		srcs, srcRoot, workDir, dst, validChown, false, false, pathutils.DefaultBlacklist, false)
 	require.Error(err)
 
 	srcs = []string{"file", "dir/"}
 	workDir = ""
 	dst = "target/test"
 	_, err = NewCopyOperation(
-		srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
+		srcs, srcRoot, workDir, dst, validChown, false, false, pathutils.DefaultBlacklist, false)
 	require.Error(err)
 
 	srcs = []string{"file", "dir/"}
 	workDir = "wrk/"
 	dst = "target/test/"
 	_, err = NewCopyOperation(
-		srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
+		srcs, srcRoot, workDir, dst, validChown, false, false, pathutils.DefaultBlacklist, false)
 	require.Error(err)
 }
 
 func TestExecuteCopyOperation(t *testing.T) {
-	tmpRoot1, err := ioutil.TempDir("/tmp", "makisu-test")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpRoot1)
-	tmpRoot2, err := ioutil.TempDir("/tmp", "makisu-test")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpRoot2)
-
 	t.Run("absolute file to absolute file", func(t *testing.T) {
 		require := require.New(t)
+
+		tmpRoot1, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot1)
+		tmpRoot2, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot2)
 
 		srcs := []string{"/test.txt"}
 		require.NoError(ioutil.WriteFile(filepath.Join(tmpRoot1, "/test.txt"), _hello, os.ModePerm))
@@ -87,18 +90,23 @@ func TestExecuteCopyOperation(t *testing.T) {
 		srcRoot := tmpRoot1
 		dst := filepath.Join(tmpRoot2, "test2/test.txt")
 		c, err := NewCopyOperation(
-			srcs, srcRoot, "", dst, validChown, pathutils.DefaultBlacklist, false, true)
+			srcs, srcRoot, "", dst, validChown, true, false, pathutils.DefaultBlacklist, false)
 		require.NoError(err)
 		require.NoError(c.Execute())
 		b, err := ioutil.ReadFile(dst)
 		require.NoError(err)
 		require.Equal(_hello, b)
 	})
-	removeAllChildren(tmpRoot1, nil)
-	removeAllChildren(tmpRoot2, nil)
 
 	t.Run("absolute file to relative file", func(t *testing.T) {
 		require := require.New(t)
+
+		tmpRoot1, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot1)
+		tmpRoot2, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot2)
 
 		srcs := []string{"/test.txt"}
 		require.NoError(ioutil.WriteFile(filepath.Join(tmpRoot1, "test.txt"), _hello, os.ModePerm))
@@ -107,18 +115,23 @@ func TestExecuteCopyOperation(t *testing.T) {
 		workDir := tmpRoot2
 		dst := "test2/test.txt"
 		c, err := NewCopyOperation(
-			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
+			srcs, srcRoot, workDir, dst, validChown, false, false, pathutils.DefaultBlacklist, false)
 		require.NoError(err)
 		require.NoError(c.Execute())
 		b, err := ioutil.ReadFile(filepath.Join(tmpRoot2, dst))
 		require.NoError(err)
 		require.Equal(_hello, b)
 	})
-	removeAllChildren(tmpRoot1, nil)
-	removeAllChildren(tmpRoot2, nil)
 
 	t.Run("absolute files to absolute dir", func(t *testing.T) {
 		require := require.New(t)
+
+		tmpRoot1, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot1)
+		tmpRoot2, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot2)
 
 		srcs := []string{"/test.txt", "/test2.txt"}
 		require.NoError(ioutil.WriteFile(filepath.Join(tmpRoot1, "test.txt"), _hello, os.ModePerm))
@@ -129,7 +142,7 @@ func TestExecuteCopyOperation(t *testing.T) {
 		workDir := tmpRoot2
 		dst := "test2/"
 		c, err := NewCopyOperation(
-			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
+			srcs, srcRoot, workDir, dst, validChown, false, false, pathutils.DefaultBlacklist, false)
 		require.NoError(err)
 		require.NoError(c.Execute())
 		b, err := ioutil.ReadFile(filepath.Join(tmpRoot2, dst, "test.txt"))
@@ -139,11 +152,16 @@ func TestExecuteCopyOperation(t *testing.T) {
 		require.NoError(err)
 		require.Equal(_hello2, b)
 	})
-	removeAllChildren(tmpRoot1, nil)
-	removeAllChildren(tmpRoot2, nil)
 
 	t.Run("absolute files to relative dir", func(t *testing.T) {
 		require := require.New(t)
+
+		tmpRoot1, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot1)
+		tmpRoot2, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot2)
 
 		srcs := []string{"/test.txt", "/test2.txt"}
 		require.NoError(ioutil.WriteFile(filepath.Join(tmpRoot1, "test.txt"), _hello, os.ModePerm))
@@ -154,7 +172,7 @@ func TestExecuteCopyOperation(t *testing.T) {
 		workDir := filepath.Join(tmpRoot2, "test2")
 		dst := "."
 		c, err := NewCopyOperation(
-			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, true)
+			srcs, srcRoot, workDir, dst, validChown, true, false, pathutils.DefaultBlacklist, false)
 		require.NoError(err)
 		require.NoError(c.Execute())
 		b, err := ioutil.ReadFile(filepath.Join(tmpRoot2, "test2", "test.txt"))
@@ -164,11 +182,16 @@ func TestExecuteCopyOperation(t *testing.T) {
 		require.NoError(err)
 		require.Equal(_hello2, b)
 	})
-	removeAllChildren(tmpRoot1, nil)
-	removeAllChildren(tmpRoot2, nil)
 
 	t.Run("absolute dirs to relative dir", func(t *testing.T) {
 		require := require.New(t)
+
+		tmpRoot1, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot1)
+		tmpRoot2, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot2)
 
 		srcs := []string{"/test/", "/test2/"}
 		require.NoError(os.MkdirAll(filepath.Join(tmpRoot1, "test"), os.ModePerm))
@@ -181,7 +204,7 @@ func TestExecuteCopyOperation(t *testing.T) {
 		workDir := tmpRoot2
 		dst := "test2/"
 		c, err := NewCopyOperation(
-			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
+			srcs, srcRoot, workDir, dst, validChown, false, false, pathutils.DefaultBlacklist, false)
 		require.NoError(err)
 		require.NoError(c.Execute())
 		b, err := ioutil.ReadFile(filepath.Join(tmpRoot2, dst, "test.txt"))
@@ -191,11 +214,16 @@ func TestExecuteCopyOperation(t *testing.T) {
 		require.NoError(err)
 		require.Equal(_hello2, b)
 	})
-	removeAllChildren(tmpRoot1, nil)
-	removeAllChildren(tmpRoot2, nil)
 
 	t.Run("absolute dir and file to relative dir", func(t *testing.T) {
 		require := require.New(t)
+
+		tmpRoot1, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot1)
+		tmpRoot2, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot2)
 
 		srcs := []string{"/test/", "/test2.txt"}
 		require.NoError(os.MkdirAll(filepath.Join(tmpRoot1, "test"), os.ModePerm))
@@ -207,7 +235,7 @@ func TestExecuteCopyOperation(t *testing.T) {
 		workDir := tmpRoot2
 		dst := "test2/"
 		c, err := NewCopyOperation(
-			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
+			srcs, srcRoot, workDir, dst, validChown, false, false, pathutils.DefaultBlacklist, false)
 		require.NoError(err)
 		require.NoError(c.Execute())
 		b, err := ioutil.ReadFile(filepath.Join(tmpRoot2, dst, "test.txt"))
@@ -217,6 +245,43 @@ func TestExecuteCopyOperation(t *testing.T) {
 		require.NoError(err)
 		require.Equal(_hello2, b)
 	})
-	removeAllChildren(tmpRoot1, nil)
-	removeAllChildren(tmpRoot2, nil)
+
+	t.Run("untar gz if created from add step", func(t *testing.T) {
+		require := require.New(t)
+
+		tmpDir, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpDir)
+		srcRoot, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(srcRoot)
+		workDir, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(workDir)
+		dst := "test_dst/" // dst is not absolute and will be placed under workdir.
+
+		require.NoError(os.MkdirAll(filepath.Join(tmpDir, "test"), os.ModePerm))
+		require.NoError(ioutil.WriteFile(filepath.Join(tmpDir, "test", "test.txt"), _hello, os.ModePerm))
+		require.NoError(os.Chown(filepath.Join(tmpDir, "test", "test.txt"), testutil.CurrUID(), testutil.CurrGID()))
+
+		tempGzipTar, err := os.Create(path.Join(srcRoot, "test_add.tar.gz"))
+		require.NoError(err)
+		gzipper, err := tario.NewGzipWriter(tempGzipTar)
+		require.NoError(err)
+		tarWriter := tar.NewWriter(gzipper)
+		require.NoError(writeTarHelper(tmpDir, tarWriter))
+		tarWriter.Close()
+		gzipper.Close()
+		tempGzipTar.Close()
+
+		srcs := []string{"test_add.tar.gz"}
+		c, err := NewCopyOperation(
+			srcs, srcRoot, workDir, dst, validChown, false, false, pathutils.DefaultBlacklist, true)
+		require.NoError(err)
+		require.NoError(c.Execute())
+
+		b, err := ioutil.ReadFile(filepath.Join(workDir, dst, "test", "test.txt"))
+		require.NoError(err)
+		require.Equal(_hello, b)
+	})
 }
