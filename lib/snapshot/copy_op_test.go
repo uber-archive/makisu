@@ -71,15 +71,15 @@ func TestNewCopyOperation(t *testing.T) {
 }
 
 func TestExecuteCopyOperation(t *testing.T) {
-	tmpRoot1, err := ioutil.TempDir("/tmp", "makisu-test")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpRoot1)
-	tmpRoot2, err := ioutil.TempDir("/tmp", "makisu-test")
-	require.NoError(t, err)
-	defer os.RemoveAll(tmpRoot2)
-
 	t.Run("absolute file to absolute file", func(t *testing.T) {
 		require := require.New(t)
+
+		tmpRoot1, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot1)
+		tmpRoot2, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot2)
 
 		srcs := []string{"/test.txt"}
 		require.NoError(ioutil.WriteFile(filepath.Join(tmpRoot1, "/test.txt"), _hello, os.ModePerm))
@@ -94,11 +94,16 @@ func TestExecuteCopyOperation(t *testing.T) {
 		require.NoError(err)
 		require.Equal(_hello, b)
 	})
-	removeAllChildren(tmpRoot1, nil)
-	removeAllChildren(tmpRoot2, nil)
 
 	t.Run("absolute file to relative file", func(t *testing.T) {
 		require := require.New(t)
+
+		tmpRoot1, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot1)
+		tmpRoot2, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot2)
 
 		srcs := []string{"/test.txt"}
 		require.NoError(ioutil.WriteFile(filepath.Join(tmpRoot1, "test.txt"), _hello, os.ModePerm))
@@ -114,11 +119,16 @@ func TestExecuteCopyOperation(t *testing.T) {
 		require.NoError(err)
 		require.Equal(_hello, b)
 	})
-	removeAllChildren(tmpRoot1, nil)
-	removeAllChildren(tmpRoot2, nil)
 
 	t.Run("absolute files to absolute dir", func(t *testing.T) {
 		require := require.New(t)
+
+		tmpRoot1, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot1)
+		tmpRoot2, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot2)
 
 		srcs := []string{"/test.txt", "/test2.txt"}
 		require.NoError(ioutil.WriteFile(filepath.Join(tmpRoot1, "test.txt"), _hello, os.ModePerm))
@@ -139,11 +149,16 @@ func TestExecuteCopyOperation(t *testing.T) {
 		require.NoError(err)
 		require.Equal(_hello2, b)
 	})
-	removeAllChildren(tmpRoot1, nil)
-	removeAllChildren(tmpRoot2, nil)
 
 	t.Run("absolute files to relative dir", func(t *testing.T) {
 		require := require.New(t)
+
+		tmpRoot1, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot1)
+		tmpRoot2, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot2)
 
 		srcs := []string{"/test.txt", "/test2.txt"}
 		require.NoError(ioutil.WriteFile(filepath.Join(tmpRoot1, "test.txt"), _hello, os.ModePerm))
@@ -164,11 +179,16 @@ func TestExecuteCopyOperation(t *testing.T) {
 		require.NoError(err)
 		require.Equal(_hello2, b)
 	})
-	removeAllChildren(tmpRoot1, nil)
-	removeAllChildren(tmpRoot2, nil)
 
 	t.Run("absolute dirs to relative dir", func(t *testing.T) {
 		require := require.New(t)
+
+		tmpRoot1, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot1)
+		tmpRoot2, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot2)
 
 		srcs := []string{"/test/", "/test2/"}
 		require.NoError(os.MkdirAll(filepath.Join(tmpRoot1, "test"), os.ModePerm))
@@ -191,11 +211,16 @@ func TestExecuteCopyOperation(t *testing.T) {
 		require.NoError(err)
 		require.Equal(_hello2, b)
 	})
-	removeAllChildren(tmpRoot1, nil)
-	removeAllChildren(tmpRoot2, nil)
 
 	t.Run("absolute dir and file to relative dir", func(t *testing.T) {
 		require := require.New(t)
+
+		tmpRoot1, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot1)
+		tmpRoot2, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(tmpRoot2)
 
 		srcs := []string{"/test/", "/test2.txt"}
 		require.NoError(os.MkdirAll(filepath.Join(tmpRoot1, "test"), os.ModePerm))
@@ -217,6 +242,4 @@ func TestExecuteCopyOperation(t *testing.T) {
 		require.NoError(err)
 		require.Equal(_hello2, b)
 	})
-	removeAllChildren(tmpRoot1, nil)
-	removeAllChildren(tmpRoot2, nil)
 }
