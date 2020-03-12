@@ -58,13 +58,12 @@ type addCopyStep struct {
 	toPath        string
 	chown         string
 	preserveOwner bool
-	isAdd         bool
 }
 
 // newAddCopyStep returns a BuildStep from given arguments.
 func newAddCopyStep(
 	directive Directive, args, chown, fromStage string,
-	fromPaths []string, toPath string, commit, preserveOwner, isAdd bool) (*addCopyStep, error) {
+	fromPaths []string, toPath string, commit, preserveOwner bool) (*addCopyStep, error) {
 
 	toPath = strings.Trim(toPath, "\"'")
 	for i := range fromPaths {
@@ -81,7 +80,6 @@ func newAddCopyStep(
 		toPath:        toPath,
 		chown:         chown,
 		preserveOwner: preserveOwner,
-		isAdd:         isAdd,
 	}, nil
 }
 
@@ -138,16 +136,14 @@ func (s *addCopyStep) Execute(ctx *context.BuildContext, modifyFS bool) (err err
 
 	internal := s.fromStage != ""
 	blacklist := append(pathutils.DefaultBlacklist, ctx.ImageStore.RootDir)
-	copyOp, err := snapshot.NewCopyOperation(relPaths, sourceRoot, s.workingDir, s.toPath, s.chown,
-		s.preserveOwner, internal, blacklist, s.isAdd)
+	copyOp, err := snapshot.NewCopyOperation(
+		relPaths, sourceRoot, s.workingDir, s.toPath, s.chown, blacklist, internal, s.preserveOwner)
 	if err != nil {
 		return fmt.Errorf("invalid copy operation: %s", err)
 	}
 
 	ctx.CopyOps = append(ctx.CopyOps, copyOp)
 	if modifyFS {
-		// Note: We still want to keep this copyop in the list, just in case there
-		// is no RUN afterwards, and layer needs to be created from copyops.
 		return copyOp.Execute()
 	}
 	return nil

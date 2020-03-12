@@ -26,8 +26,7 @@ func NewCopyStep(
 	args, chown, fromStage string, fromPaths []string, toPath string, commit, preserveOwner bool,
 ) (*CopyStep, error) {
 
-	s, err := newAddCopyStep(
-		Copy, args, chown, fromStage, fromPaths, toPath, commit, preserveOwner, false)
+	s, err := newAddCopyStep(Copy, args, chown, fromStage, fromPaths, toPath, commit, preserveOwner)
 	if err != nil {
 		return nil, fmt.Errorf("new add/copy step: %s", err)
 	}
