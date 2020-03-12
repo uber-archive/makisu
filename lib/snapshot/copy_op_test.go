@@ -81,11 +81,18 @@ func TestExecuteCopyOperation(t *testing.T) {
 	t.Run("absolute file to absolute file", func(t *testing.T) {
 		require := require.New(t)
 
+		srcRoot, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(srcRoot)
+		workDir, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(workDir)
+
+		require.NoError(ioutil.WriteFile(filepath.Join(srcRoot, "/test.txt"), _hello, os.ModePerm))
+		require.NoError(os.Chown(filepath.Join(srcRoot, "/test.txt"), testutil.CurrUID(), testutil.CurrGID()))
+
 		srcs := []string{"/test.txt"}
-		require.NoError(ioutil.WriteFile(filepath.Join(tmpRoot1, "/test.txt"), _hello, os.ModePerm))
-		require.NoError(os.Chown(filepath.Join(tmpRoot1, "/test.txt"), testutil.CurrUID(), testutil.CurrGID()))
-		srcRoot := tmpRoot1
-		dst := filepath.Join(tmpRoot2, "test2/test.txt")
+		dst := filepath.Join(workDir, "test2/test.txt")
 		c, err := NewCopyOperation(
 			srcs, srcRoot, "", dst, validChown, pathutils.DefaultBlacklist, false, true)
 		require.NoError(err)
@@ -94,129 +101,148 @@ func TestExecuteCopyOperation(t *testing.T) {
 		require.NoError(err)
 		require.Equal(_hello, b)
 	})
-	removeAllChildren(tmpRoot1, nil)
-	removeAllChildren(tmpRoot2, nil)
 
 	t.Run("absolute file to relative file", func(t *testing.T) {
 		require := require.New(t)
 
+		srcRoot, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(srcRoot)
+		workDir, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(workDir)
+
+		require.NoError(ioutil.WriteFile(filepath.Join(srcRoot, "test.txt"), _hello, os.ModePerm))
+		require.NoError(os.Chown(filepath.Join(srcRoot, "/test.txt"), testutil.CurrUID(), testutil.CurrGID()))
+
 		srcs := []string{"/test.txt"}
-		require.NoError(ioutil.WriteFile(filepath.Join(tmpRoot1, "test.txt"), _hello, os.ModePerm))
-		require.NoError(os.Chown(filepath.Join(tmpRoot1, "/test.txt"), testutil.CurrUID(), testutil.CurrGID()))
-		srcRoot := tmpRoot1
-		workDir := tmpRoot2
 		dst := "test2/test.txt"
 		c, err := NewCopyOperation(
 			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
 		require.NoError(err)
 		require.NoError(c.Execute())
-		b, err := ioutil.ReadFile(filepath.Join(tmpRoot2, dst))
+		b, err := ioutil.ReadFile(filepath.Join(workDir, dst))
 		require.NoError(err)
 		require.Equal(_hello, b)
 	})
-	removeAllChildren(tmpRoot1, nil)
-	removeAllChildren(tmpRoot2, nil)
 
 	t.Run("absolute files to absolute dir", func(t *testing.T) {
 		require := require.New(t)
 
+		srcRoot, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(srcRoot)
+		workDir, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(workDir)
+
+		require.NoError(ioutil.WriteFile(filepath.Join(srcRoot, "test.txt"), _hello, os.ModePerm))
+		require.NoError(os.Chown(filepath.Join(srcRoot, "test.txt"), testutil.CurrUID(), testutil.CurrGID()))
+		require.NoError(ioutil.WriteFile(filepath.Join(srcRoot, "test2.txt"), _hello2, os.ModePerm))
+		require.NoError(os.Chown(filepath.Join(srcRoot, "test2.txt"), testutil.CurrUID(), testutil.CurrGID()))
+
 		srcs := []string{"/test.txt", "/test2.txt"}
-		require.NoError(ioutil.WriteFile(filepath.Join(tmpRoot1, "test.txt"), _hello, os.ModePerm))
-		require.NoError(os.Chown(filepath.Join(tmpRoot1, "test.txt"), testutil.CurrUID(), testutil.CurrGID()))
-		require.NoError(ioutil.WriteFile(filepath.Join(tmpRoot1, "test2.txt"), _hello2, os.ModePerm))
-		require.NoError(os.Chown(filepath.Join(tmpRoot1, "test2.txt"), testutil.CurrUID(), testutil.CurrGID()))
-		srcRoot := tmpRoot1
-		workDir := tmpRoot2
 		dst := "test2/"
 		c, err := NewCopyOperation(
 			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
 		require.NoError(err)
 		require.NoError(c.Execute())
-		b, err := ioutil.ReadFile(filepath.Join(tmpRoot2, dst, "test.txt"))
+		b, err := ioutil.ReadFile(filepath.Join(workDir, dst, "test.txt"))
 		require.NoError(err)
 		require.Equal(_hello, b)
-		b, err = ioutil.ReadFile(filepath.Join(tmpRoot2, dst, "test2.txt"))
+		b, err = ioutil.ReadFile(filepath.Join(workDir, dst, "test2.txt"))
 		require.NoError(err)
 		require.Equal(_hello2, b)
 	})
-	removeAllChildren(tmpRoot1, nil)
-	removeAllChildren(tmpRoot2, nil)
 
 	t.Run("absolute files to relative dir", func(t *testing.T) {
 		require := require.New(t)
 
+		srcRoot, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(srcRoot)
+		workDir, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(workDir)
+
+		require.NoError(ioutil.WriteFile(filepath.Join(srcRoot, "test.txt"), _hello, os.ModePerm))
+		require.NoError(os.Chown(filepath.Join(srcRoot, "test.txt"), testutil.CurrUID(), testutil.CurrGID()))
+		require.NoError(ioutil.WriteFile(filepath.Join(srcRoot, "test2.txt"), _hello2, os.ModePerm))
+		require.NoError(os.Chown(filepath.Join(srcRoot, "test2.txt"), testutil.CurrUID(), testutil.CurrGID()))
+
 		srcs := []string{"/test.txt", "/test2.txt"}
-		require.NoError(ioutil.WriteFile(filepath.Join(tmpRoot1, "test.txt"), _hello, os.ModePerm))
-		require.NoError(os.Chown(filepath.Join(tmpRoot1, "test.txt"), testutil.CurrUID(), testutil.CurrGID()))
-		require.NoError(ioutil.WriteFile(filepath.Join(tmpRoot1, "test2.txt"), _hello2, os.ModePerm))
-		require.NoError(os.Chown(filepath.Join(tmpRoot1, "test2.txt"), testutil.CurrUID(), testutil.CurrGID()))
-		srcRoot := tmpRoot1
-		workDir := filepath.Join(tmpRoot2, "test2")
+		workDir = filepath.Join(workDir, "test2")
 		dst := "."
 		c, err := NewCopyOperation(
 			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, true)
 		require.NoError(err)
 		require.NoError(c.Execute())
-		b, err := ioutil.ReadFile(filepath.Join(tmpRoot2, "test2", "test.txt"))
+		b, err := ioutil.ReadFile(filepath.Join(workDir, "test.txt"))
 		require.NoError(err)
 		require.Equal(_hello, b)
-		b, err = ioutil.ReadFile(filepath.Join(tmpRoot2, "test2", "test2.txt"))
+		b, err = ioutil.ReadFile(filepath.Join(workDir, "test2.txt"))
 		require.NoError(err)
 		require.Equal(_hello2, b)
 	})
-	removeAllChildren(tmpRoot1, nil)
-	removeAllChildren(tmpRoot2, nil)
 
 	t.Run("absolute dirs to relative dir", func(t *testing.T) {
 		require := require.New(t)
 
+		srcRoot, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(srcRoot)
+		workDir, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(workDir)
+
+		require.NoError(os.MkdirAll(filepath.Join(srcRoot, "test"), os.ModePerm))
+		require.NoError(os.MkdirAll(filepath.Join(srcRoot, "test2"), os.ModePerm))
+		require.NoError(ioutil.WriteFile(filepath.Join(srcRoot, "test", "test.txt"), _hello, os.ModePerm))
+		require.NoError(os.Chown(filepath.Join(srcRoot, "test", "test.txt"), testutil.CurrUID(), testutil.CurrGID()))
+		require.NoError(ioutil.WriteFile(filepath.Join(srcRoot, "test2", "test2.txt"), _hello2, os.ModePerm))
+		require.NoError(os.Chown(filepath.Join(srcRoot, "test2", "test2.txt"), testutil.CurrUID(), testutil.CurrGID()))
+
 		srcs := []string{"/test/", "/test2/"}
-		require.NoError(os.MkdirAll(filepath.Join(tmpRoot1, "test"), os.ModePerm))
-		require.NoError(os.MkdirAll(filepath.Join(tmpRoot1, "test2"), os.ModePerm))
-		require.NoError(ioutil.WriteFile(filepath.Join(tmpRoot1, "test", "test.txt"), _hello, os.ModePerm))
-		require.NoError(os.Chown(filepath.Join(tmpRoot1, "test", "test.txt"), testutil.CurrUID(), testutil.CurrGID()))
-		require.NoError(ioutil.WriteFile(filepath.Join(tmpRoot1, "test2", "test2.txt"), _hello2, os.ModePerm))
-		require.NoError(os.Chown(filepath.Join(tmpRoot1, "test2", "test2.txt"), testutil.CurrUID(), testutil.CurrGID()))
-		srcRoot := tmpRoot1
-		workDir := tmpRoot2
 		dst := "test2/"
 		c, err := NewCopyOperation(
 			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
 		require.NoError(err)
 		require.NoError(c.Execute())
-		b, err := ioutil.ReadFile(filepath.Join(tmpRoot2, dst, "test.txt"))
+		b, err := ioutil.ReadFile(filepath.Join(workDir, dst, "test.txt"))
 		require.NoError(err)
 		require.Equal(_hello, b)
-		b, err = ioutil.ReadFile(filepath.Join(tmpRoot2, dst, "test2.txt"))
+		b, err = ioutil.ReadFile(filepath.Join(workDir, dst, "test2.txt"))
 		require.NoError(err)
 		require.Equal(_hello2, b)
 	})
-	removeAllChildren(tmpRoot1, nil)
-	removeAllChildren(tmpRoot2, nil)
 
 	t.Run("absolute dir and file to relative dir", func(t *testing.T) {
 		require := require.New(t)
 
+		srcRoot, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(srcRoot)
+		workDir, err := ioutil.TempDir("/tmp", "makisu-test")
+		require.NoError(err)
+		defer os.RemoveAll(workDir)
+
+		require.NoError(os.MkdirAll(filepath.Join(srcRoot, "test"), os.ModePerm))
+		require.NoError(ioutil.WriteFile(filepath.Join(srcRoot, "test", "test.txt"), _hello, os.ModePerm))
+		require.NoError(os.Chown(filepath.Join(srcRoot, "test", "test.txt"), testutil.CurrUID(), testutil.CurrGID()))
+		require.NoError(ioutil.WriteFile(filepath.Join(srcRoot, "test2.txt"), _hello2, os.ModePerm))
+		require.NoError(os.Chown(filepath.Join(srcRoot, "test2.txt"), testutil.CurrUID(), testutil.CurrGID()))
+
 		srcs := []string{"/test/", "/test2.txt"}
-		require.NoError(os.MkdirAll(filepath.Join(tmpRoot1, "test"), os.ModePerm))
-		require.NoError(ioutil.WriteFile(filepath.Join(tmpRoot1, "test", "test.txt"), _hello, os.ModePerm))
-		require.NoError(os.Chown(filepath.Join(tmpRoot1, "test", "test.txt"), testutil.CurrUID(), testutil.CurrGID()))
-		require.NoError(ioutil.WriteFile(filepath.Join(tmpRoot1, "test2.txt"), _hello2, os.ModePerm))
-		require.NoError(os.Chown(filepath.Join(tmpRoot1, "test2.txt"), testutil.CurrUID(), testutil.CurrGID()))
-		srcRoot := tmpRoot1
-		workDir := tmpRoot2
 		dst := "test2/"
 		c, err := NewCopyOperation(
 			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
 		require.NoError(err)
 		require.NoError(c.Execute())
-		b, err := ioutil.ReadFile(filepath.Join(tmpRoot2, dst, "test.txt"))
+		b, err := ioutil.ReadFile(filepath.Join(workDir, dst, "test.txt"))
 		require.NoError(err)
 		require.Equal(_hello, b)
-		b, err = ioutil.ReadFile(filepath.Join(tmpRoot2, dst, "test2.txt"))
+		b, err = ioutil.ReadFile(filepath.Join(workDir, dst, "test2.txt"))
 		require.NoError(err)
 		require.Equal(_hello2, b)
 	})
-	removeAllChildren(tmpRoot1, nil)
-	removeAllChildren(tmpRoot2, nil)
 }
