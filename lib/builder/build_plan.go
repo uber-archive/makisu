@@ -17,6 +17,7 @@ package builder
 import (
 	"fmt"
 	"hash/crc32"
+	"os"
 	"strconv"
 
 	"github.com/uber/makisu/lib/cache"
@@ -161,6 +162,9 @@ func (plan *BuildPlan) processStagesAndAliases(
 
 // Execute executes all build stages in order.
 func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
+	// We need to backup the original env to restore it between stages
+	orignalEnv := utils.ConvertStringSliceToMap(os.Environ())
+
 	var currStage *buildStage
 	for k := 0; k < len(plan.stages); k++ {
 		currStage = plan.stages[k]
@@ -177,6 +181,12 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 
 		if err := plan.executeStage(currStage, lastStage, copiedFrom); err != nil {
 			return nil, fmt.Errorf("execute stage: %s", err)
+		}
+
+		// Restore env
+		os.Clearenv()
+		for k, v := range orignalEnv {
+			os.Setenv(k, v)
 		}
 	}
 
