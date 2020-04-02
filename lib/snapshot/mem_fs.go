@@ -215,7 +215,7 @@ func (fs *MemFS) UpdateFromTarReader(r *tar.Reader, untar bool) error {
 					return fmt.Errorf("untar one item %s: %s", path, err)
 				}
 			}
-			if err := fs.maybeAddToLayer(l, "", pathutils.AbsPath(hdr.Name), hdr, false); err != nil {
+			if err := fs.maybeAddToLayer(l, pathutils.AbsPath(hdr.Name), pathutils.AbsPath(hdr.Name), hdr, false); err != nil {
 				return fmt.Errorf("add hdr from tar to layer: %s", err)
 			}
 		}
@@ -229,7 +229,7 @@ func (fs *MemFS) UpdateFromTarReader(r *tar.Reader, untar bool) error {
 				return fmt.Errorf("untar one item %s: %s", path, err)
 			}
 		}
-		if err := fs.maybeAddToLayer(l, "", pathutils.AbsPath(hdr.Name), hdr, false); err != nil {
+		if err := fs.maybeAddToLayer(l, pathutils.AbsPath(hdr.Name), pathutils.AbsPath(hdr.Name), hdr, false); err != nil {
 			return fmt.Errorf("add hdr from tar to layer: %s", err)
 		}
 	}
