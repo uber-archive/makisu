@@ -8,8 +8,8 @@ require (
 	github.com/alicebob/gopher-json v0.0.0-20180125190556-5a6b3ba71ee6 // indirect
 	github.com/alicebob/miniredis v2.4.5+incompatible
 	github.com/andres-erbsen/clock v0.0.0-20160526145045-9e14626cd129
-	github.com/aws/aws-sdk-go v1.19.29 // indirect
-	github.com/awslabs/amazon-ecr-credential-helper v0.3.0
+	github.com/aws/aws-sdk-go v1.30.1 // indirect
+	github.com/awslabs/amazon-ecr-credential-helper v0.4.0
 	github.com/axw/gocov v0.0.0-20170322000131-3a69a0d2a4ef
 	github.com/client9/misspell v0.3.4
 	github.com/docker/distribution v2.7.0+incompatible
@@ -35,20 +35,20 @@ require (
 	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
-	github.com/pkg/errors v0.8.0
+	github.com/pkg/errors v0.9.1
 	github.com/pressly/chi v3.3.3+incompatible
 	github.com/prometheus/client_golang v0.9.2 // indirect
 	github.com/prometheus/common v0.0.0-20181218105931-67670fe90761 // indirect
 	github.com/sirupsen/logrus v1.4.0 // indirect
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.3 // indirect
-	github.com/stretchr/testify v1.2.2
+	github.com/stretchr/testify v1.5.1
 	github.com/yuin/gopher-lua v0.0.0-20181214045814-db9ae37725ec // indirect
 	go.uber.org/atomic v1.3.2 // indirect
 	go.uber.org/multierr v1.1.0 // indirect
 	go.uber.org/zap v1.9.1
 	golang.org/x/lint v0.0.0-20190301231843-5614ed5bae6f
-	golang.org/x/net v0.0.0-20190311183353-d8887717615a
+	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45 // indirect
 	golang.org/x/tools v0.0.0-20190311215038-5c2858a9cfe5
 	gopkg.in/yaml.v2 v2.2.2

@@ -1,8 +1,10 @@
 # Registry configuration
 
 ## General info
+
 Makisu supports TLS and Basic Auth with Docker registry (Docker Hub, GCR, and private registries).
 By default, TLS is enabled and makisu uses a list of common root CA certs to authenticate registry.
+
 ```go
 // Config contains Docker registry client configuration.
 type Config struct {
@@ -22,14 +24,17 @@ type Config struct {
 ```
 
 Configs can be passed in through the `--registry-config` flag, either as filepath, or as a raw json blob :
+
 ```
 --registry-config='{"gcr.io": {"uber-container-tools/*": {"push_chunk": -1, "security": {"basic": {"username": "_json_key", "password": "<escaped key here>"}}}}}'
 ```
+
 Consider using the great tool [yq](https://github.com/kislyuk/yq) to convert your yaml configuration into the blob that can be passed in.
 
-
 ## Examples
-For the convenience to work with all public Docker Hub repositories including library/.*, a default config is provided:
+
+For the convenience to work with all public Docker Hub repositories including library/.\*, a default config is provided:
+
 ```yaml
 index.docker.io:
   .*:
@@ -44,6 +49,7 @@ index.docker.io:
 ```
 
 Example config for GCR:
+
 ```yaml
 "gcr.io":
   "uber-container-tools/*":
@@ -52,12 +58,13 @@ Example config for GCR:
       basic:
         username: _json_key
         password: |-
-            {
-                <json here>
-            }
+          {
+              <json here>
+          }
 ```
 
 To configure your own registry endpoint, pass a custom configuration file to Makisu with `--registry-config=${PATH_TO_CONFIG}`.:
+
 ```yaml
 [registry]:
   [repo]:
@@ -78,6 +85,7 @@ To configure your own registry endpoint, pass a custom configuration file to Mak
         username: <username>
         password: <password>
 ```
+
 Note: For the cert path, you can point to a directory containing your certificates. Makisu will then use all of the certs in that
 directory for TLS verification.
 
@@ -89,6 +97,7 @@ For ECR, you can export the following [variables](https://docs.aws.amazon.com/cl
 If you encounter a certificate validation errors (ex: `x509: certificate signed by unknown authority`) you might want to export the following variable `SSL_CERT_DIR=/makisu-internal/certs/`.
 
 Example AWS ECR config:
+
 ```yaml
 "someawsregistry":
   "my-project/*":
@@ -98,6 +107,7 @@ Example AWS ECR config:
 ```
 
 Example GCR config:
+
 ```yaml
 "gcr.io":
   "my-project/*":
@@ -108,10 +118,26 @@ Example GCR config:
 
 NB: You need to put your config files (ex: aws config/credentials file) inside the /makisu-internal/ dir (and use env variable to specify their locations) in order for the helpers to find and use them when building your images.
 
+### AWS EKS (IAM Roles for Service Accounts - IRSA)
+
+Makisu cleans the environment variables when running so you will need to provide a AWS configuration file.
+
+Example:
+
+```sh
+mkdir -p /makisu-internal/.aws/
+cp ${AWS_WEB_IDENTITY_TOKEN_FILE} /makisu-internal/.aws/identity_creds
+printf "\n[profile eks_role]\nregion = eu-west-3\nrole_arn=${AWS_ROLE_ARN}\nweb_identity_token_file=/makisu-internal/.aws/identity_creds\n" > /makisu-internal/.aws/config
+export AWS_SDK_LOAD_CONFIG=true AWS_PROFILE=eks_role AWS_CONFIG_FILE=/makisu-internal/.aws/config SSL_CERT_DIR=/makisu-internal/certs/ SSL_CERT_FILE=/makisu-internal/certs/cacerts.pem
+```
+
+Using this example, we are setting an AWS profile (`eks_role`) that will assume the web identity provided to the pod by the EKS service account.
+
 ### Using another cred helper
 
 For now makisu handles ECR and GCR as lib instead of calling their binaries.
 If you want to use another docker credentials helper, add its binary in the directory `/makisu-internal`, with a name matching `docker-credential-<cred-helper-name>`, then in your configuration:
+
 ```yaml
 "example.com":
   "my-project/*":
@@ -122,3 +148,21 @@ If you want to use another docker credentials helper, add its binary in the dire
 ## Handling `BLOB_UPLOAD_INVALID` and `BLOB_UPLOAD_UNKNOWN` errors
 
 If you encounter these errors when pushing your image to a registry, try to use the `push_chunk: -1` option (some registries, despite implementing registry v2 do not support chunked upload, ECR and GCR being one example).
+
+## Handling certificate errors
+
+If you encounter the following error `lstat path: lstat /etc/ssl: no such file or directory`, you should manually specify the SSL cert path. (makisu cleans the env var so the TLS client does not find the correct path if you did overwrite it via the `SSL_CERT_DIR` env var).
+
+Example configuration:
+
+```yaml
+"someawsregistry":
+  "my-project/*":
+    push_chunk: -1
+    security:
+      credsStore: ecr-login
+      tls:
+        ca:
+          cert:
+            path: /makisu-internal/certs/
+```
