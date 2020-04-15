@@ -249,7 +249,7 @@ func (c copier) copyDirContents(src, dst, origDst string, uid, gid int, preserve
 
 // copyDir copies the directory at src to dst.
 func (c copier) copyDir(src, dst string, uid, gid int, preserveOwner bool) error {
-	srcInfo, err := os.Lstat(src)
+	srcInfo, err := os.Stat(src)
 	if err != nil {
 		return fmt.Errorf("lstat %s: %s", src, err)
 	} else if !srcInfo.IsDir() {
