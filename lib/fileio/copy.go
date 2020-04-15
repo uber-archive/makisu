@@ -104,7 +104,7 @@ func (c copier) CopyDir(source, target string, uid, gid int) error {
 	if err := mkdirAll(target, os.ModePerm, uid, gid, false); err != nil {
 		return fmt.Errorf("mkdir all %s: %s", target, err)
 	}
-	// Recursively copy directories and files.
+	// Recursively copy contents of source directory.
 	return c.copyDirContents(source, target, target, uid, gid, false)
 }
 
@@ -115,11 +115,11 @@ func (c copier) CopyDirPreserveOwner(source, target string) error {
 		log.Infof("* Ignoring copy of directory %s because it is blacklisted", source)
 		return nil
 	}
-	// Make target parent directories (uid and gid will be computed from the sources one).
-	if err := mkdirAll(target, os.ModePerm, 0, 0, true); err != nil {
-		return fmt.Errorf("mkdir all %s: %s", target, err)
+	// Copy source directory and preserve the ownership.
+	if err := c.copyDir(source, target, 0, 0, true); err != nil {
+		return fmt.Errorf("preserve the ownership of %s: %s", target, err)
 	}
-	// Recursively copy directories and files.
+	// Recursively copy contents of source directory.
 	return c.copyDirContents(source, target, target, 0, 0, true)
 }
 
@@ -289,7 +289,7 @@ func (c copier) copyDir(src, dst string, uid, gid int, preserveOwner bool) error
 
 // mkdirAll performs the same operation as os.MkdirAll, but also sets the given
 // permissions & owners on all created directories.
-func mkdirAll(dst string, mode os.FileMode, uid, gid int, preserveOwner bool) error {
+func mkdirAll(dst string, mode os.FileMode, uid, gid int, preserveParentOwner bool) error {
 	if dst == "" {
 		return errors.New("empty target directory")
 	}
@@ -313,7 +313,7 @@ func mkdirAll(dst string, mode os.FileMode, uid, gid int, preserveOwner bool) er
 
 			// Update file info
 			fi, _ = os.Lstat(absDir)
-			if preserveOwner {
+			if preserveParentOwner {
 				uid, gid = fileOwners(fi)
 			}
 			if err := os.Chown(absDir, uid, gid); err != nil {
