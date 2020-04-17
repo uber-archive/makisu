@@ -64,7 +64,7 @@ func NewInternalCopier() Copier {
 func (c copier) CopyFile(source, target string, uid, gid int) error {
 	// Make target parent directories (uid and gid will be computed from the sources one).
 	targetDir := filepath.Dir(target)
-	if err := mkdirAll(targetDir, os.ModePerm, uid, gid, false, false); err != nil {
+	if err := mkdirAll(targetDir, os.ModePerm, uid, gid, false); err != nil {
 		return fmt.Errorf("mkdir all %s: %s", targetDir, err)
 	}
 	// Copy file permissions and contents.
@@ -75,7 +75,7 @@ func (c copier) CopyFile(source, target string, uid, gid int) error {
 func (c copier) CopyFilePreserveOwner(source, target string) error {
 	// Make target parent directories with passed uid & gid if they don't exist.
 	targetDir := filepath.Dir(target)
-	if err := mkdirAll(targetDir, os.ModePerm, 0, 0, true, false); err != nil {
+	if err := mkdirAll(targetDir, os.ModePerm, 0, 0, true); err != nil {
 		return fmt.Errorf("mkdir all %s: %s", targetDir, err)
 	}
 	// Copy file permissions and contents.
@@ -101,7 +101,7 @@ func (c copier) CopyDir(source, target string, uid, gid int) error {
 		return nil
 	}
 	// Make target parent directories with passed uid & gid if they don't exist.
-	if err := mkdirAll(target, os.ModePerm, uid, gid, false, true); err != nil {
+	if err := mkdirAll(target, os.ModePerm, uid, gid, false); err != nil {
 		return fmt.Errorf("mkdir all %s: %s", target, err)
 	}
 	// Recursively copy contents of source directory.
@@ -115,10 +115,24 @@ func (c copier) CopyDirPreserveOwner(source, target string) error {
 		log.Infof("* Ignoring copy of directory %s because it is blacklisted", source)
 		return nil
 	}
+	// Copy the parent directory of target.
+	targetParentDir := filepath.Dir(target)
+	if err := mkdirAll(targetParentDir, os.ModePerm, 0, 0, true); err != nil {
+		return fmt.Errorf("mkdir parent dir %s: %s", targetParentDir, err)
+	}
+	// If the source dir is a symlink, makisu would try to copy the contents rather than a link.
 	fi, _ := os.Stat(source)
-	uid, gid := fileOwners(fi)
-	if err := mkdirAll(target, os.ModePerm, uid, gid, false, true); err != nil {
-		return fmt.Errorf("mkdir all %s: %s", target, err)
+	sourceUid, sourceGid := fileOwners(fi)
+	if _, err := os.Lstat(target); err != nil {
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("stat %s: %s", target, err)
+		} else if err := os.Mkdir(target, os.ModePerm); err != nil {
+			return fmt.Errorf("mkdir %s: %s", target, err)
+		}
+	}
+	// Preserve the source dir owernship.
+	if err := os.Chown(target, sourceUid, sourceGid); err != nil {
+		return fmt.Errorf("chown %s: %s", target, err)
 	}
 	// Recursively copy contents of source directory.
 	return c.copyDirContents(source, target, target, 0, 0, true)
@@ -290,8 +304,7 @@ func (c copier) copyDir(src, dst string, uid, gid int, preserveOwner bool) error
 
 // mkdirAll performs the same operation as os.MkdirAll, but also sets the given
 // permissions & owners on all created directories.
-func mkdirAll(dst string, mode os.FileMode, uid, gid int, preserveParentOwner bool, isDir bool) error {
-	sourceUid, sourceGid := uid, gid
+func mkdirAll(dst string, mode os.FileMode, uid, gid int, preserveParentOwner bool) error {
 	if dst == "" {
 		return errors.New("empty target directory")
 	}
@@ -322,14 +335,6 @@ func mkdirAll(dst string, mode os.FileMode, uid, gid int, preserveParentOwner bo
 			}
 		}
 		prevDir = absDir
-	}
-
-	// Preserve the source dir ownership.
-	if isDir {
-		if err := os.Chown(abs, sourceUid, sourceGid); err != nil {
-			return fmt.Errorf("chown %s: %s", abs, err)
-		}
-
 	}
 
 	return nil
