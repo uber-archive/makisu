@@ -130,7 +130,7 @@ func (c copier) CopyDirPreserveOwner(source, target string) error {
 			return fmt.Errorf("mkdir %s: %s", target, err)
 		}
 	}
-	// Preserve the source dir owernship.
+	// Preserve the source dir ownership.
 	if err := os.Chown(target, sourceUid, sourceGid); err != nil {
 		return fmt.Errorf("chown %s: %s", target, err)
 	}
