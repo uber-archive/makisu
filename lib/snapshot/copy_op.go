@@ -115,7 +115,6 @@ func (c *CopyOperation) Execute() error {
 					return fmt.Errorf("copy file %s to dir %s: %s", src, targetFilePath, err)
 				}
 			}
-
 		} else {
 			// File to file
 			if c.preserveOwner {

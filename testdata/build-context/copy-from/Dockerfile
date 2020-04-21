@@ -34,11 +34,13 @@ RUN mkdir /mine
 COPY --from=phaseA /mine/c/ /mine/c/
 RUN cat /mine/c/1.txt && cat /mine/c/2.txt
 # Copy to existing dir with changed permission.
-RUN mkdir /mine/d/ && chown daemon:daemon /mine/d
-COPY --from=phaseA /mine/c/ /mine/d/
+RUN mkdir /mine/d && chown daemon:daemon /mine/d && chmod 777 /mine/d
+COPY --from=phaseA --archive /mine/c/ /mine/d/
+RUN mkdir /mine/e && chown daemon:daemon /mine/e
+COPY --from=phaseA /mine/c/ /mine/e/
 
 FROM alpine
 RUN mkdir /mine
 # Copy root.
-COPY --from=phaseB / /
-ENTRYPOINT ["/bin/sh", "-c", "cat /mine/c/1.txt && cat /mine/c/2.txt && cat /mine/d/1.txt && cat /mine/d/2.txt && test $(stat -c '%U:%G' /mine/d) = 'daemon:daemon'"]
+COPY --from=phaseB --archive / /
+ENTRYPOINT ["/bin/sh", "-c", "cat /mine/c/1.txt && cat /mine/c/2.txt && cat /mine/d/1.txt && cat /mine/d/2.txt && test $(stat -c '%U:%G' /mine/d) = 'daemon:daemon' && test $(stat -c '%a' /mine/d) = 777 && test $(stat -c '%U:%G' /mine/e) = 'daemon:daemon'"]
