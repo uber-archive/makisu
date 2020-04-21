@@ -120,20 +120,25 @@ func (c copier) CopyDirPreserveOwner(source, target string) error {
 	if err := mkdirAll(targetParentDir, os.ModePerm, 0, 0, true); err != nil {
 		return fmt.Errorf("mkdir parent dir %s: %s", targetParentDir, err)
 	}
-	// If the source dir is a symlink, makisu would try to copy the contents rather than a link.
+	// Use stat instead of Lstat here.
+	// If the source is a symlink, makisu would try to copy the contents rather than the link.
 	fi, _ := os.Stat(source)
 	sourceUid, sourceGid := fileOwners(fi)
 	if _, err := os.Lstat(target); err != nil {
 		if !os.IsNotExist(err) {
 			return fmt.Errorf("stat %s: %s", target, err)
-		} else if err := os.Mkdir(target, os.ModePerm); err != nil {
+		}
+
+		if err := os.Mkdir(target, fi.Mode()); err != nil {
 			return fmt.Errorf("mkdir %s: %s", target, err)
 		}
+
+		// Preserve the source dir ownership.
+		if err := os.Chown(target, sourceUid, sourceGid); err != nil {
+			return fmt.Errorf("chown %s: %s", target, err)
+		}
 	}
-	// Preserve the source dir ownership.
-	if err := os.Chown(target, sourceUid, sourceGid); err != nil {
-		return fmt.Errorf("chown %s: %s", target, err)
-	}
+
 	// Recursively copy contents of source directory.
 	return c.copyDirContents(source, target, target, 0, 0, true)
 }
