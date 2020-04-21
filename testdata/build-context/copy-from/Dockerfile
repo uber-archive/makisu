@@ -18,7 +18,6 @@ RUN touch /mine/b.txt #!COMMIT
 RUN mkdir /mine/c
 RUN touch /mine/c/1.txt
 RUN touch /mine/c/2.txt
-RUN touch /mine/c/3.txt
 
 FROM alpine
 RUN mkdir /mine
@@ -26,17 +25,20 @@ RUN touch /mine/a.txt
 RUN touch /mine/b.txt #!COMMIT
 # Copy files that were not cached from previous stage.
 COPY --from=phaseA /mine/c/ /mine/c/
-RUN cat /mine/c/1.txt && cat /mine/c/2.txt && cat /mine/c/3.txt
+RUN cat /mine/c/1.txt && cat /mine/c/2.txt
 RUN rm -rf /mine/c/ #!COMMIT
 
-FROM alpine
+FROM alpine AS phaseB
 RUN mkdir /mine
 # Copy files again that were deleted from previous stage.
 COPY --from=phaseA /mine/c/ /mine/c/
-RUN cat /mine/c/1.txt && cat /mine/c/2.txt && cat /mine/c/3.txt
+RUN cat /mine/c/1.txt && cat /mine/c/2.txt
+# Copy to existing dir with changed permission.
+RUN mkdir /mine/d/ && chown daemon:daemon /mine/d
+COPY --from=phaseA /mine/c/ /mine/d/
 
 FROM alpine
 RUN mkdir /mine
 # Copy root.
-COPY --from=phaseA / /
-ENTRYPOINT ["/bin/sh", "-c", "cat /mine/a.txt && cat /mine/b.txt && cat /mine/c/1.txt && cat /mine/c/2.txt && cat /mine/c/3.txt"]
+COPY --from=phaseB / /
+ENTRYPOINT ["/bin/sh", "-c", "cat /mine/c/1.txt && cat /mine/c/2.txt && cat /mine/d/1.txt && cat /mine/d/2.txt && test $(stat -c '%U:%G' /mine/d) = 'daemon:daemon'"]
