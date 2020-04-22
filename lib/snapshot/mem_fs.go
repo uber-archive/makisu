@@ -111,9 +111,9 @@ func (fs *MemFS) Checkpoint(newRoot string, sources []string) error {
 			return fmt.Errorf("trim src %s: %s", src, err)
 		}
 		dst := filepath.Join(newRoot, trimmedSrc)
-		sourceInfo, err := os.Stat(src)
+		sourceInfo, err := os.Lstat(src)
 		if err != nil {
-			return fmt.Errorf("stat %s: %s", src, err)
+			return fmt.Errorf("lstat %s: %s", src, err)
 		}
 
 		if sourceInfo.IsDir() {
@@ -121,8 +121,43 @@ func (fs *MemFS) Checkpoint(newRoot string, sources []string) error {
 				return fmt.Errorf("copy dir %s: %s", src, err)
 			}
 		} else {
-			if err := copier.CopyFilePreserveOwner(src, dst); err != nil {
-				return fmt.Errorf("copy file %s: %s", src, err)
+			if sourceInfo.Mode()&os.ModeSymlink != 0 {
+				var linkTarget string
+				for sourceInfo.Mode()&os.ModeSymlink != 0 {
+					linkTarget, err = os.Readlink(src)
+					if err != nil {
+						return fmt.Errorf("read link %s: %s", src, err)
+					}
+
+					// Update sourceInfo and src
+					src = linkTarget
+					sourceInfo, err = os.Lstat(src)
+					if err != nil {
+						return fmt.Errorf("lstat %s: %s", src, err)
+					}
+				}
+				linkTargetCopy := filepath.Join(newRoot, linkTarget)
+				linkTargetFi, err := os.Lstat(linkTarget)
+				if err != nil {
+					return fmt.Errorf("lstat %s: %s", linkTarget, err)
+				}
+				// Copy the linkTarget under newRoot.
+				if linkTargetFi.IsDir() {
+					if err := copier.CopyDirPreserveOwner(linkTarget, linkTargetCopy); err != nil {
+						return fmt.Errorf("copy dir %s: %s", linkTarget, err)
+					}
+				} else {
+					if err := copier.CopyFilePreserveOwner(linkTarget, linkTargetCopy); err != nil {
+						return fmt.Errorf("copy file %s: %s", linkTarget, err)
+					}
+				}
+				if err := os.Symlink(linkTargetCopy, dst); err != nil {
+					return fmt.Errorf("write link %s with content %s: %s", dst, linkTargetCopy, err)
+				}
+			} else {
+				if err := copier.CopyFilePreserveOwner(src, dst); err != nil {
+					return fmt.Errorf("copy file %s: %s", src, err)
+				}
 			}
 		}
 	}
@@ -342,8 +377,8 @@ func (fs *MemFS) addToLayer(l *memLayer, c *CopyOperation) error {
 
 	if len(c.srcs) == 1 {
 		src := filepath.Join(c.srcRoot, c.srcs[0])
-		if fi, err := os.Stat(src); err != nil {
-			return fmt.Errorf("stat src %s: %s", src, err)
+		if fi, err := os.Lstat(src); err != nil {
+			return fmt.Errorf("lstat src %s: %s", src, err)
 		} else if !fi.IsDir() {
 			// Case 1, no need to ensure dst exists explicitly.
 			createDst = false
