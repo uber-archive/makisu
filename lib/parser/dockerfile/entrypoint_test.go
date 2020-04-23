@@ -33,8 +33,9 @@ func TestNewEntrypointDirective(t *testing.T) {
 		{"good json", true, `entrypoint ["this", "entrypoint"]`, []string{"this", "entrypoint"}},
 		{"substitution", true, `entrypoint ["${prefix}this", "entrypoint${suffix}"]`, []string{"test_this", "entrypoint_test"}},
 		{"substitution2", true, `entrypoint ["this"$comma "entrypoint"]`, []string{"this", "entrypoint"}},
-		{"good entrypoint", true, "entrypoint this entrypoint", []string{"this", "entrypoint"}},
-		{"substitution", true, "entrypoint ${prefix}this entrypoint$suffix", []string{"test_this", "entrypoint_test"}},
+		{"good entrypoint", true, "entrypoint this entrypoint", []string{"/bin/sh", "-c", "this entrypoint"}},
+		{"substitution", true, "entrypoint ${prefix}this entrypoint$suffix", []string{"/bin/sh", "-c", "test_this entrypoint_test"}},
+		{"substitution", true, `entrypoint "${prefix}this" entrypoint$suffix`, []string{"/bin/sh", "-c", `"test_this" entrypoint_test`}},
 		{"bad json", false, `entrypoint ["this, "entrypoint"]`, nil},
 		{"bad substitution", false, `entrypoint ["${prefixthis", "entrypoint${suffix}"]`, nil},
 	}
