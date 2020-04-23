@@ -25,8 +25,8 @@ import (
 	"github.com/uber/makisu/lib/utils"
 )
 
-// fileOwners returns the uid & gid that own the file.
-func fileOwners(fi os.FileInfo) (uid int, gid int) {
+// getFileOwners returns the uid & gid that own the file.
+func getFileOwners(fi os.FileInfo) (uid int, gid int) {
 	stat := utils.FileInfoStat(fi)
 	return int(stat.Uid), int(stat.Gid)
 }

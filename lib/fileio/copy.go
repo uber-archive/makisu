@@ -67,7 +67,9 @@ import (
 type Copier struct {
 	blacklist []string
 
-	dstDirOwner             *Owner
+	// Owner info for dst dir.
+	dstDirOwner *Owner
+	// Owner info for dst dir's children, or if dst is to be a file.
 	dstFileAndChildrenOwner *Owner
 }
 
@@ -213,7 +215,7 @@ func (c *Copier) copyRegularFile(fi os.FileInfo, src, dst string) error {
 	// Change the mode of dst to that of src, and update owner accordingly.
 	// Note: Chmod needs to be called after chown, otherwise setuid and setgid
 	// bits could be unset.
-	uid, gid := fileOwners(fi)
+	uid, gid := getFileOwners(fi)
 	if c.dstFileAndChildrenOwner != nil && c.dstFileAndChildrenOwner.overwrite {
 		uid = c.dstFileAndChildrenOwner.uid
 		gid = c.dstFileAndChildrenOwner.gid
@@ -264,7 +266,7 @@ func (c *Copier) copyDirContents(src, dst, origDst string) error {
 		}
 		currDst := filepath.Join(dst, entry.Name())
 		if entry.IsDir() {
-			if err := c.copyChildDir(currSrc, currDst); err != nil {
+			if err := c.copyDir(currSrc, currDst); err != nil {
 				return fmt.Errorf("copy dir %s to %s: %s", currSrc, currDst, err)
 			}
 			if err := c.copyDirContents(currSrc, currDst, origDst); err != nil {
@@ -280,7 +282,8 @@ func (c *Copier) copyDirContents(src, dst, origDst string) error {
 }
 
 // copyDir copies the directory at src to dst.
-func (c *Copier) copyChildDir(src, dst string) error {
+// Note: This dst is not the dst dir of public CopyDir(), but a descendent.
+func (c *Copier) copyDir(src, dst string) error {
 	srcInfo, err := os.Lstat(src)
 	if err != nil {
 		return fmt.Errorf("lstat %s: %s", src, err)
@@ -311,7 +314,7 @@ func (c *Copier) copyChildDir(src, dst string) error {
 	if err := os.Chmod(dst, srcInfo.Mode()); err != nil {
 		return fmt.Errorf("chmod %s: %s", dst, err)
 	}
-	uid, gid := fileOwners(srcInfo)
+	uid, gid := getFileOwners(srcInfo)
 	if c.dstFileAndChildrenOwner != nil && c.dstFileAndChildrenOwner.overwrite {
 		uid = c.dstFileAndChildrenOwner.uid
 		gid = c.dstFileAndChildrenOwner.gid
@@ -340,11 +343,7 @@ func (c *Copier) mkdirAll(dst string) error {
 	split := strings.Split(abs, "/")
 	split[0] = "/"
 	var prevDir string
-	for i, dir := range split {
-		if i == len(split)-1 {
-			break
-		}
-
+	for _, dir := range split[:len(split)-1] {
 		currDir := filepath.Join(prevDir, dir)
 		if _, err := os.Lstat(currDir); err != nil {
 			if !os.IsNotExist(err) {
