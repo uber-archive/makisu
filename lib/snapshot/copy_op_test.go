@@ -94,7 +94,7 @@ func TestExecuteCopyOperation(t *testing.T) {
 		srcs := []string{"/test.txt"}
 		dst := filepath.Join(workDir, "test2/test.txt")
 		c, err := NewCopyOperation(
-			srcs, srcRoot, "", dst, validChown, pathutils.DefaultBlacklist, false, true)
+			srcs, srcRoot, "", dst, validChown, pathutils.DefaultBlacklist, false, false)
 		require.NoError(err)
 		require.NoError(c.Execute())
 		b, err := ioutil.ReadFile(dst)
@@ -174,7 +174,7 @@ func TestExecuteCopyOperation(t *testing.T) {
 		workDir = filepath.Join(workDir, "test2")
 		dst := "."
 		c, err := NewCopyOperation(
-			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, true)
+			srcs, srcRoot, workDir, dst, validChown, pathutils.DefaultBlacklist, false, false)
 		require.NoError(err)
 		require.NoError(c.Execute())
 		b, err := ioutil.ReadFile(filepath.Join(workDir, "test.txt"))

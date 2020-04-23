@@ -117,11 +117,11 @@ func (fs *MemFS) Checkpoint(newRoot string, sources []string) error {
 		}
 
 		if sourceInfo.IsDir() {
-			if err := copier.CopyDirPreserveOwner(src, dst); err != nil {
+			if err := copier.CopyDir(src, dst); err != nil {
 				return fmt.Errorf("copy dir %s: %s", src, err)
 			}
 		} else {
-			if err := copier.CopyFilePreserveOwner(src, dst); err != nil {
+			if err := copier.CopyFile(src, dst); err != nil {
 				return fmt.Errorf("copy file %s: %s", src, err)
 			}
 		}

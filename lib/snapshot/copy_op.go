@@ -32,6 +32,7 @@ type CopyOperation struct {
 	dst           string
 	uid           int
 	gid           int
+	chown         bool
 	preserveOwner bool
 
 	blacklist []string
@@ -42,16 +43,20 @@ type CopyOperation struct {
 // NewCopyOperation initializes and validates a CopyOperation. Use "internal" to
 // specify if the copy op is used for copying from previous stages.
 func NewCopyOperation(
-	srcs []string, srcRoot, workDir, dst, chown string,
+	srcs []string, srcRoot, workDir, dst, chownStr string,
 	blacklist []string, internal, preserveOwner bool) (*CopyOperation, error) {
 
 	if err := checkCopyParams(srcs, workDir, dst); err != nil {
 		return nil, fmt.Errorf("check copy param: %s", err)
 	}
+	chown := chownStr != ""
+	if chown && preserveOwner {
+		return nil, fmt.Errorf("both chown and archive are true")
+	}
 
-	uid, gid, err := utils.ResolveChown(chown)
+	uid, gid, err := utils.ResolveChown(chownStr)
 	if err != nil {
-		return nil, fmt.Errorf("resolve chown: %s", err)
+		return nil, fmt.Errorf("resolve chown str: %s", err)
 	}
 
 	relSources := make([]string, len(srcs))
@@ -67,6 +72,7 @@ func NewCopyOperation(
 		dst:           dst,
 		uid:           uid,
 		gid:           gid,
+		chown:         chown,
 		preserveOwner: preserveOwner,
 		blacklist:     blacklist,
 		internal:      internal,
@@ -86,47 +92,39 @@ func (c *CopyOperation) Execute() error {
 		if err != nil {
 			return fmt.Errorf("lstat %s: %s", src, err)
 		}
-		var copier fileio.Copier
+		var copier *fileio.Copier
+		blacklist := c.blacklist
 		if c.internal {
-			copier = fileio.NewInternalCopier()
-		} else {
-			copier = fileio.NewCopier(c.blacklist)
+			// Copying checkpointed files from sandbox dir, and there is no need to
+			// blacklist any path, since they would have been filtered out by checkpoint.
+			blacklist = []string{}
+		}
+		if c.preserveOwner {
+			stat := utils.FileInfoStat(fi)
+			copier = fileio.NewCopier(blacklist,
+				fileio.WithDstDirOwner(int(stat.Uid), int(stat.Gid), false))
+		} else if c.chown {
+			copier = fileio.NewCopier(blacklist,
+				fileio.WithDstDirOwner(c.uid, c.gid, false),
+				fileio.WithDstFileAndChildrenOwner(c.uid, c.gid, true),
+			)
 		}
 		if fi.IsDir() {
 			// Dir to dir
-			if c.preserveOwner {
-				if err := copier.CopyDirPreserveOwner(src, c.dst); err != nil {
-					return fmt.Errorf("copy dir %s to dir %s: %s", src, c.dst, err)
-				}
-			} else {
-				if err := copier.CopyDir(src, c.dst, c.uid, c.gid); err != nil {
-					return fmt.Errorf("copy dir %s to dir %s: %s", src, c.dst, err)
-				}
+			if err := copier.CopyDir(src, c.dst); err != nil {
+				return fmt.Errorf("copy dir %s to dir %s: %s", src, c.dst, err)
 			}
 		} else if isDirFormat(c.dst) {
 			// File to dir
 			targetFilePath := filepath.Join(c.dst, filepath.Base(src))
-			if c.preserveOwner {
-				if err := copier.CopyFilePreserveOwner(src, targetFilePath); err != nil {
-					return fmt.Errorf("copy file %s to dir %s: %s", src, targetFilePath, err)
-				}
-			} else {
-				if err := copier.CopyFile(src, targetFilePath, c.uid, c.gid); err != nil {
-					return fmt.Errorf("copy file %s to dir %s: %s", src, targetFilePath, err)
-				}
+			if err := copier.CopyFile(src, targetFilePath); err != nil {
+				return fmt.Errorf("copy file %s to dir %s: %s", src, targetFilePath, err)
 			}
 		} else {
 			// File to file
-			if c.preserveOwner {
-				if err := copier.CopyFilePreserveOwner(src, c.dst); err != nil {
-					return fmt.Errorf("copy file %s to dir %s: %s", src, c.dst, err)
-				}
-			} else {
-				if err := copier.CopyFile(src, c.dst, c.uid, c.gid); err != nil {
-					return fmt.Errorf("copy file %s to file %s: %s", src, c.dst, err)
-				}
+			if err := copier.CopyFile(src, c.dst); err != nil {
+				return fmt.Errorf("copy file %s to file %s: %s", src, c.dst, err)
 			}
-
 		}
 	}
 	return nil
