@@ -54,7 +54,7 @@ func newHealthcheckDirective(base *baseDirective, state *parsingState) (Directiv
 		return nil, base.err(fmt.Errorf("CMD not defined"))
 	}
 
-	flags, err := splitArgs(base.Args[:cmdIndices[0]])
+	flags, err := splitArgs(base.Args[:cmdIndices[0]], false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse interval")
 	}
@@ -133,7 +133,7 @@ func newHealthcheckDirective(base *baseDirective, state *parsingState) (Directiv
 	}
 
 	// Verify cmd arg is a valid array, but return the whole arg as one string.
-	args, err := splitArgs(remaining)
+	args, err := splitArgs(remaining, false)
 	if err != nil {
 		return nil, base.err(err)
 	}

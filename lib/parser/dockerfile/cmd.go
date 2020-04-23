@@ -34,7 +34,7 @@ func newCmdDirective(base *baseDirective, state *parsingState) (Directive, error
 		return &CmdDirective{base, cmd}, nil
 	}
 
-	args, err := splitArgs(base.Args)
+	args, err := splitArgs(base.Args, false)
 	if err != nil {
 		return nil, base.err(err)
 	}

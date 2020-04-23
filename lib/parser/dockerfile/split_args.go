@@ -22,10 +22,10 @@ import (
 
 // splitArgs splits a whitespace-delimited string into an array of arguments,
 // not splitting quoted arguments.
-func splitArgs(input string) ([]string, error) {
+func splitArgs(input string, keepQuotes bool) ([]string, error) {
 	var err error
 	var state splitArgsState = &splitArgsStateSpace{
-		&splitArgsBase{args: make([]string, 0)},
+		&splitArgsBase{args: make([]string, 0), keepQuotes: keepQuotes},
 	}
 	for i := 0; i < len(input); i++ {
 		state, err = state.nextRune(rune(input[i]))
@@ -45,9 +45,10 @@ type splitArgsState interface {
 
 // splitArgsBase defines pieces of data that are used & managed by each state.
 type splitArgsBase struct {
-	args    []string
-	currArg string
-	escaped bool
+	args       []string
+	currArg    string
+	escaped    bool
+	keepQuotes bool
 }
 
 // splitArgsStateSpace is the starting state for the state machine. It should be entered
@@ -60,6 +61,9 @@ func (s *splitArgsStateSpace) nextRune(r rune) (splitArgsState, error) {
 	if unicode.IsSpace(r) {
 		return s, nil
 	} else if r == '"' {
+		if s.keepQuotes {
+			s.currArg += "\""
+		}
 		return &splitArgsStateQuote{s.splitArgsBase}, nil
 	} else if r == '\\' {
 		s.escaped = true
@@ -107,7 +111,7 @@ type splitArgsStateQuote struct{ *splitArgsBase }
 // transitioning to splitArgsStateEndQuote.
 func (s *splitArgsStateQuote) nextRune(r rune) (splitArgsState, error) {
 	if s.escaped {
-		if r != '"' {
+		if r != '"' || s.keepQuotes {
 			s.currArg += "\\"
 		}
 		s.escaped = false
@@ -115,6 +119,9 @@ func (s *splitArgsStateQuote) nextRune(r rune) (splitArgsState, error) {
 		s.escaped = true
 		return s, nil
 	} else if r == '"' {
+		if s.keepQuotes {
+			s.currArg += "\""
+		}
 		s.args = append(s.args, s.currArg)
 		s.currArg = ""
 		return &splitArgsStateEndQuote{s.splitArgsBase}, nil

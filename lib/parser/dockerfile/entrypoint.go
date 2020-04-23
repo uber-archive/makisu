@@ -14,6 +14,8 @@
 
 package dockerfile
 
+import "strings"
+
 // EntrypointDirective represents the "ENTRYPOINT" dockerfile command.
 type EntrypointDirective struct {
 	*baseDirective
@@ -34,11 +36,17 @@ func newEntrypointDirective(base *baseDirective, state *parsingState) (Directive
 		return &EntrypointDirective{base, entrypoint}, nil
 	}
 
-	args, err := splitArgs(base.Args)
+	// This is the Shell form (https://docs.docker.com/engine/reference/builder/#shell-form-entrypoint-example)
+	// It is expected to wrap the whole entrypoint into a sh -c command
+	var shell []string
+	shell = append(shell, "/bin/sh", "-c")
+	args, err := splitArgs(base.Args, true)
 	if err != nil {
 		return nil, base.err(err)
 	}
-	return &EntrypointDirective{base, args}, nil
+
+	cmd := append(shell, strings.Join(args, " "))
+	return &EntrypointDirective{base, cmd}, nil
 }
 
 // Add this command to the build stage.
