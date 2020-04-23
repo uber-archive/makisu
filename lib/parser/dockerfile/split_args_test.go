@@ -22,24 +22,28 @@ import (
 
 func TestSplitArgs(t *testing.T) {
 	tests := []struct {
-		desc    string
-		input   string
-		succeed bool
-		output  []string
+		desc       string
+		input      string
+		keepQuotes bool
+		succeed    bool
+		output     []string
 	}{
-		{"single", "  a	", true, []string{"a"}},
-		{"single quoted", `  "a   "	`, true, []string{"a   "}},
-		{"quoted contains backslash", `  "a \  "	`, true, []string{`a \  `}},
-		{"quoted contains quote", `  "a \"  "	`, true, []string{`a "  `}},
-		{"single quoted incomplete", `"a `, false, nil},
-		{"multiple", `a=b   c d  "e f" \"g`, true, []string{"a=b", "c", "d", "e f", "\"g"}},
-		{"arg chars", "`1'{}$@#! *&@)(*_&", true, []string{"`1'{}$@#!", "*&@)(*_&"}},
-		{"non-escapes", "\\`1'{}$\\@#! *&\\;)\\(*_&", true, []string{"\\`1'{}$\\@#!", "*&\\;)\\(*_&"}},
+		{"single", "  a	", false, true, []string{"a"}},
+		{"single quoted", `  "a   "	`, false, true, []string{"a   "}},
+		{"quoted contains backslash", `  "a \  "	`, false, true, []string{`a \  `}},
+		{"quoted contains quote", `  "a \"  "	`, false, true, []string{`a "  `}},
+		{"single quoted incomplete", `"a `, false, false, nil},
+		{"multiple", `a=b   c d  "e f" \"g`, false, true, []string{"a=b", "c", "d", "e f", "\"g"}},
+		{"arg chars", "`1'{}$@#! *&@)(*_&", false, true, []string{"`1'{}$@#!", "*&@)(*_&"}},
+		{"non-escapes", "\\`1'{}$\\@#! *&\\;)\\(*_&", false, true, []string{"\\`1'{}$\\@#!", "*&\\;)\\(*_&"}},
+		{"keep quotes", `echo "${MESSAGE}" "multi \"word"`, true, true, []string{"echo", `"${MESSAGE}"`, `"multi \"word"`}},
+		{"non-escapes", `echo "${MESSAGE}" "multi \"word"`, true, true, []string{"echo", `"${MESSAGE}"`, `"multi \"word"`}},
+		{"non-escapes", `echo "single argument \\\"keepQuotes\\\""`, true, true, []string{"echo", `"single argument \\\"keepQuotes\\\""`}},
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			require := require.New(t)
-			result, err := splitArgs(test.input)
+			result, err := splitArgs(test.input, test.keepQuotes)
 			if test.succeed {
 				require.NoError(err)
 				require.Equal(test.output, result)

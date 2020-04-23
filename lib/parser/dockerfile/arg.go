@@ -45,7 +45,7 @@ func newArgDirective(base *baseDirective, state *parsingState) (Directive, error
 		return &ArgDirective{base, name, defaultVal, nil}, nil
 	}
 
-	args, err := splitArgs(base.Args)
+	args, err := splitArgs(base.Args, false)
 	if err != nil {
 		return nil, base.err(err)
 	}
