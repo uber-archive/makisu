@@ -268,3 +268,12 @@ def test_build_with_preserve_root(registry1, storage_dir):
     del os.environ["MAKISU_ALPINE"]
 
     assert code == 0, err
+
+def test_build_remove(registry1, storage_dir):
+    new_image = utils.new_image_name()
+    context_dir = os.path.join(
+        os.getcwd(), 'testdata/build-context/entrypoint')
+    utils.makisu_build_image(
+        new_image, context_dir, storage_dir, registry=registry1.addr)
+    code, err = utils.docker_run_image(registry1.addr, new_image)
+    assert code == 0, err

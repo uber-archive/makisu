@@ -22,10 +22,10 @@ import (
 
 // splitArgs splits a whitespace-delimited string into an array of arguments,
 // not splitting quoted arguments.
-func splitArgs(input string, keepQuotes bool) ([]string, error) {
+func splitArgs(input string, forShell bool) ([]string, error) {
 	var err error
 	var state splitArgsState = &splitArgsStateSpace{
-		&splitArgsBase{args: make([]string, 0), keepQuotes: keepQuotes},
+		&splitArgsBase{args: make([]string, 0), forShell: forShell},
 	}
 	for i := 0; i < len(input); i++ {
 		state, err = state.nextRune(rune(input[i]))
@@ -45,10 +45,11 @@ type splitArgsState interface {
 
 // splitArgsBase defines pieces of data that are used & managed by each state.
 type splitArgsBase struct {
-	args       []string
-	currArg    string
-	escaped    bool
-	keepQuotes bool
+	args    []string
+	currArg string
+	escaped bool
+	// This allows for shell escaping (keeping quotes and handling quote ending with common char)
+	forShell bool
 }
 
 // splitArgsStateSpace is the starting state for the state machine. It should be entered
@@ -61,12 +62,18 @@ func (s *splitArgsStateSpace) nextRune(r rune) (splitArgsState, error) {
 	if unicode.IsSpace(r) {
 		return s, nil
 	} else if r == '"' {
-		if s.keepQuotes {
+		if s.forShell {
 			s.currArg += "\""
 		}
 		return &splitArgsStateQuote{s.splitArgsBase}, nil
 	} else if r == '\\' {
 		s.escaped = true
+	} else if s.forShell && (r == '&' || r == '|' || r == ';') {
+		if len(s.currArg) > 0 {
+			s.args = append(s.args, s.currArg)
+		}
+		s.currArg = string(r)
+		return &splitArgsStateShellCharacters{s.splitArgsBase}, nil
 	} else {
 		s.currArg += string(r)
 	}
@@ -94,6 +101,12 @@ func (s *splitArgsStateArg) nextRune(r rune) (splitArgsState, error) {
 		s.args = append(s.args, s.currArg)
 		s.currArg = ""
 		return &splitArgsStateSpace{s.splitArgsBase}, nil
+	} else if s.forShell && (r == '&' || r == '|' || r == ';') {
+		if len(s.currArg) > 0 {
+			s.args = append(s.args, s.currArg)
+		}
+		s.currArg = string(r)
+		return &splitArgsStateShellCharacters{s.splitArgsBase}, nil
 	}
 	s.currArg += string(r)
 	return s, nil
@@ -111,7 +124,7 @@ type splitArgsStateQuote struct{ *splitArgsBase }
 // transitioning to splitArgsStateEndQuote.
 func (s *splitArgsStateQuote) nextRune(r rune) (splitArgsState, error) {
 	if s.escaped {
-		if r != '"' || s.keepQuotes {
+		if r != '"' || s.forShell {
 			s.currArg += "\\"
 		}
 		s.escaped = false
@@ -119,7 +132,7 @@ func (s *splitArgsStateQuote) nextRune(r rune) (splitArgsState, error) {
 		s.escaped = true
 		return s, nil
 	} else if r == '"' {
-		if s.keepQuotes {
+		if s.forShell {
 			s.currArg += "\""
 		}
 		s.args = append(s.args, s.currArg)
@@ -140,8 +153,13 @@ func (s *splitArgsStateQuote) endOfInput() ([]string, error) {
 type splitArgsStateEndQuote struct{ *splitArgsBase }
 
 // nextRune accepts only a whitespace character, transitioning to splitArgsStateSpace.
+// If we are parsing for a shell we need to accept some more characters (&,|,;)
 func (s *splitArgsStateEndQuote) nextRune(r rune) (splitArgsState, error) {
 	if !unicode.IsSpace(r) {
+		if s.forShell && r == '&' || r == '|' || r == ';' {
+			s.currArg = string(r)
+			return &splitArgsStateShellCharacters{s.splitArgsBase}, nil
+		}
 		return nil, errors.New("missing whitespace after argument")
 	}
 	return &splitArgsStateSpace{s.splitArgsBase}, nil
@@ -149,5 +167,38 @@ func (s *splitArgsStateEndQuote) nextRune(r rune) (splitArgsState, error) {
 
 // endOfInput returns the args array.
 func (s *splitArgsStateEndQuote) endOfInput() ([]string, error) {
+	return s.args, nil
+}
+
+// splitArgsStateShellCharacters is the state entered when parsing for a shell and encountering these characters: & or | or ;.
+type splitArgsStateShellCharacters struct{ *splitArgsBase }
+
+// nextRune accepts whitespace chars and shell special chars.
+func (s *splitArgsStateShellCharacters) nextRune(r rune) (splitArgsState, error) {
+	if !s.forShell {
+		return nil, errors.New("not in a shell")
+	}
+
+	if r != '&' && r != '|' && r != ';' {
+		if len(s.currArg) > 0 {
+			s.args = append(s.args, s.currArg)
+		}
+
+		if unicode.IsSpace(r) {
+			s.currArg = ""
+			return &splitArgsStateSpace{s.splitArgsBase}, nil
+		}
+
+		// Do not loose current char
+		s.currArg = string(r)
+		return &splitArgsStateSpace{s.splitArgsBase}, nil
+	}
+	// We parsed some shell chars but there are more
+	s.currArg += string(r)
+	return &splitArgsStateShellCharacters{s.splitArgsBase}, nil
+}
+
+// endOfInput returns the args array.
+func (s *splitArgsStateShellCharacters) endOfInput() ([]string, error) {
 	return s.args, nil
 }

@@ -14,6 +14,8 @@
 
 package dockerfile
 
+import "strings"
+
 // CmdDirective represents the "CMD" dockerfile command.
 type CmdDirective struct {
 	*baseDirective
@@ -34,11 +36,13 @@ func newCmdDirective(base *baseDirective, state *parsingState) (Directive, error
 		return &CmdDirective{base, cmd}, nil
 	}
 
-	args, err := splitArgs(base.Args, false)
+	args, err := splitArgs(base.Args, true)
 	if err != nil {
 		return nil, base.err(err)
 	}
-	return &CmdDirective{base, args}, nil
+
+	cmd := append([]string{"/bin/sh", "-c"}, strings.Join(args, " "))
+	return &CmdDirective{base, cmd}, nil
 }
 
 // Add this command to the build stage.
