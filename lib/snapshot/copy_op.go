@@ -92,23 +92,39 @@ func (c *CopyOperation) Execute() error {
 		if err != nil {
 			return fmt.Errorf("lstat %s: %s", src, err)
 		}
-		var copier *fileio.Copier
+
 		blacklist := c.blacklist
 		if c.internal {
 			// Copying checkpointed files from sandbox dir, and there is no need to
 			// blacklist any path, since they would have been filtered out by checkpoint.
 			blacklist = []string{}
 		}
-		if c.preserveOwner {
-			stat := utils.FileInfoStat(fi)
-			copier = fileio.NewCopier(blacklist,
-				fileio.WithDstDirOwner(int(stat.Uid), int(stat.Gid), false))
-		} else if c.chown {
+
+		var copier *fileio.Copier
+		if c.chown {
+			// COPY --chown.
+			// Owner decided by --chown.
 			copier = fileio.NewCopier(blacklist,
 				fileio.WithDstDirOwner(c.uid, c.gid, false),
 				fileio.WithDstFileAndChildrenOwner(c.uid, c.gid, true),
 			)
+		} else if !c.internal {
+			// Copying from context, owner should be root if no --chown.
+			// Whether --archive is provided doesn't matter in this case.
+			copier = fileio.NewCopier(blacklist,
+				fileio.WithDstDirOwner(0, 0, false),
+				fileio.WithDstFileAndChildrenOwner(0, 0, true),
+			)
+		} else if c.preserveOwner {
+			// COPY --from --archive.
+			stat := utils.FileInfoStat(fi)
+			copier = fileio.NewCopier(blacklist,
+				fileio.WithDstDirOwner(int(stat.Uid), int(stat.Gid), false))
+		} else {
+			// COPY --from.
+			copier = fileio.NewCopier(blacklist)
 		}
+
 		if fi.IsDir() {
 			// Dir to dir
 			if err := copier.CopyDir(src, c.dst); err != nil {

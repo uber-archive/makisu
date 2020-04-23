@@ -36,27 +36,34 @@ import (
 //   preserved.
 // - Symlinks are copied with original targets (not guaranteed to be valid).
 //
-// Then there are 3 scenarios for handling file/directory permissions:
-// - ADD/COPY without flags:
+// Then there are 4 scenarios for handling file/directory permissions:
+// - ADD/COPY without flags, from context:
+//   - If target directory doesn't exist, it will be created with default 0755
+//     permission and owned by root.
+//   - For directories and files under source, permissions will be preserved,
+//     and owners will be root.
+//   - Use dstDirOwner without overwrite and dstFileAndChildrenOwner with
+//     overwrite, set uid:gid to 0:0.
+// - ADD/COPY --from, without other flags:
 //   - If target directory doesn't exist, it will be created with default 0755
 //     permission and owned by root.
 //   - For directories and files under source, permissions and owners will be
 //     preserved.
-//   - Leave dstDirOwner and dstFileAndChildrenOwner empty
-// - ADD/COPY --chown:
+//   - Leave dstDirOwner and dstFileAndChildrenOwner empty.
+// - ADD/COPY --chown, with or wihout --from:
 //   - If target directory doesn't exist, it will be created with default 0755
 //     permission and owned by given uid/gid.
 //   - For directories and files under source, permissions are kept, but owner
 //     will be changed to given uid/gid.
 //   - Use dstDirOwner without overwrite and dstFileAndChildrenOwner with
 //     overwrite.
-// - ADD/COPY --archive:
+// - ADD/COPY --from --archive:
 //   - If target directory doesn't exist, it will be created with default 0755
 //     permission and owned by source dir's uid/gid (directly given as copier
 //     parameters).
 //   - For directories and files under source, permissions and owners will be
 //     preserved.
-//   - Use dstDirOwner without overwrite.
+//   - Use dstDirOwner without overwrite and source dir's uid/gid.
 type Copier struct {
 	blacklist []string
 
