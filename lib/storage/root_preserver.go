@@ -58,7 +58,7 @@ func copyOldRootToBackup(rootDir, backupDir string, blacklist []string) error {
 	}
 
 	// TODO: Handle uid, gid preservation
-	if err := copier.CopyDirPreserveOwner(rootDir, backupDir); err != nil {
+	if err := copier.CopyDir(rootDir, backupDir); err != nil {
 		return fmt.Errorf("copy dir %s to dir %s: %s", rootDir, backupDir, err)
 	}
 
@@ -70,7 +70,7 @@ func (r *RootPreserver) RestoreRoot() error {
 	copier := fileio.NewCopier(r.blacklist)
 
 	// TODO: Handle uid, gid preservation
-	if err := copier.CopyDirPreserveOwner(r.SavedRootDir, r.InitialRootDir); err != nil {
+	if err := copier.CopyDir(r.SavedRootDir, r.InitialRootDir); err != nil {
 		return fmt.Errorf("copy dir %s to dir %s: %s", r.SavedRootDir, r.InitialRootDir, err)
 	}
 

@@ -30,6 +30,7 @@ import (
 	"github.com/uber/makisu/lib/mountutils"
 	"github.com/uber/makisu/lib/pathutils"
 	"github.com/uber/makisu/lib/tario"
+	"github.com/uber/makisu/lib/utils"
 )
 
 // memFSNode represents one node of the directory tree in the merged fs view.
@@ -101,7 +102,6 @@ func (fs *MemFS) Checkpoint(newRoot string, sources []string) error {
 	}
 
 	log.Infof("* Moving directories %v to %s", sources, newRoot)
-	copier := fileio.NewCopier(fs.blacklist)
 	for _, src := range resolvedSources {
 		if !filepath.IsAbs(src) {
 			src = filepath.Join(fs.tree.src, src)
@@ -116,12 +116,20 @@ func (fs *MemFS) Checkpoint(newRoot string, sources []string) error {
 			return fmt.Errorf("stat %s: %s", src, err)
 		}
 
+		fi, err := os.Lstat(src)
+		if err != nil {
+			return fmt.Errorf("lstat %s: %s", src, err)
+		}
+		stat := utils.FileInfoStat(fi)
+		copier := fileio.NewCopier(fs.blacklist,
+			fileio.WithDstDirOwner(int(stat.Uid), int(stat.Gid), false))
+
 		if sourceInfo.IsDir() {
-			if err := copier.CopyDirPreserveOwner(src, dst); err != nil {
+			if err := copier.CopyDir(src, dst); err != nil {
 				return fmt.Errorf("copy dir %s: %s", src, err)
 			}
 		} else {
-			if err := copier.CopyFilePreserveOwner(src, dst); err != nil {
+			if err := copier.CopyFile(src, dst); err != nil {
 				return fmt.Errorf("copy file %s: %s", src, err)
 			}
 		}

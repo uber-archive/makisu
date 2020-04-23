@@ -21,7 +21,15 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/uber/makisu/lib/utils"
 )
+
+// getFileOwners returns the uid & gid that own the file.
+func getFileOwners(fi os.FileInfo) (uid int, gid int) {
+	stat := utils.FileInfoStat(fi)
+	return int(stat.Uid), int(stat.Gid)
+}
 
 // ReaderToFile copies the data from a reader to a destination file.
 func ReaderToFile(r io.Reader, dst string) error {

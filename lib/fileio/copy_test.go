@@ -53,7 +53,7 @@ func TestCopyFileDanglingSymlink(t *testing.T) {
 	defer target.Close()
 
 	c := NewCopier(pathutils.DefaultBlacklist)
-	require.NoError(c.CopyFile(sourceSymlink, target.Name(), currUID, currGID))
+	require.NoError(c.CopyFile(sourceSymlink, target.Name()))
 
 	result, err := os.Readlink(target.Name())
 	require.NoError(err)
@@ -78,7 +78,7 @@ func TestCopyFileTargetNotExist(t *testing.T) {
 	require.NoError(err)
 
 	c := NewCopier(pathutils.DefaultBlacklist)
-	require.NoError(c.CopyFile(source.Name(), target.Name(), currUID, currGID))
+	require.NoError(c.CopyFile(source.Name(), target.Name()))
 
 	result, err := ioutil.ReadFile(target.Name())
 	require.NoError(err)
@@ -105,7 +105,7 @@ func TestCopyFileSetSpecialBit(t *testing.T) {
 	defer os.Remove(target.Name())
 
 	c := NewCopier(pathutils.DefaultBlacklist)
-	require.NoError(c.CopyFile(source.Name(), target.Name(), currUID, currGID))
+	require.NoError(c.CopyFile(source.Name(), target.Name()))
 
 	result, err := ioutil.ReadFile(target.Name())
 	require.NoError(err)
@@ -132,7 +132,7 @@ func TestCopyFileTargetEmpty(t *testing.T) {
 	require.NoError(err)
 
 	c := NewCopier(pathutils.DefaultBlacklist)
-	require.NoError(c.CopyFile(source.Name(), target.Name(), currUID, currGID))
+	require.NoError(c.CopyFile(source.Name(), target.Name()))
 
 	result, err := ioutil.ReadFile(target.Name())
 	require.NoError(err)
@@ -158,7 +158,7 @@ func TestCopyFileTargetOverwrite(t *testing.T) {
 	require.NoError(err)
 
 	c := NewCopier(pathutils.DefaultBlacklist)
-	require.NoError(c.CopyFile(source.Name(), target.Name(), currUID, currGID))
+	require.NoError(c.CopyFile(source.Name(), target.Name()))
 
 	result, err := ioutil.ReadFile(target.Name())
 	require.NoError(err)
@@ -192,7 +192,7 @@ func TestCopyDirectoryTargetNotExist(t *testing.T) {
 
 	// Perform copy.
 	c := NewCopier(pathutils.DefaultBlacklist)
-	require.NoError(c.CopyDir(sourceDir, targetDir, currUID, currGID))
+	require.NoError(c.CopyDir(sourceDir, targetDir))
 
 	// Verify.
 	_, err = os.Stat(path.Join(targetDir, path.Base(sourceSubDirOne)))
@@ -241,7 +241,7 @@ func TestCopyDirectoryTargetExists(t *testing.T) {
 
 	// Perform copy.
 	c := NewCopier(pathutils.DefaultBlacklist)
-	require.NoError(c.CopyDir(sourceDir, targetDir, currUID, currGID))
+	require.NoError(c.CopyDir(sourceDir, targetDir))
 
 	// Verify.
 	_, err = os.Stat(path.Join(targetDir, path.Base(sourceSubDirOne)))
@@ -286,7 +286,7 @@ func TestCopyDirectoryIncludingSymlink(t *testing.T) {
 
 	// Perform copy.
 	c := NewCopier(pathutils.DefaultBlacklist)
-	require.NoError(c.CopyDir(sourceDir, targetDir, currUID, currGID))
+	require.NoError(c.CopyDir(sourceDir, targetDir))
 
 	// Verify.
 	_, err = os.Stat(path.Join(targetDir, path.Base(sourceSubDirOne)))
@@ -332,7 +332,7 @@ func TestCopyDirectoryInfiniteLoop(t *testing.T) {
 
 	// Perform copy.
 	c := NewCopier(pathutils.DefaultBlacklist)
-	require.NoError(c.CopyDir(sourceDir, targetDir, currUID, currGID))
+	require.NoError(c.CopyDir(sourceDir, targetDir))
 
 	// Verify.
 	_, err = os.Stat(path.Join(targetDir, path.Base(sourceSubDirOne)))
