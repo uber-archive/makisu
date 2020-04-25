@@ -269,7 +269,7 @@ def test_build_with_preserve_root(registry1, storage_dir):
 
     assert code == 0, err
 
-def test_build_remove(registry1, storage_dir):
+def test_build_entrypoint(registry1, storage_dir):
     new_image = utils.new_image_name()
     context_dir = os.path.join(
         os.getcwd(), 'testdata/build-context/entrypoint')
