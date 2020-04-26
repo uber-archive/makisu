@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/log"
 	"github.com/uber/makisu/lib/mountutils"
 	"github.com/uber/makisu/lib/pathutils"
@@ -317,5 +318,76 @@ func walkLinks(path, root string, linksWalked *int) (string, error) {
 			return newpath, nil
 		}
 		return filepath.Join(newdir, newpath), nil
+	}
+}
+
+// compare betweeen memFSNode.
+func compareNode(node1, node2 *memFSNode, missing1, missing2 map[string]*memFSNode, diff1, diff2 map[string]*tar.Header, path string) {
+	// some issue with the IsSimilarHeader, I remove the time check.
+	if isSimilar, _ := tario.IsSimilarHeader(node1.hdr, node2.hdr); !isSimilar {
+		diff1[path] = node1.hdr
+		diff2[path] = node2.hdr
+	}
+
+	// group the children
+	allChildren := make(map[string]bool)
+	for child := range node1.children {
+		allChildren[child] = true
+	}
+
+	for child := range node2.children {
+		allChildren[child] = true
+	}
+
+	for child := range allChildren {
+		nextNode1, ok1 := node1.children[child]
+		nextNode2, ok2 := node2.children[child]
+		updatedPath := filepath.Join(path, child)
+		if ok1 && ok2 {
+			compareNode(nextNode1, nextNode2, missing1, missing2, diff1, diff2, updatedPath)
+			continue
+		} else if ok1 {
+			missing2[updatedPath] = node1.children[child]
+		} else if ok2 {
+			missing1[updatedPath] = node2.children[child]
+		}
+	}
+}
+
+func checkMemFsNode(node *memFSNode) {
+	hdr := node.hdr
+	log.Infof("%s %s %d %d %d", hdr.Name, hdr.FileInfo().Mode(), hdr.Uid, hdr.Gid, hdr.Size)
+	for _, nxtNode := range node.children {
+		checkMemFsNode(nxtNode)
+	}
+}
+
+func CompareFS(fs1, fs2 *MemFS, image1, image2 image.Name) {
+	missing1 := make(map[string]*memFSNode)
+	missing2 := make(map[string]*memFSNode)
+
+	diff1 := make(map[string]*tar.Header)
+	diff2 := make(map[string]*tar.Header)
+
+	compareNode(fs1.tree, fs2.tree, missing1, missing2, diff1, diff2, "")
+	image1Format := image1.GetRepository() + ":" + image1.GetTag()
+	image2Format := image2.GetRepository() + ":" + image2.GetTag()
+	// missing in first image but appeared in second image
+	log.Infof("======== file missing in first image %s=====", image1Format)
+	for _, node := range missing2 {
+		checkMemFsNode(node)
+	}
+
+	// missing in second image but appeared in first image.
+	log.Infof("========= file missing in second image %s=====", image2Format)
+	for _, node := range missing1 {
+		checkMemFsNode(node)
+	}
+
+	// difference between the common file in the two images.
+	log.Infof("======== difference between two images %s and %s ======", image1Format, image2Format)
+	for path := range diff1 {
+		hdr1, hdr2 := diff1[path], diff2[path]
+		log.Infof("%s %s %d %d %d %s %d %d %d", path, hdr1.FileInfo().Mode(), hdr1.Uid, hdr1.Gid, hdr1.Size, hdr2.FileInfo().Mode(), hdr2.Uid, hdr2.Gid, hdr2.Size)
 	}
 }

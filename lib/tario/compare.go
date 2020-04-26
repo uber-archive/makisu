@@ -17,7 +17,6 @@ package tario
 import (
 	"archive/tar"
 	"fmt"
-	"time"
 )
 
 // IsSimilarHeader returns if the given headers are describing similar entries.
@@ -62,10 +61,7 @@ func isSimilarSymlink(h *tar.Header, nh *tar.Header) (bool, error) {
 // isSimilarHardLink returns if the given headers are describing similar hard
 // links. It only checks mtime and link target.
 func isSimilarHardLink(h *tar.Header, nh *tar.Header) (bool, error) {
-	hMtime := h.ModTime.Truncate(1 * time.Second)
-	nhMtime := nh.ModTime.Truncate(1 * time.Second)
-	if hMtime.Equal(nhMtime) &&
-		h.Linkname == nh.Linkname &&
+	if h.Linkname == nh.Linkname &&
 		h.Uid == nh.Uid &&
 		h.Gid == nh.Gid &&
 		h.FileInfo().Mode() == nh.FileInfo().Mode() {
@@ -77,10 +73,7 @@ func isSimilarHardLink(h *tar.Header, nh *tar.Header) (bool, error) {
 // isSimilarDirectory returns if the given headers are describing similar
 // directories. It only checks mtime and owner, ignoring size, path and content.
 func isSimilarDirectory(h *tar.Header, nh *tar.Header) (bool, error) {
-	hMtime := h.ModTime.Truncate(1 * time.Second)
-	nhMtime := nh.ModTime.Truncate(1 * time.Second)
-	if hMtime.Equal(nhMtime) &&
-		h.Uid == nh.Uid &&
+	if h.Uid == nh.Uid &&
 		h.Gid == nh.Gid &&
 		h.FileInfo().Mode() == nh.FileInfo().Mode() {
 		return true, nil
@@ -92,10 +85,7 @@ func isSimilarDirectory(h *tar.Header, nh *tar.Header) (bool, error) {
 // regular files. It only checks mtime, size, and owner, ignoring path and
 // content.
 func isSimilarRegularFile(h *tar.Header, nh *tar.Header) (bool, error) {
-	hMtime := h.ModTime.Truncate(1 * time.Second)
-	nhMtime := nh.ModTime.Truncate(1 * time.Second)
-	if hMtime.Equal(nhMtime) &&
-		h.Uid == nh.Uid &&
+	if h.Uid == nh.Uid &&
 		h.Gid == nh.Gid &&
 		h.Size == nh.Size &&
 		h.FileInfo().Mode() == nh.FileInfo().Mode() {
