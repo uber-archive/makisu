@@ -287,3 +287,15 @@ def test_build_entrypoint(registry1, storage_dir):
         new_image, context_dir, storage_dir, registry=registry1.addr)
     code, err = utils.docker_run_image(registry1.addr, new_image)
     assert code == 0, err
+
+def test_build_global_arg(registry1, storage_dir):
+    new_image = utils.new_image_name()
+    context_dir = os.path.join(
+        os.getcwd(), 'testdata/build-context/global-arg')
+    docker_build_args = [
+        "version_default=v2",
+    ]
+    utils.makisu_build_image(
+        new_image, context_dir, storage_dir, registry=registry1.addr)
+    code, err = utils.docker_run_image(registry1.addr, new_image)
+    assert code == 0, err

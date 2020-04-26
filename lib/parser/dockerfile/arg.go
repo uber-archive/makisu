@@ -76,6 +76,13 @@ func (d *ArgDirective) update(state *parsingState) error {
 		d.ResolvedVal = &d.DefaultVal
 	}
 	if !global {
+		// If no value is provided to this arg, we try to replace it using the global scope
+		// (see the testdata/build-context/global-arg/Dockerfile)
+		if val, ok := state.globalArgs[d.Name]; ok {
+			vars[d.Name] = val
+			d.ResolvedVal = &val
+		}
+
 		return state.addToCurrStage(d)
 	}
 	return nil
