@@ -323,8 +323,7 @@ func walkLinks(path, root string, linksWalked *int) (string, error) {
 
 // compare tar files of memFSNodes.
 func compareNode(node1, node2 *memFSNode, missing1, missing2 map[string]*memFSNode, diff1, diff2 map[string]*tar.Header, path string) {
-	// some issue with the IsSimilarHeader, I remove the time check.
-	if isSimilar, _ := tario.IsSimilarHeader(node1.hdr, node2.hdr); !isSimilar {
+	if isSimilar, _ := tario.IsSimilarHeader(node1.hdr, node2.hdr, true); !isSimilar {
 		diff1[path] = node1.hdr
 		diff2[path] = node2.hdr
 	}
@@ -354,15 +353,15 @@ func compareNode(node1, node2 *memFSNode, missing1, missing2 map[string]*memFSNo
 }
 
 // log the info of a memFSNode.
-func checkMemFsNode(node *memFSNode) {
+func logMemFSNodeInfo(node *memFSNode) {
 	hdr := node.hdr
 	log.Infof("%s %s %d %d %d", hdr.Name, hdr.FileInfo().Mode(), hdr.Uid, hdr.Gid, hdr.Size)
 	for _, nxtNode := range node.children {
-		checkMemFsNode(nxtNode)
+		logMemFSNodeInfo(nxtNode)
 	}
 }
 
-func CompareFS(fs1, fs2 *MemFS, image1, image2 image.Name) {
+func CompareFS(fs1, fs2 *MemFS, image1Name, image2Name image.Name) {
 	missing1 := make(map[string]*memFSNode)
 	missing2 := make(map[string]*memFSNode)
 
@@ -370,24 +369,26 @@ func CompareFS(fs1, fs2 *MemFS, image1, image2 image.Name) {
 	diff2 := make(map[string]*tar.Header)
 
 	compareNode(fs1.tree, fs2.tree, missing1, missing2, diff1, diff2, "")
-	image1Format := image1.GetRepository() + ":" + image1.GetTag()
-	image2Format := image2.GetRepository() + ":" + image2.GetTag()
+	image1Format := image1Name.GetRepository() + ":" + image1Name.GetTag()
+	image2Format := image2Name.GetRepository() + ":" + image2Name.GetTag()
 	// Files missing in first image but appeared in second image
 	log.Infof("======== file missing in first image %s=====", image1Format)
 	for _, node := range missing2 {
-		checkMemFsNode(node)
+		logMemFSNodeInfo(node)
 	}
 
 	// Files missing in second image but appeared in first image.
 	log.Infof("========= file missing in second image %s=====", image2Format)
 	for _, node := range missing1 {
-		checkMemFsNode(node)
+		logMemFSNodeInfo(node)
 	}
 
 	// File differences in two images.
 	log.Infof("======== difference between two images %s and %s ======", image1Format, image2Format)
 	for path := range diff1 {
 		hdr1, hdr2 := diff1[path], diff2[path]
-		log.Infof("%s %s %d %d %d %s %d %d %d", path, hdr1.FileInfo().Mode(), hdr1.Uid, hdr1.Gid, hdr1.Size, hdr2.FileInfo().Mode(), hdr2.Uid, hdr2.Gid, hdr2.Size)
+		log.Infof("%s %s %d %d %d", path, hdr1.FileInfo().Mode(), hdr1.Uid, hdr1.Gid, hdr1.Size)
+		log.Infof("%s %s %d %d %d", path, hdr2.FileInfo().Mode(), hdr2.Uid, hdr2.Gid, hdr2.Size)
+		log.Infof("------------------------------")
 	}
 }
