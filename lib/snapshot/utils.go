@@ -360,7 +360,7 @@ func logMemFSNodeInfo(node *memFSNode) {
 		logMemFSNodeInfo(nxtNode)
 	}
 }
-ls
+
 func CompareFS(fs1, fs2 *MemFS, image1Name, image2Name image.Name) {
 	missing1 := make(map[string]*memFSNode)
 	missing2 := make(map[string]*memFSNode)
