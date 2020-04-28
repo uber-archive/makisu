@@ -46,83 +46,60 @@ func getDiffCmd() *diffCmd {
 	return diffCmd
 }
 
-func (cmd *diffCmd) Diff(image1, image2 string) error {
-	pullImage1, err := image.ParseNameForPull(image1)
+func (cmd *diffCmd) Diff(image1FullName, image2FullName string) error {
+	pullImage1, err := image.ParseNameForPull(image1FullName)
 	if err != nil {
 		return fmt.Errorf("parse the first image %s: %s", pullImage1, err)
 	}
 
-	pullImage2, err := image.ParseNameForPull(image2)
+	pullImage2, err := image.ParseNameForPull(image2FullName)
 	if err != nil {
 		return fmt.Errorf("parse the second image %s: %s", pullImage2, err)
 	}
+
+	var pullImages []image.Name
+	pullImages = append(pullImages, pullImage1)
+	pullImages = append(pullImages, pullImage2)
 
 	if err := initRegistryConfig(""); err != nil {
 		return fmt.Errorf("failed to initialize registry configuration: %s", err)
 	}
 
-	store1, err := storage.NewImageStore("/tmp/makisu-storage/image1")
+	store, err := storage.NewImageStore("/tmp/makisu-storage/")
 	if err != nil {
 		panic(err)
 	}
 
-	store2, err := storage.NewImageStore("/tmp/makisu-storage/image2")
-	if err != nil {
-		panic(err)
-	}
-
-	client1 := registry.New(store1, pullImage1.GetRegistry(), pullImage1.GetRepository())
-	client2 := registry.New(store2, pullImage2.GetRegistry(), pullImage2.GetRepository())
-
-	manifest1, err := client1.Pull(pullImage1.GetTag())
-	if err != nil {
-		panic(err)
-	}
-
-	manifest2, err := client2.Pull(pullImage2.GetTag())
-	if err != nil {
-		panic(err)
-	}
-
-	memfs1, err := snapshot.NewMemFS(clock.New(), "/tmp/makisu-storage/diff1", nil)
-	if err != nil {
-		panic(err)
-	}
-
-	for _, descriptor := range manifest1.Layers {
-		reader, err := store1.Layers.GetStoreFileReader(descriptor.Digest.Hex())
+	var memFSArr []*snapshot.MemFS
+	for i, pullImage := range pullImages {
+		client := registry.New(store, pullImage.GetRegistry(), pullImage.GetRepository())
+		manifest, err := client.Pull(pullImage.GetTag())
 		if err != nil {
-			panic(fmt.Errorf("get reader from first image layer: %s", err))
+			panic(err)
 		}
-		gzipReader, err := tario.NewGzipReader(reader)
-		if err != nil {
-			panic(fmt.Errorf("create gzip reader for layer: %s", err))
-		}
-		if err = memfs1.UpdateFromTarReader(tar.NewReader(gzipReader), false); err != nil {
-			panic(fmt.Errorf("untar first image layer reader: %s", err))
-		}
-	}
 
-	memfs2, err := snapshot.NewMemFS(clock.New(), "/tmp/makisu-storage/diff2", nil)
-	if err != nil {
-		panic(err)
-	}
+		memfs, err := snapshot.NewMemFS(clock.New(), "/tmp/makisu-storage/", nil)
+		if err != nil {
+			panic(err)
+		}
 
-	for _, descriptor := range manifest2.Layers {
-		reader, err := store2.Layers.GetStoreFileReader(descriptor.Digest.Hex())
-		if err != nil {
-			panic(fmt.Errorf("get reader from second image layer: %s", err))
+		for _, descriptor := range manifest.Layers {
+			reader, err := store.Layers.GetStoreFileReader(descriptor.Digest.Hex())
+			if err != nil {
+				panic(fmt.Errorf("get reader from image %d layer: %s", i+1, err))
+			}
+			gzipReader, err := tario.NewGzipReader(reader)
+			if err != nil {
+				panic(fmt.Errorf("create gzip reader for layer: %s", err))
+			}
+			if err = memfs.UpdateFromTarReader(tar.NewReader(gzipReader), false); err != nil {
+				panic(fmt.Errorf("untar image %d layer reader: %s", i+1, err))
+			}
 		}
-		gzipReader, err := tario.NewGzipReader(reader)
-		if err != nil {
-			panic(fmt.Errorf("create gzip reader for layer: %s", err))
-		}
-		if err = memfs2.UpdateFromTarReader(tar.NewReader(gzipReader), false); err != nil {
-			panic(fmt.Errorf("untar second image layer reader: %s", err))
-		}
+		memFSArr = append(memFSArr, memfs)
 	}
 
 	log.Infof("* Diff two images")
-	snapshot.CompareFS(memfs1, memfs2, pullImage1, pullImage2)
+	snapshot.CompareFS(memFSArr[0], memFSArr[1], pullImage1, pullImage2)
 	return nil
 }

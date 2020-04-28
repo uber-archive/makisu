@@ -489,7 +489,7 @@ func (fs *MemFS) isUpdated(p string, hdr *tar.Header) (bool, *memFSNode, error) 
 		}
 	}
 
-	similar, err := tario.IsSimilarHeader(curr.hdr, hdr)
+	similar, err := tario.IsSimilarHeader(curr.hdr, hdr, false)
 	if err != nil {
 		return false, nil, fmt.Errorf("compare header %s: %s", p, err)
 	}
@@ -599,7 +599,7 @@ func (fs *MemFS) untarOneItem(path string, header *tar.Header, r *tar.Reader) er
 		}
 
 		// If the file is already on disk, nothing needs to be done.
-		if similar, err := tario.IsSimilarHeader(localHeader, header); err != nil {
+		if similar, err := tario.IsSimilarHeader(localHeader, header, false); err != nil {
 			return fmt.Errorf("compare headers %s: %s", path, err)
 		} else if similar {
 			return nil
