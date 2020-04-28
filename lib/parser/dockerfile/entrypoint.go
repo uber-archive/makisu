@@ -37,15 +37,13 @@ func newEntrypointDirective(base *baseDirective, state *parsingState) (Directive
 	}
 
 	// This is the Shell form (https://docs.docker.com/engine/reference/builder/#shell-form-entrypoint-example)
-	// It is expected to wrap the whole entrypoint into a sh -c command
-	var shell []string
-	shell = append(shell, "/bin/sh", "-c")
+	// It is expected to wrap the whole entrypoint into a sh -c command)
 	args, err := splitArgs(base.Args, true)
 	if err != nil {
 		return nil, base.err(err)
 	}
 
-	cmd := append(shell, strings.Join(args, " "))
+	cmd := append([]string{"/bin/sh", "-c"}, strings.Join(args, " "))
 	return &EntrypointDirective{base, cmd}, nil
 }
 

@@ -294,7 +294,7 @@ func stageArgs() []*test {
 	})
 	stage.addDirective(&CmdDirective{
 		&baseDirective{"cmd", "${cmd}", false},
-		[]string{"${cmd}"},
+		[]string{"/bin/sh", "-c", "${cmd}"},
 	})
 
 	tests = append(tests, &test{
@@ -323,7 +323,7 @@ func stageArgs() []*test {
 	})
 	stage.addDirective(&CmdDirective{
 		&baseDirective{"cmd", "${cmd}", false},
-		[]string{"${cmd}"},
+		[]string{"/bin/sh", "-c", "${cmd}"},
 	})
 
 	tests = append(tests, &test{
@@ -355,7 +355,7 @@ func stageArgs() []*test {
 	})
 	stage1.addDirective(&CmdDirective{
 		&baseDirective{"cmd", "ls", false},
-		[]string{"ls"},
+		[]string{"/bin/sh", "-c", "ls"},
 	})
 	stage2 := newStage(&FromDirective{
 		&baseDirective{"from", "alpine:latest AS alias2", false},
@@ -364,7 +364,7 @@ func stageArgs() []*test {
 	})
 	stage2.addDirective(&CmdDirective{
 		&baseDirective{"cmd", "${cmd}", false},
-		[]string{"${cmd}"},
+		[]string{"/bin/sh", "-c", "${cmd}"},
 	})
 
 	tests = append(tests, &test{
@@ -394,7 +394,7 @@ func stageArgs() []*test {
 	})
 	stage.addDirective(&CmdDirective{
 		&baseDirective{"cmd", "ls", false},
-		[]string{"ls"},
+		[]string{"/bin/sh", "-c", "ls"},
 	})
 
 	tests = append(tests, &test{
@@ -443,7 +443,7 @@ func envs() []*test {
 	})
 	stage1.addDirective(&CmdDirective{
 		&baseDirective{"cmd", "ls", false},
-		[]string{"ls"},
+		[]string{"/bin/sh", "-c", "ls"},
 	})
 	stage2 := newStage(&FromDirective{
 		&baseDirective{"from", "alpine:latest AS alias2", false},
@@ -452,7 +452,7 @@ func envs() []*test {
 	})
 	stage2.addDirective(&CmdDirective{
 		&baseDirective{"cmd", "${cmd}", false},
-		[]string{"${cmd}"},
+		[]string{"/bin/sh", "-c", "${cmd}"},
 	})
 
 	tests = append(tests, &test{
@@ -495,11 +495,11 @@ func envs() []*test {
 	})
 	stage.addDirective(&CmdDirective{
 		&baseDirective{"cmd", "ls -la", false},
-		[]string{"ls", "-la"},
+		[]string{"/bin/sh", "-c", "ls -la"},
 	})
 	stage.addDirective(&CmdDirective{
 		&baseDirective{"cmd", "echo", false},
-		[]string{"echo"},
+		[]string{"/bin/sh", "-c", "echo"},
 	})
 
 	tests = append(tests, &test{
@@ -572,7 +572,7 @@ func integration() []*test {
 	})
 	stage1.addDirective(&CmdDirective{
 		&baseDirective{"cmd", "echo echo ubuntu", false},
-		[]string{"echo", "echo", "ubuntu"},
+		[]string{"/bin/sh", "-c", "echo echo ubuntu"},
 	})
 	stage1.addDirective(&CmdDirective{
 		&baseDirective{"cmd", `["echo echo", "ubuntu"]`, false},

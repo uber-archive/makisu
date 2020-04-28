@@ -37,8 +37,11 @@ func TestSplitArgs(t *testing.T) {
 		{"arg chars", "`1'{}$@#! *&@)(*_&", false, true, []string{"`1'{}$@#!", "*&@)(*_&"}},
 		{"non-escapes", "\\`1'{}$\\@#! *&\\;)\\(*_&", false, true, []string{"\\`1'{}$\\@#!", "*&\\;)\\(*_&"}},
 		{"keep quotes", `echo "${MESSAGE}" "multi \"word"`, true, true, []string{"echo", `"${MESSAGE}"`, `"multi \"word"`}},
-		{"non-escapes", `echo "${MESSAGE}" "multi \"word"`, true, true, []string{"echo", `"${MESSAGE}"`, `"multi \"word"`}},
-		{"non-escapes", `echo "single argument \\\"keepQuotes\\\""`, true, true, []string{"echo", `"single argument \\\"keepQuotes\\\""`}},
+		{"keep quotes - inclusion", `echo "single argument \\\"keepQuotes\\\""`, true, true, []string{"echo", `"single argument \\\"keepQuotes\\\""`}},
+		{"keep quotes - shell like", `if true; then echo "you are just here for the 0 exit code"; else exit 1; fi`, true, true, []string{"if", "true", ";", "then", "echo", `"you are just here for the 0 exit code"`, ";", "else", "exit", "1", ";", "fi"}},
+		{"keep quotes - parse or and and correctly", `echo "toto"&&echo "tata"||echo "test"`, true, true, []string{"echo", `"toto"`, "&&", "echo", `"tata"`, "||", "echo", `"test"`}},
+		{"keep quotes - harder and and or", `echo "more space" &&echo "detached after"&&echo "toto"& `, true, true, []string{"echo", "\"more space\"", "&&", "echo", "\"detached after\"", "&&", "echo", "\"toto\"", "&"}},
+		{"keep quotes - one and", `echo "more space"& `, true, true, []string{"echo", "\"more space\"", "&"}},
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {

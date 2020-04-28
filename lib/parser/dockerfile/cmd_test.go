@@ -33,11 +33,12 @@ func TestNewCmdDirective(t *testing.T) {
 		{"good json", true, `cmd ["this", "cmd"]`, []string{"this", "cmd"}},
 		{"substitution", true, `cmd ["${prefix}this", "cmd${suffix}"]`, []string{"test_this", "cmd_test"}},
 		{"substitution 2", true, `cmd ["this"$comma "cmd"]`, []string{"this", "cmd"}},
-		{"good cmd", true, "cmd this cmd", []string{"this", "cmd"}},
-		{"quotes", true, `cmd "this cmd"`, []string{"this cmd"}},
-		{"quotes 2", true, `cmd "this cmd" cmd2 "and cmd 3"`, []string{"this cmd", "cmd2", "and cmd 3"}},
-		{"substitution", true, "cmd ${prefix}this cmd$suffix", []string{"test_this", "cmd_test"}},
+		{"good cmd", true, "cmd this cmd", []string{"/bin/sh", "-c", `this cmd`}},
+		{"quotes", true, `cmd "this cmd"`, []string{"/bin/sh", "-c", `"this cmd"`}},
+		{"quotes 2", true, `cmd "this cmd" cmd2 "and cmd 3"`, []string{"/bin/sh", "-c", `"this cmd" cmd2 "and cmd 3"`}},
+		{"substitution", true, "cmd ${prefix}this cmd$suffix", []string{"/bin/sh", "-c", `test_this cmd_test`}},
 		{"bad json", false, `cmd ["this, "cmd"]`, nil},
+		{"hard inline if", true, `cmd if true; then echo "you are just here for the 0 exit code"; else echo "string could be followed by &"&&exit 1; fi`, []string{"/bin/sh", "-c", `if true ; then echo "you are just here for the 0 exit code" ; else echo "string could be followed by &" && exit 1 ; fi`}},
 	}
 
 	for _, test := range tests {

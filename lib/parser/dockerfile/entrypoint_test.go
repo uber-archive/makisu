@@ -36,6 +36,7 @@ func TestNewEntrypointDirective(t *testing.T) {
 		{"good entrypoint", true, "entrypoint this entrypoint", []string{"/bin/sh", "-c", "this entrypoint"}},
 		{"substitution", true, "entrypoint ${prefix}this entrypoint$suffix", []string{"/bin/sh", "-c", "test_this entrypoint_test"}},
 		{"substitution", true, `entrypoint "${prefix}this" entrypoint$suffix`, []string{"/bin/sh", "-c", `"test_this" entrypoint_test`}},
+		{"hard inline if", true, `entrypoint if true; then echo "you are just here for the 0 exit code"; else echo "string could be followed by &"&&exit 1; fi`, []string{"/bin/sh", "-c", `if true ; then echo "you are just here for the 0 exit code" ; else echo "string could be followed by &" && exit 1 ; fi`}},
 		{"bad json", false, `entrypoint ["this, "entrypoint"]`, nil},
 		{"bad substitution", false, `entrypoint ["${prefixthis", "entrypoint${suffix}"]`, nil},
 	}
