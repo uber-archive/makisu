@@ -18,6 +18,7 @@ import (
 
 type diffCmd struct {
 	*cobra.Command
+	ignoreModTime bool
 }
 
 func getDiffCmd() *diffCmd {
@@ -37,29 +38,26 @@ func getDiffCmd() *diffCmd {
 	}
 
 	diffCmd.Run = func(cmd *cobra.Command, args []string) {
-		if err := diffCmd.Diff(args[0], args[1]); err != nil {
+		if err := diffCmd.Diff(args); err != nil {
 			log.Error(err)
 			os.Exit(1)
 		}
 	}
 
+	diffCmd.PersistentFlags().BoolVar(&diffCmd.ignoreModTime, "ignoreModTime", true, "Ignore mod time of image when comparing images")
 	return diffCmd
 }
 
-func (cmd *diffCmd) Diff(image1FullName, image2FullName string) error {
-	pullImage1, err := image.ParseNameForPull(image1FullName)
-	if err != nil {
-		return fmt.Errorf("parse the first image %s: %s", pullImage1, err)
-	}
-
-	pullImage2, err := image.ParseNameForPull(image2FullName)
-	if err != nil {
-		return fmt.Errorf("parse the second image %s: %s", pullImage2, err)
-	}
-
+func (cmd *diffCmd) Diff(imagesFullName []string) error {
+	log.Infof("ingore time? :%t", cmd.ignoreModTime)
 	var pullImages []image.Name
-	pullImages = append(pullImages, pullImage1)
-	pullImages = append(pullImages, pullImage2)
+	for _, imageFullName := range imagesFullName {
+		pullImage, err := image.ParseNameForPull(imageFullName)
+		if err != nil {
+			return fmt.Errorf("parse image %s: %s", pullImage, err)
+		}
+		pullImages = append(pullImages, pullImage)
+	}
 
 	if err := initRegistryConfig(""); err != nil {
 		return fmt.Errorf("failed to initialize registry configuration: %s", err)
@@ -100,6 +98,7 @@ func (cmd *diffCmd) Diff(image1FullName, image2FullName string) error {
 	}
 
 	log.Infof("* Diff two images")
-	snapshot.CompareFS(memFSArr[0], memFSArr[1], pullImage1, pullImage2)
+
+	snapshot.CompareFS(memFSArr[0], memFSArr[1], pullImages[0], pullImages[1], cmd.ignoreModTime)
 	return nil
 }
