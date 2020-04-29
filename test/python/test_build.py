@@ -31,6 +31,16 @@ def test_build_remove(registry1, storage_dir):
     assert code == 0, err
 
 
+def test_build_from_sha256(registry1, storage_dir):
+    new_image = utils.new_image_name()
+    context_dir = os.path.join(
+        os.getcwd(), 'testdata/build-context/from-sha256')
+    utils.makisu_build_image(
+        new_image, context_dir, storage_dir, registry=registry1.addr)
+    code, err = utils.docker_run_image(registry1.addr, new_image)
+    assert code == 0, err
+
+
 def test_build_symlink(registry1, storage_dir):
     new_image = utils.new_image_name()
     context_dir = os.path.join(

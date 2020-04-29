@@ -82,7 +82,12 @@ func (name Name) IsValid() bool {
 
 // ShortName returns the name of the image without the registry information
 func (name Name) ShortName() string {
-	return fmt.Sprintf("%s:%s", name.GetRepository(), name.tag)
+	separator := ":"
+	// If the tag contains a :, it must be a digest tag of the form <digest-algo>:<digest>. Should stringify as <repository>@<digest-algo>:<digest>
+	if strings.Contains(name.tag, ":") {
+		separator = "@"
+	}
+	return fmt.Sprintf("%s%s%s", name.GetRepository(), separator, name.tag)
 }
 
 // String returns the full name of the image with the registry information if available
@@ -103,6 +108,7 @@ func ParseName(input string) (Name, error) {
 
 	slashIndex := strings.LastIndex(input, "/")
 	sepIndex := strings.LastIndex(input, ":")
+	digestIndex := strings.LastIndex(input, "@")
 	if sepIndex < slashIndex || sepIndex == -1 {
 		// <ip>:<port>/<repo>
 		// <dns>:<port>/<repo>
@@ -110,8 +116,25 @@ func ParseName(input string) (Name, error) {
 		// <repo>
 		result.repository = input
 		result.tag = "latest"
+	} else if digestIndex < sepIndex && digestIndex > slashIndex {
+		result.repository = input[:digestIndex]
+		sepIndex = strings.LastIndex(result.repository, ":")
+		if sepIndex >= slashIndex && sepIndex != -1 {
+			// A tag can still be specified for informational purposes if a digest is specified
+			// <ip>:<port>/<repo>:<tag>@<digest-algo>:<digest>
+			// <dns>:<port>/<repo>:<tag>@<digest-algo>:<digest>
+			// <repo>:<tag>@<digest-algo>:<digest>
+			result.repository = input[:sepIndex]
+		}
+		// else if no tag is specified result.repository = input[:digestIndex]
+		// <ip>:<port>/<repo>@<digest-algo>:<digest>
+		// <dns>:<port>/<repo>@<digest-algo>:<digest>
+		// <repo>@<digest-algo>:<digest>
+
+		// When pulling by digest, the docker API expects <digest-algo>:<digest> to take the place of the tag
+		result.tag = input[digestIndex+1:]
 	} else {
-		// if sepIndex >= slashIndex && sepIndex == -1
+		// if sepIndex >= slashIndex && sepIndex != -1 && (digestIndex < slashIndex || digestIndex > sepIndex) -1)
 		// <ip>:<port>/<repo>:<tag>
 		// <dns>:<port>/<repo>:<tag>
 		// <repo>:<tag>
