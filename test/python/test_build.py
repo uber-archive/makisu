@@ -296,6 +296,7 @@ def test_build_global_arg(registry1, storage_dir):
         "version_default=v2",
     ]
     utils.makisu_build_image(
-        new_image, context_dir, storage_dir, registry=registry1.addr)
+        new_image, context_dir, storage_dir,
+        registry=registry1.addr, docker_args=docker_build_args)
     code, err = utils.docker_run_image(registry1.addr, new_image)
     assert code == 0, err
