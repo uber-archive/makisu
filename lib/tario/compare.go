@@ -17,6 +17,7 @@ package tario
 import (
 	"archive/tar"
 	"fmt"
+	"time"
 )
 
 // IsSimilarHeader returns if the given headers are describing similar entries.

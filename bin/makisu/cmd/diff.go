@@ -48,6 +48,7 @@ func getDiffCmd() *diffCmd {
 	return diffCmd
 }
 
+<<<<<<< HEAD
 func (cmd *diffCmd) Diff(imagesFullName []string) error {
 	log.Infof("ingore time? :%t", cmd.ignoreModTime)
 	var pullImages []image.Name
@@ -57,7 +58,22 @@ func (cmd *diffCmd) Diff(imagesFullName []string) error {
 			return fmt.Errorf("parse image %s: %s", pullImage, err)
 		}
 		pullImages = append(pullImages, pullImage)
+=======
+func (cmd *diffCmd) Diff(image1FullName, image2FullName string) error {
+	pullImage1, err := image.ParseNameForPull(image1FullName)
+	if err != nil {
+		return fmt.Errorf("parse the first image %s: %s", pullImage1, err)
 	}
+
+	pullImage2, err := image.ParseNameForPull(image2FullName)
+	if err != nil {
+		return fmt.Errorf("parse the second image %s: %s", pullImage2, err)
+>>>>>>> 64164fd34239773df070466c0c3940af0f8932e9
+	}
+
+	var pullImages []image.Name
+	pullImages = append(pullImages, pullImage1)
+	pullImages = append(pullImages, pullImage2)
 
 	if err := initRegistryConfig(""); err != nil {
 		return fmt.Errorf("failed to initialize registry configuration: %s", err)
@@ -98,7 +114,6 @@ func (cmd *diffCmd) Diff(imagesFullName []string) error {
 	}
 
 	log.Infof("* Diff two images")
-
 	snapshot.CompareFS(memFSArr[0], memFSArr[1], pullImages[0], pullImages[1], cmd.ignoreModTime)
 	return nil
 }
