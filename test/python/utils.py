@@ -182,12 +182,3 @@ def makisu_push_image(
 
     if registry:
         assert registry_image_exists(new_image_tag, registry)
-
-def makisu_diff_images(image1FullName, image2FullName):
-    args = [
-        'diff',
-        image1FullName,
-        image2FullName,
-    ]
-    exit_code = makisu_run_cmd(args)
-    assert exit_code == 0

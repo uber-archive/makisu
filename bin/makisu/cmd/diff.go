@@ -98,7 +98,7 @@ func (cmd *diffCmd) Diff(imagesFullName []string) error {
 	}
 
 	log.Infof("* Diff two images")
-
+	// TODO: compare the image config.
 	snapshot.CompareFS(memFSArr[0], memFSArr[1], pullImages[0], pullImages[1], cmd.ignoreModTime)
 	return nil
 }
