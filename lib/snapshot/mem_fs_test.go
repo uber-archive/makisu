@@ -20,12 +20,12 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"testing"
-
-	"github.com/uber/makisu/lib/pathutils"
 
 	"github.com/andres-erbsen/clock"
 	"github.com/stretchr/testify/require"
+	"github.com/uber/makisu/lib/pathutils"
 )
 
 func TestUntarFromPath(t *testing.T) {
@@ -1193,4 +1193,87 @@ func TestAddLayersEqual(t *testing.T) {
 
 	require.Equal(b3, b1)
 	require.Equal(b2, b1)
+}
+
+func TestCompareFS(t *testing.T) {
+	require := require.New(t)
+
+	tmpRoot, err := ioutil.TempDir("/tmp", "makisu-test")
+	require.NoError(err)
+	defer os.RemoveAll(tmpRoot)
+
+	clk := clock.NewMock()
+	fs1, err := NewMemFS(clk, tmpRoot, pathutils.DefaultBlacklist)
+	require.NoError(err)
+
+	l1 := newMemLayer()
+	dst11 := "/common"
+	require.NoError(addDirectoryToLayer(l1, tmpRoot, dst11, 0755))
+	dst12 := "/common/test1"
+	require.NoError(addDirectoryToLayer(l1, tmpRoot, dst12, 0755))
+	dst13 := "/common/world"
+	require.NoError(addRegularFileToLayer(l1, tmpRoot, dst13, "hello", 0711))
+	require.NoError(fs1.merge(l1))
+
+	fs2, err := NewMemFS(clk, tmpRoot, pathutils.DefaultBlacklist)
+	require.NoError(err)
+
+	l2 := newMemLayer()
+	dst21 := "/common"
+	require.NoError(addDirectoryToLayer(l2, tmpRoot, dst21, 0755))
+	dst22 := "/common/test2"
+	require.NoError(addDirectoryToLayer(l2, tmpRoot, dst22, 0755))
+	dst23 := "/common/world"
+	require.NoError(addRegularFileToLayer(l2, tmpRoot, dst23, "hello", 0755))
+	require.NoError(fs2.merge(l2))
+
+	missing1 := make(map[string]*memFSNode)
+	missing2 := make(map[string]*memFSNode)
+	diff1 := make(map[string]*memFSNode)
+	diff2 := make(map[string]*memFSNode)
+
+	compareNode(fs1.tree, fs2.tree, missing1, missing2, diff1, diff2, "/", true)
+	// Check Missing paths.
+	expectedMissing1Nums := 1
+	require.Equal(expectedMissing1Nums, len(missing1))
+
+	expectedMissing1Paths := []string{"/common/test2"}
+	actualMissing1Paths := make([]string, 0)
+	for path1 := range missing1 {
+		actualMissing1Paths = append(actualMissing1Paths, path1)
+	}
+
+	sort.Strings(actualMissing1Paths)
+	sort.Strings(expectedMissing1Paths)
+	require.Equal(actualMissing1Paths, expectedMissing1Paths)
+
+	expectedMissing2Nums := 1
+	require.Equal(expectedMissing2Nums, len(missing2))
+	expectedMissing2Paths := []string{"/common/test1"}
+	actualMissing2Paths := make([]string, 0)
+	for path2 := range missing2 {
+		actualMissing2Paths = append(actualMissing2Paths, path2)
+	}
+
+	sort.Strings(actualMissing2Paths)
+	sort.Strings(expectedMissing2Paths)
+	require.Equal(actualMissing2Paths,
+		expectedMissing2Paths)
+
+	// Check diff paths.
+	expectedDiff := []string{"/common/world"}
+	actualDiff1 := make([]string, 0)
+	for path := range diff1 {
+		actualDiff1 = append(actualDiff1, path)
+	}
+
+	actualDiff2 := make([]string, 0)
+	for path := range diff2 {
+		actualDiff2 = append(actualDiff2, path)
+	}
+
+	sort.Strings(actualDiff1)
+	sort.Strings(actualDiff2)
+	require.Equal(expectedDiff, actualDiff1)
+	require.Equal(expectedDiff, actualDiff2)
 }

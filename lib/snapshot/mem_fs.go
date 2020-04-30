@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/andres-erbsen/clock"
+	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/fileio"
 	"github.com/uber/makisu/lib/log"
 	"github.com/uber/makisu/lib/mountutils"
@@ -489,7 +490,7 @@ func (fs *MemFS) isUpdated(p string, hdr *tar.Header) (bool, *memFSNode, error) 
 		}
 	}
 
-	similar, err := tario.IsSimilarHeader(curr.hdr, hdr)
+	similar, err := tario.IsSimilarHeader(curr.hdr, hdr, false)
 	if err != nil {
 		return false, nil, fmt.Errorf("compare header %s: %s", p, err)
 	}
@@ -599,7 +600,7 @@ func (fs *MemFS) untarOneItem(path string, header *tar.Header, r *tar.Reader) er
 		}
 
 		// If the file is already on disk, nothing needs to be done.
-		if similar, err := tario.IsSimilarHeader(localHeader, header); err != nil {
+		if similar, err := tario.IsSimilarHeader(localHeader, header, false); err != nil {
 			return fmt.Errorf("compare headers %s: %s", path, err)
 		} else if similar {
 			return nil
@@ -709,4 +710,76 @@ func (fs *MemFS) untarFile(path string, header *tar.Header, r *tar.Reader) error
 		return fmt.Errorf("update fi %s: %s", path, err)
 	}
 	return nil
+}
+
+// CompareFS is the public API for comparing merged layers of two images for differences.
+func CompareFS(fs1, fs2 *MemFS, image1Name, image2Name image.Name, ignoreModTime bool) {
+	missing1 := make(map[string]*memFSNode)
+	missing2 := make(map[string]*memFSNode)
+	diff1 := make(map[string]*memFSNode)
+	diff2 := make(map[string]*memFSNode)
+
+	compareNode(fs1.tree, fs2.tree, missing1, missing2, diff1, diff2, "/", ignoreModTime)
+	image1Format := image1Name.GetRepository() + ":" + image1Name.GetTag()
+	image2Format := image2Name.GetRepository() + ":" + image2Name.GetTag()
+	// Files missing in first image but appeared in second image.
+	log.Infof("===== file missing in first image %s =====", image1Format)
+	for _, node := range missing1 {
+		logMemFSNodeInfo(node)
+	}
+
+	// Files missing in second image but appeared in first image.
+	log.Infof("===== file missing in second image %s =====", image2Format)
+	for _, node := range missing2 {
+		logMemFSNodeInfo(node)
+	}
+
+	// File differences in two images.
+	log.Infof("===== difference between two images %s and %s =====", image1Format, image2Format)
+	for path := range diff1 {
+		hdr1, hdr2 := diff1[path].hdr, diff2[path].hdr
+		log.Infof("%s %s %d %d %d", path, hdr1.FileInfo().Mode(), hdr1.Uid, hdr1.Gid, hdr1.Size)
+		log.Infof("%s %s %d %d %d", path, hdr2.FileInfo().Mode(), hdr2.Uid, hdr2.Gid, hdr2.Size)
+		log.Infof("xxxxxxxxxxxxxxxxxxxxxxxxxxx")
+	}
+}
+
+// compareNode compares two memFSNodes for differences.
+func compareNode(node1, node2 *memFSNode, missing1, missing2, diff1, diff2 map[string]*memFSNode, path string, ignoreModTime bool) {
+	if isSimilar, _ := tario.IsSimilarHeader(node1.hdr, node2.hdr, ignoreModTime); !isSimilar {
+		diff1[path] = node1
+		diff2[path] = node2
+	}
+
+	allChildren := make(map[string]bool)
+	for child := range node1.children {
+		allChildren[child] = true
+	}
+
+	for child := range node2.children {
+		allChildren[child] = true
+	}
+
+	for child := range allChildren {
+		nextNode1, ok1 := node1.children[child]
+		nextNode2, ok2 := node2.children[child]
+		updatedPath := filepath.Join(path, child)
+		if ok1 && ok2 {
+			compareNode(nextNode1, nextNode2, missing1, missing2, diff1, diff2, updatedPath, ignoreModTime)
+			continue
+		} else if ok1 {
+			missing2[updatedPath] = node1.children[child]
+		} else if ok2 {
+			missing1[updatedPath] = node2.children[child]
+		}
+	}
+}
+
+//logMemFSNodeInfo logs the info of a memFSNode.
+func logMemFSNodeInfo(node *memFSNode) {
+	hdr := node.hdr
+	log.Infof("%s %s %d %d %d", hdr.Name, hdr.FileInfo().Mode(), hdr.Uid, hdr.Gid, hdr.Size)
+	for _, nxtNode := range node.children {
+		logMemFSNodeInfo(nxtNode)
+	}
 }

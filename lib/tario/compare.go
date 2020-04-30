@@ -21,7 +21,7 @@ import (
 )
 
 // IsSimilarHeader returns if the given headers are describing similar entries.
-func IsSimilarHeader(h *tar.Header, nh *tar.Header) (bool, error) {
+func IsSimilarHeader(h *tar.Header, nh *tar.Header, ignoreTime bool) (bool, error) {
 	// Don't support modifying "/".
 	if h.Name == "" && nh.Name == "" {
 		return true, nil
@@ -37,17 +37,17 @@ func IsSimilarHeader(h *tar.Header, nh *tar.Header) (bool, error) {
 		if nh.Typeflag != tar.TypeLink {
 			return false, nil
 		}
-		return isSimilarHardLink(h, nh)
+		return isSimilarHardLink(h, nh, ignoreTime)
 	case tar.TypeDir:
 		if nh.Typeflag != tar.TypeDir {
 			return false, nil
 		}
-		return isSimilarDirectory(h, nh)
+		return isSimilarDirectory(h, nh, ignoreTime)
 	case tar.TypeReg, tar.TypeRegA:
 		if nh.Typeflag != tar.TypeReg && nh.Typeflag != tar.TypeRegA {
 			return false, nil
 		}
-		return isSimilarRegularFile(h, nh)
+		return isSimilarRegularFile(h, nh, ignoreTime)
 	default:
 		return false, fmt.Errorf("unsupported type %b", h.Typeflag)
 	}
@@ -61,10 +61,15 @@ func isSimilarSymlink(h *tar.Header, nh *tar.Header) (bool, error) {
 
 // isSimilarHardLink returns if the given headers are describing similar hard
 // links. It only checks mtime and link target.
-func isSimilarHardLink(h *tar.Header, nh *tar.Header) (bool, error) {
-	hMtime := h.ModTime.Truncate(1 * time.Second)
-	nhMtime := nh.ModTime.Truncate(1 * time.Second)
-	if hMtime.Equal(nhMtime) &&
+func isSimilarHardLink(h *tar.Header, nh *tar.Header, ignoreTime bool) (bool, error) {
+	timeIsEqual := true
+	if !ignoreTime {
+		hMtime := h.ModTime.Truncate(1 * time.Second)
+		nhMtime := nh.ModTime.Truncate(1 * time.Second)
+		timeIsEqual = hMtime.Equal(nhMtime)
+	}
+
+	if timeIsEqual &&
 		h.Linkname == nh.Linkname &&
 		h.Uid == nh.Uid &&
 		h.Gid == nh.Gid &&
@@ -76,10 +81,15 @@ func isSimilarHardLink(h *tar.Header, nh *tar.Header) (bool, error) {
 
 // isSimilarDirectory returns if the given headers are describing similar
 // directories. It only checks mtime and owner, ignoring size, path and content.
-func isSimilarDirectory(h *tar.Header, nh *tar.Header) (bool, error) {
-	hMtime := h.ModTime.Truncate(1 * time.Second)
-	nhMtime := nh.ModTime.Truncate(1 * time.Second)
-	if hMtime.Equal(nhMtime) &&
+func isSimilarDirectory(h *tar.Header, nh *tar.Header, ignoreTime bool) (bool, error) {
+	timeIsEqual := true
+	if !ignoreTime {
+		hMtime := h.ModTime.Truncate(1 * time.Second)
+		nhMtime := nh.ModTime.Truncate(1 * time.Second)
+		timeIsEqual = hMtime.Equal(nhMtime)
+	}
+
+	if timeIsEqual &&
 		h.Uid == nh.Uid &&
 		h.Gid == nh.Gid &&
 		h.FileInfo().Mode() == nh.FileInfo().Mode() {
@@ -91,10 +101,15 @@ func isSimilarDirectory(h *tar.Header, nh *tar.Header) (bool, error) {
 // isSimilarRegularFile returns if the given headers are describing similar
 // regular files. It only checks mtime, size, and owner, ignoring path and
 // content.
-func isSimilarRegularFile(h *tar.Header, nh *tar.Header) (bool, error) {
-	hMtime := h.ModTime.Truncate(1 * time.Second)
-	nhMtime := nh.ModTime.Truncate(1 * time.Second)
-	if hMtime.Equal(nhMtime) &&
+func isSimilarRegularFile(h *tar.Header, nh *tar.Header, ignoreTime bool) (bool, error) {
+	timeIsEqual := true
+	if !ignoreTime {
+		hMtime := h.ModTime.Truncate(1 * time.Second)
+		nhMtime := nh.ModTime.Truncate(1 * time.Second)
+		timeIsEqual = hMtime.Equal(nhMtime)
+	}
+
+	if timeIsEqual &&
 		h.Uid == nh.Uid &&
 		h.Gid == nh.Gid &&
 		h.Size == nh.Size &&
