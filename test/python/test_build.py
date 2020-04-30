@@ -238,7 +238,7 @@ def test_build_go_with_debian_package(registry1, storage_dir):
 
     proc = subprocess.Popen([
         "docker", "run", "-i", "--rm", '{}/{}'.format(registry1.addr, new_image),
-    ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8")
     output, err = proc.communicate()
     assert proc.returncode == 0, err
     assert output.find("/usr/bin/hello") != -1
