@@ -5,7 +5,8 @@ import requests
 import shutil
 import tempfile
 import time
-import utils
+
+from .utils import docker_pull_image
 
 REGISTRY_IMAGE = "registry:2.4.1"
 REGISTRY1_PORT = 5002
@@ -22,8 +23,8 @@ class Registry(object):
         self.name = name
         self.port = port
         self.stop()
-        utils.docker_pull_image(REGISTRY_IMAGE)
-        print 'Starting container ' + self.name
+        docker_pull_image(REGISTRY_IMAGE)
+        print('Starting container ' + self.name)
         run_cmd = [
             'docker', 'run',
             '-d',
@@ -39,12 +40,12 @@ class Registry(object):
             r.close()
             if r.status_code == 200:
                 break
-        print 'Started container ' + self.name
+        print('Started container ' + self.name)
 
     def stop(self):
-        print 'Stopping container ' + self.name
+        print('Stopping container ' + self.name)
         subprocess.call(['docker', 'stop', self.name])
-        print 'Removing docker container ' + self.name
+        print('Removing docker container ' + self.name)
         subprocess.call(['docker', 'rm', self.name])
 
     @property
@@ -73,7 +74,7 @@ def storage_dir():
     try:
         shutil.rmtree(path)
     except Exception as e:
-        print 'Cleanup error for {path}: {err}'.format(path=path, err=str(e))
+        print('Cleanup error for {path}: {err}'.format(path=path, err=str(e)))
 
 
 @pytest.fixture
@@ -83,4 +84,4 @@ def cache_dir():
     try:
         shutil.rmtree(path)
     except Exception as e:
-        print 'Cleanup error for {path}: {err}'.format(path=path, err=str(e))
+        print('Cleanup error for {path}: {err}'.format(path=path, err=str(e)))

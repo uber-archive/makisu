@@ -5,6 +5,9 @@ language: go
 go:
   - 1.12.6
 
+python:
+  - 3.7
+
 services:
   - docker
 
