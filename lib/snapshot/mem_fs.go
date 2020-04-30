@@ -712,17 +712,39 @@ func (fs *MemFS) untarFile(path string, header *tar.Header, r *tar.Reader) error
 	return nil
 }
 
-// Public api for diff image purpose.
+// CompareFS is the public API for comparing merged layers of two images for differences.
 func CompareFS(fs1, fs2 *MemFS, image1Name, image2Name image.Name, ignoreModTime bool) {
 	missing1 := make(map[string]*memFSNode)
 	missing2 := make(map[string]*memFSNode)
 	diff1 := make(map[string]*memFSNode)
 	diff2 := make(map[string]*memFSNode)
 
-	compareFS(fs1, fs2, image1Name, image2Name, missing1, missing2, diff1, diff2, ignoreModTime)
+	compareNode(fs1.tree, fs2.tree, missing1, missing2, diff1, diff2, "/", ignoreModTime)
+	image1Format := image1Name.GetRepository() + ":" + image1Name.GetTag()
+	image2Format := image2Name.GetRepository() + ":" + image2Name.GetTag()
+	// Files missing in first image but appeared in second image.
+	log.Infof("===== file missing in first image %s =====", image1Format)
+	for _, node := range missing1 {
+		logMemFSNodeInfo(node)
+	}
+
+	// Files missing in second image but appeared in first image.
+	log.Infof("===== file missing in second image %s =====", image2Format)
+	for _, node := range missing2 {
+		logMemFSNodeInfo(node)
+	}
+
+	// File differences in two images.
+	log.Infof("===== difference between two images %s and %s =====", image1Format, image2Format)
+	for path := range diff1 {
+		hdr1, hdr2 := diff1[path].hdr, diff2[path].hdr
+		log.Infof("%s %s %d %d %d", path, hdr1.FileInfo().Mode(), hdr1.Uid, hdr1.Gid, hdr1.Size)
+		log.Infof("%s %s %d %d %d", path, hdr2.FileInfo().Mode(), hdr2.Uid, hdr2.Gid, hdr2.Size)
+		log.Infof("xxxxxxxxxxxxxxxxxxxxxxxxxxx")
+	}
 }
 
-// compare tar files of memFSNodes.
+// compareNode compares two memFSNodes for differences.
 func compareNode(node1, node2 *memFSNode, missing1, missing2, diff1, diff2 map[string]*memFSNode, path string, ignoreModTime bool) {
 	if isSimilar, _ := tario.IsSimilarHeader(node1.hdr, node2.hdr, ignoreModTime); !isSimilar {
 		diff1[path] = node1
@@ -753,37 +775,11 @@ func compareNode(node1, node2 *memFSNode, missing1, missing2, diff1, diff2 map[s
 	}
 }
 
-// log the info of a memFSNode.
+//logMemFSNodeInfo logs the info of a memFSNode.
 func logMemFSNodeInfo(node *memFSNode) {
 	hdr := node.hdr
 	log.Infof("%s %s %d %d %d", hdr.Name, hdr.FileInfo().Mode(), hdr.Uid, hdr.Gid, hdr.Size)
 	for _, nxtNode := range node.children {
 		logMemFSNodeInfo(nxtNode)
-	}
-}
-
-func compareFS(fs1, fs2 *MemFS, image1Name, image2Name image.Name, missing1, missing2, diff1, diff2 map[string]*memFSNode, ignoreModTime bool) {
-	compareNode(fs1.tree, fs2.tree, missing1, missing2, diff1, diff2, "/", ignoreModTime)
-	image1Format := image1Name.GetRepository() + ":" + image1Name.GetTag()
-	image2Format := image2Name.GetRepository() + ":" + image2Name.GetTag()
-	// Files missing in first image but appeared in second image
-	log.Infof("======== file missing in first image %s=====", image1Format)
-	for _, node := range missing1 {
-		logMemFSNodeInfo(node)
-	}
-
-	// Files missing in second image but appeared in first image.
-	log.Infof("========= file missing in second image %s=====", image2Format)
-	for _, node := range missing2 {
-		logMemFSNodeInfo(node)
-	}
-
-	// File differences in two images.
-	log.Infof("======== difference between two images %s and %s ======", image1Format, image2Format)
-	for path := range diff1 {
-		hdr1, hdr2 := diff1[path].hdr, diff2[path].hdr
-		log.Infof("%s %s %d %d %d", path, hdr1.FileInfo().Mode(), hdr1.Uid, hdr1.Gid, hdr1.Size)
-		log.Infof("%s %s %d %d %d", path, hdr2.FileInfo().Mode(), hdr2.Uid, hdr2.Gid, hdr2.Size)
-		log.Infof("xxxxxxxxxxxxxxxxxxxxxxxxxxx")
 	}
 }

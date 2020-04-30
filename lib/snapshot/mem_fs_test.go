@@ -23,11 +23,9 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/uber/makisu/lib/docker/image"
-	"github.com/uber/makisu/lib/pathutils"
-
 	"github.com/andres-erbsen/clock"
 	"github.com/stretchr/testify/require"
+	"github.com/uber/makisu/lib/pathutils"
 )
 
 func TestUntarFromPath(t *testing.T) {
@@ -1229,15 +1227,12 @@ func TestCompareFS(t *testing.T) {
 	require.NoError(addRegularFileToLayer(l2, tmpRoot, dst23, "hello", 0755))
 	require.NoError(fs2.merge(l2))
 
-	image1Name := image.NewImageName("127.0.0.1:15055", "uber-usi/docker", "tag1")
-	image2Name := image.NewImageName("127.0.0.1:15055", "uber-usi/docker", "tag2")
-
 	missing1 := make(map[string]*memFSNode)
 	missing2 := make(map[string]*memFSNode)
 	diff1 := make(map[string]*memFSNode)
 	diff2 := make(map[string]*memFSNode)
 
-	compareFS(fs1, fs2, image1Name, image2Name, missing1, missing2, diff1, diff2, true)
+	compareNode(fs1.tree, fs2.tree, missing1, missing2, diff1, diff2, "/", true)
 	// Check Missing paths.
 	expectedMissing1Nums := 1
 	require.Equal(expectedMissing1Nums, len(missing1))
