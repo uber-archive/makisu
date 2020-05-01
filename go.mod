@@ -22,6 +22,7 @@ require (
 	github.com/go-redis/redis v6.14.2+incompatible
 	github.com/golang/mock v1.2.0
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
+	github.com/google/go-cmp v0.4.0
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/mux v1.6.2 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect

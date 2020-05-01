@@ -2,11 +2,15 @@ package cmd
 
 import (
 	"archive/tar"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/andres-erbsen/clock"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/spf13/cobra"
 	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/log"
@@ -49,7 +53,6 @@ func getDiffCmd() *diffCmd {
 }
 
 func (cmd *diffCmd) Diff(imagesFullName []string) error {
-	log.Infof("ingore time? :%t", cmd.ignoreModTime)
 	var pullImages []image.Name
 	for _, imageFullName := range imagesFullName {
 		pullImage, err := image.ParseNameForPull(imageFullName)
@@ -69,6 +72,7 @@ func (cmd *diffCmd) Diff(imagesFullName []string) error {
 	}
 
 	var memFSArr []*snapshot.MemFS
+	var imageConfigs []*image.Config
 	for i, pullImage := range pullImages {
 		client := registry.New(store, pullImage.GetRegistry(), pullImage.GetRepository())
 		manifest, err := client.Pull(pullImage.GetTag())
@@ -94,11 +98,31 @@ func (cmd *diffCmd) Diff(imagesFullName []string) error {
 				panic(fmt.Errorf("untar image %d layer reader: %s", i+1, err))
 			}
 		}
+
 		memFSArr = append(memFSArr, memfs)
+		reader, err := store.Layers.GetStoreFileReader(manifest.GetConfigDigest().Hex())
+		if err != nil {
+			panic(fmt.Errorf("get image%d config file reader %s: %s", i+1, manifest.GetConfigDigest().Hex(), err))
+		}
+
+		configBytes, err := ioutil.ReadAll(reader)
+		if err != nil {
+			panic(fmt.Errorf("read image%d config file %s: %s", i+1, manifest.GetConfigDigest().Hex(), err))
+		}
+
+		config := new(image.Config)
+		if err := json.Unmarshal(configBytes, config); err != nil {
+			panic(fmt.Errorf("unmarshal image%d config file %s: %s", i+1, manifest.GetConfigDigest().Hex(), err))
+		}
+		imageConfigs = append(imageConfigs, config)
 	}
 
-	log.Infof("* Diff two images")
-	// TODO: compare the image config.
+	log.Infof("* Diff image configs ")
+	if configDiff := cmp.Diff(imageConfigs[0], imageConfigs[1], cmpopts.IgnoreUnexported(image.Config{})); configDiff != "" {
+		log.Infof("-image %s +image %s):\n%s", pullImages[0].GetRepository()+":"+pullImages[0].GetTag(), pullImages[1].GetRepository()+":"+pullImages[1].GetTag(), configDiff)
+	}
+
+	log.Infof("* Diff image layers")
 	snapshot.CompareFS(memFSArr[0], memFSArr[1], pullImages[0], pullImages[1], cmd.ignoreModTime)
 	return nil
 }
