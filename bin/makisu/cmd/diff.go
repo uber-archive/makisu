@@ -69,6 +69,7 @@ func (cmd *diffCmd) Diff(imagesFullName []string) error {
 	}
 
 	var memFSArr []*snapshot.MemFS
+	var imageConfigs []os.FileInfo
 	for i, pullImage := range pullImages {
 		client := registry.New(store, pullImage.GetRegistry(), pullImage.GetRepository())
 		manifest, err := client.Pull(pullImage.GetTag())
@@ -95,10 +96,23 @@ func (cmd *diffCmd) Diff(imagesFullName []string) error {
 			}
 		}
 		memFSArr = append(memFSArr, memfs)
+
+		// Check image config.
+		imageConfig, err := client.PullImageConfig(manifest.GetConfigDigest())
+		if err != nil {
+			panic(err)
+		}
+		imageConfigs = append(imageConfigs, imageConfig)
+	}
+
+	log.Infof("* Diff two images config")
+	if os.SameFile(imageConfigs[0], imageConfigs[1]) {
+		log.Infof("Image config files are same")
+	} else {
+		log.Infof("Image config files are different")
 	}
 
 	log.Infof("* Diff two images")
-	// TODO: compare the image config.
 	snapshot.CompareFS(memFSArr[0], memFSArr[1], pullImages[0], pullImages[1], cmd.ignoreModTime)
 	return nil
 }
