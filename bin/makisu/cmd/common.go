@@ -21,6 +21,7 @@ import (
 
 	"github.com/uber/makisu/lib/log"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func (cmd *rootCmd) processGlobalFlags() error {
@@ -55,6 +56,12 @@ func (cmd *rootCmd) getLogger() (*zap.Logger, error) {
 	config.Encoding = cmd.logFormat
 	config.DisableStacktrace = true
 	config.DisableCaller = true
+
+	if cmd.logFormat == "console" {
+		config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+		config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	}
+
 	return config.Build()
 }
 
