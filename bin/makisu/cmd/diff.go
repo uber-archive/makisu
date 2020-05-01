@@ -54,7 +54,6 @@ func getDiffCmd() *diffCmd {
 }
 
 func (cmd *diffCmd) Diff(imagesFullName []string) error {
-	log.Infof("ingore time? :%t", cmd.ignoreModTime)
 	var pullImages []image.Name
 	for _, imageFullName := range imagesFullName {
 		pullImage, err := image.ParseNameForPull(imageFullName)
@@ -100,9 +99,8 @@ func (cmd *diffCmd) Diff(imagesFullName []string) error {
 				panic(fmt.Errorf("untar image %d layer reader: %s", i+1, err))
 			}
 		}
-		memFSArr = append(memFSArr, memfs)
 
-		// Check image config.
+		memFSArr = append(memFSArr, memfs)
 		reader, err := store.Layers.GetStoreFileReader(manifest.GetConfigDigest().Hex())
 		if err != nil {
 			panic(fmt.Errorf("get image%d config file reader %s: %s", i+1, manifest.GetConfigDigest().Hex(), err))
@@ -117,34 +115,18 @@ func (cmd *diffCmd) Diff(imagesFullName []string) error {
 		if err := json.Unmarshal(configBytes, config); err != nil {
 			panic(fmt.Errorf("unmarshal image%d config file %s: %s", i+1, manifest.GetConfigDigest().Hex(), err))
 		}
-		// Strore as image.Config for future reference.
 		imageConfigs = append(imageConfigs, config)
 	}
 
 	log.Infof("* compare image %s and image %s config", pullImages[0].GetRepository()+":"+pullImages[0].GetTag(), pullImages[1].GetRepository()+":"+pullImages[1].GetTag())
-	// Basically, we don't have a standard to compare image.Config for now. So just print the content of each config.
-	if diff := cmp.Diff(imageConfigs[0], imageConfigs[1], cmpopts.IgnoreUnexported(image.Config{})); diff != "" {
+	if configDiff := cmp.Diff(imageConfigs[0], imageConfigs[1], cmpopts.IgnoreUnexported(image.Config{})); configDiff != "" {
 		// Format the diff string.
-		diff = strings.ReplaceAll(diff, "\n", "")
-		diff = strings.ReplaceAll(diff, "\t", "")
-		diff = strings.ReplaceAll(diff, "\"", "")
-		diff = strings.ReplaceAll(diff, "  ", "")
-		log.Infof("-image %s +image %s):\n%s", pullImages[0].GetRepository()+":"+pullImages[0].GetTag(), pullImages[1].GetRepository()+":"+pullImages[1].GetTag(), diff)
+		configDiff = strings.ReplaceAll(configDiff, "\n", "")
+		configDiff = strings.ReplaceAll(configDiff, "\t", "")
+		configDiff = strings.ReplaceAll(configDiff, "\"", "")
+		configDiff = strings.ReplaceAll(configDiff, "  ", "")
+		log.Infof("-image %s +image %s):\n%s", pullImages[0].GetRepository()+":"+pullImages[0].GetTag(), pullImages[1].GetRepository()+":"+pullImages[1].GetTag(), configDiff)
 	}
-
-	log.Infof("==== image %s config ====", pullImages[0].GetRepository()+":"+pullImages[0].GetTag())
-	content1, err := imageConfigs[0].MarshalJSON()
-	if err != nil {
-		panic(fmt.Errorf("marshal image1 config file: %s", err))
-	}
-	log.Infof(string(content1))
-
-	log.Infof("==== image %s config ====", pullImages[1].GetRepository()+":"+pullImages[1].GetTag())
-	content2, err := imageConfigs[1].MarshalJSON()
-	if err != nil {
-		panic(fmt.Errorf("marshal image2 config file: %s", err))
-	}
-	log.Infof(string(content2))
 
 	log.Infof("* Diff two images")
 	snapshot.CompareFS(memFSArr[0], memFSArr[1], pullImages[0], pullImages[1], cmd.ignoreModTime)
