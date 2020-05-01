@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strings"
 
 	"github.com/andres-erbsen/clock"
 	"github.com/google/go-cmp/cmp"
@@ -118,17 +117,12 @@ func (cmd *diffCmd) Diff(imagesFullName []string) error {
 		imageConfigs = append(imageConfigs, config)
 	}
 
-	log.Infof("* compare image %s and image %s config", pullImages[0].GetRepository()+":"+pullImages[0].GetTag(), pullImages[1].GetRepository()+":"+pullImages[1].GetTag())
+	log.Infof("* Diff image configs ")
 	if configDiff := cmp.Diff(imageConfigs[0], imageConfigs[1], cmpopts.IgnoreUnexported(image.Config{})); configDiff != "" {
-		// Format the diff string.
-		configDiff = strings.ReplaceAll(configDiff, "\n", "")
-		configDiff = strings.ReplaceAll(configDiff, "\t", "")
-		configDiff = strings.ReplaceAll(configDiff, "\"", "")
-		configDiff = strings.ReplaceAll(configDiff, "  ", "")
 		log.Infof("-image %s +image %s):\n%s", pullImages[0].GetRepository()+":"+pullImages[0].GetTag(), pullImages[1].GetRepository()+":"+pullImages[1].GetTag(), configDiff)
 	}
 
-	log.Infof("* Diff two images")
+	log.Infof("* Diff image layers")
 	snapshot.CompareFS(memFSArr[0], memFSArr[1], pullImages[0], pullImages[1], cmd.ignoreModTime)
 	return nil
 }
