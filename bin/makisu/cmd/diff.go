@@ -2,11 +2,16 @@ package cmd
 
 import (
 	"archive/tar"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/andres-erbsen/clock"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/spf13/cobra"
 	"github.com/uber/makisu/lib/docker/image"
 	"github.com/uber/makisu/lib/log"
@@ -69,7 +74,7 @@ func (cmd *diffCmd) Diff(imagesFullName []string) error {
 	}
 
 	var memFSArr []*snapshot.MemFS
-	var imageConfigs []os.FileInfo
+	var imageConfigs []*image.Config
 	for i, pullImage := range pullImages {
 		client := registry.New(store, pullImage.GetRegistry(), pullImage.GetRepository())
 		manifest, err := client.Pull(pullImage.GetTag())
@@ -98,19 +103,48 @@ func (cmd *diffCmd) Diff(imagesFullName []string) error {
 		memFSArr = append(memFSArr, memfs)
 
 		// Check image config.
-		imageConfig, err := client.PullImageConfig(manifest.GetConfigDigest())
+		reader, err := store.Layers.GetStoreFileReader(manifest.GetConfigDigest().Hex())
 		if err != nil {
-			panic(err)
+			panic(fmt.Errorf("get image%d config file reader %s: %s", i+1, manifest.GetConfigDigest().Hex(), err))
 		}
-		imageConfigs = append(imageConfigs, imageConfig)
+
+		configBytes, err := ioutil.ReadAll(reader)
+		if err != nil {
+			panic(fmt.Errorf("read image%d config file %s: %s", i+1, manifest.GetConfigDigest().Hex(), err))
+		}
+
+		config := new(image.Config)
+		if err := json.Unmarshal(configBytes, config); err != nil {
+			panic(fmt.Errorf("unmarshal image%d config file %s: %s", i+1, manifest.GetConfigDigest().Hex(), err))
+		}
+		// Strore as image.Config for future reference.
+		imageConfigs = append(imageConfigs, config)
 	}
 
-	log.Infof("* Diff two images config")
-	if os.SameFile(imageConfigs[0], imageConfigs[1]) {
-		log.Infof("Image config files are same")
-	} else {
-		log.Infof("Image config files are different")
+	log.Infof("* compare image %s and image %s config", pullImages[0].GetRepository()+":"+pullImages[0].GetTag(), pullImages[1].GetRepository()+":"+pullImages[1].GetTag())
+	// Basically, we don't have a standard to compare image.Config for now. So just print the content of each config.
+	if diff := cmp.Diff(imageConfigs[0], imageConfigs[1], cmpopts.IgnoreUnexported(image.Config{})); diff != "" {
+		// Format the diff string.
+		diff = strings.ReplaceAll(diff, "\n", "")
+		diff = strings.ReplaceAll(diff, "\t", "")
+		diff = strings.ReplaceAll(diff, "\"", "")
+		diff = strings.ReplaceAll(diff, "  ", "")
+		log.Infof("-image %s +image %s):\n%s", pullImages[0].GetRepository()+":"+pullImages[0].GetTag(), pullImages[1].GetRepository()+":"+pullImages[1].GetTag(), diff)
 	}
+
+	log.Infof("==== image %s config ====", pullImages[0].GetRepository()+":"+pullImages[0].GetTag())
+	content1, err := imageConfigs[0].MarshalJSON()
+	if err != nil {
+		panic(fmt.Errorf("marshal image1 config file: %s", err))
+	}
+	log.Infof(string(content1))
+
+	log.Infof("==== image %s config ====", pullImages[1].GetRepository()+":"+pullImages[1].GetTag())
+	content2, err := imageConfigs[1].MarshalJSON()
+	if err != nil {
+		panic(fmt.Errorf("marshal image2 config file: %s", err))
+	}
+	log.Infof(string(content2))
 
 	log.Infof("* Diff two images")
 	snapshot.CompareFS(memFSArr[0], memFSArr[1], pullImages[0], pullImages[1], cmd.ignoreModTime)
