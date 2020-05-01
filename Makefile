@@ -79,9 +79,8 @@ mocks: ext-tools
 	$(EXT_TOOLS_DIR)/mockgen -destination=mocks/lib/registry/mockclient.go -package=mockregistry github.com/uber/makisu/lib/registry Client
 
 env: test/python/requirements.txt
-	[ -d env ] || virtualenv --setuptools env
+	[ -d env ] || virtualenv env
 	./env/bin/pip install -q -r test/python/requirements.txt
-
 
 
 ### Target to build the makisu docker images.

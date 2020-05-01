@@ -8,11 +8,18 @@ go:
 services:
   - docker
 
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install python3-setuptools python3-pip python3
+  - pip3 install virtualenv --user
+
 before_script:
   - "curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | sudo bash"
 
 env:
-  - GOPATH="" GO111MODULE=on
+  global:
+    - PATH=/opt/python/3.7.1/bin:~/.local/bin:$PATH
+    - GOPATH="" GO111MODULE=on
 
 jobs:
   include:
@@ -24,6 +31,7 @@ jobs:
     - name: "Integration Tests"
       script:
         - "chmod -R a+rw . || true"
+        - ls /opt/python/3.7.1/bin && python --version && which virtualenv
         - "make integration"
     - stage: "Compliance"
       name: "Fossa Check"

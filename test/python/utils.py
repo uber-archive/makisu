@@ -2,7 +2,6 @@ import json
 import os.path
 import random
 import requests
-import string
 import subprocess
 
 
@@ -13,7 +12,7 @@ def new_image_name():
 def docker_image_exists(image):
     output = subprocess.check_output([
         'docker', 'images', image, '--format', '"{{.Repository}}:{{.Tag}}"'
-    ])
+    ], encoding='utf-8')
     return image in output
 
 
@@ -64,10 +63,10 @@ def docker_run_image(registry, image):
 
 
 def registry_image_exists(image, registry):
-    repotag = string.split(image, ':')
+    repotag = image.split(':')
     assert len(repotag) >= 2
     tag = repotag[-1]
-    image = string.lstrip("".join(repotag[:-1]), registry)
+    image = "".join(repotag[:-1]).lstrip(registry)
     url = os.path.join('http://' + registry, 'v2', image, 'manifests', tag)
     r = requests.get(url)
     r.close()
@@ -86,7 +85,7 @@ def makisu_run_cmd(volumes, args):
 
     # Add volumes to docker command.
     volumes['/var/run/docker.sock'] = '/docker.sock'  # Mount docker socket
-    for k, v in volumes.iteritems():
+    for k, v in volumes.items():
         cmd.extend([
             '-v',
             '{p_outside}:{p_inside}'.format(p_outside=k, p_inside=v),
@@ -100,7 +99,7 @@ def makisu_run_cmd(volumes, args):
     cmd.append(get_base_image())
     cmd.extend(args)
 
-    print 'Running docker command: ', ' '.join(cmd)
+    print('Running docker command: ', ' '.join(cmd))
 
     exit_code = subprocess.call(cmd)
     return exit_code
