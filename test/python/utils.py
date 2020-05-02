@@ -108,7 +108,7 @@ def makisu_run_cmd(volumes, args):
 def makisu_build_image(
         new_image_tag, context_dir, storage_dir, cache_dir=None, volumes=None,
         docker_args=None, load=False, registry=None, replicas=None,
-        registry_cfg=None):
+        registry_cfg=None, target=None):
 
     volumes = volumes or {}
     volumes[storage_dir] = storage_dir  # Sandbox and file store
@@ -143,6 +143,9 @@ def makisu_build_image(
 
     if not cache_dir:
         args.extend(['--local-cache-ttl', '0s'])
+
+    if target:
+        args.extend(['--target', target])
 
     args.append('/context')
 

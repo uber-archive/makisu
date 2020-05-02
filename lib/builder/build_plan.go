@@ -45,6 +45,8 @@ type BuildPlan struct {
 
 	// stages contains the build stages defined in dockerfile.
 	stages []*buildStage
+	// Which stage is the target for this plan
+	stageTarget string
 
 	// TODO: this is not used for now.
 	// Aliases of stages.
@@ -63,7 +65,7 @@ type BuildPlan struct {
 // returns a new BuildPlan.
 func NewBuildPlan(
 	ctx *context.BuildContext, target image.Name, replicas []image.Name, cacheMgr cache.Manager,
-	parsedStages []*dockerfile.Stage, allowModifyFS, forceCommit bool) (*BuildPlan, error) {
+	parsedStages []*dockerfile.Stage, allowModifyFS, forceCommit bool, stageTarget string) (*BuildPlan, error) {
 
 	plan := &BuildPlan{
 		baseCtx:           ctx,
@@ -72,6 +74,7 @@ func NewBuildPlan(
 		replicas:          replicas,
 		cacheMgr:          cacheMgr,
 		stages:            make([]*buildStage, 0),
+		stageTarget:       stageTarget,
 		stageAliases:      make(map[string]struct{}),
 		stageIndexAliases: make(map[string]*buildStage),
 		opts: &buildPlanOptions{
@@ -156,6 +159,13 @@ func (plan *BuildPlan) processStagesAndAliases(
 		// scratch before executing a stage.
 		seedCacheID = stage.nodes[len(stage.nodes)-1].CacheID()
 	}
+	plan.stageAliases = existingAliases
+
+	if plan.stageTarget != "" {
+		if _, ok := plan.stageAliases[plan.stageTarget]; !ok {
+			return fmt.Errorf("target stage not found in dockerfile")
+		}
+	}
 
 	return nil
 }
@@ -187,6 +197,11 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 		os.Clearenv()
 		for k, v := range orignalEnv {
 			os.Setenv(k, v)
+		}
+
+		if plan.stageTarget != "" && currStage.alias == plan.stageTarget {
+			log.Infof("Finished building target stage")
+			break
 		}
 	}
 
