@@ -163,7 +163,7 @@ func (plan *BuildPlan) processStagesAndAliases(
 
 	if plan.stageTarget != "" {
 		if _, ok := plan.stageAliases[plan.stageTarget]; !ok {
-			return fmt.Errorf("target stage not found in dockerfile")
+			return fmt.Errorf("target stage not found in dockerfile %s", plan.stageTarget)
 		}
 	}
 
@@ -200,7 +200,7 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 		}
 
 		if plan.stageTarget != "" && currStage.alias == plan.stageTarget {
-			log.Infof("Finished building target stage")
+			log.Info("Finished building target stage")
 			break
 		}
 	}
