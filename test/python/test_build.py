@@ -300,3 +300,13 @@ def test_build_global_arg(registry1, storage_dir):
         registry=registry1.addr, docker_args=docker_build_args)
     code, err = docker_run_image(registry1.addr, new_image)
     assert code == 0, err
+
+def test_build_target(registry1, storage_dir):
+    new_image = new_image_name()
+    context_dir = os.path.join(
+        os.getcwd(), 'testdata/build-context/target')
+    makisu_build_image(
+        new_image, context_dir, storage_dir,
+        registry=registry1.addr, target="second")
+    code, err = docker_run_image(registry1.addr, new_image)
+    assert code == 0, err
