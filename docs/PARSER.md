@@ -65,7 +65,7 @@ Syntax:
     - JSON format.
 
 Variables are substituted using values from ARGs and ENVs within the stage.
-'--archive' is a option only Makisu supports. It will make COPY preseve the original owner and permissions of `src` and its underlying files and directories. Otherwise, makisu will follow docker's behavior, where `dst` itself might be owned by root if not created beforehand.
+'--archive' is an option only Makisu supports. It will make COPY preseve the original owner and permissions of `src` and its underlying files and directories. Otherwise, makisu will follow docker's behavior, where `dst` itself might be owned by root if not created beforehand.
 
 ## ENTRYPOINT
 
