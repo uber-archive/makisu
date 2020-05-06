@@ -12,7 +12,7 @@ Some highlights of Makisu:
 * Requires no elevated privileges or containerd/Docker daemon, making the build process portable.
 * Uses a distributed layer cache to improve performance across a build cluster.
 * Provides control over generated layers with a new optional keyword [`#!COMMIT`](#explicit-commit-and-cache), reducing the number of layers in images.
-* Is Docker compatible. Note, the Dockerfile parser in Makisu is opinionated in some scenarios. More details can be found [here](lib/parser/dockerfile/README.md).
+* Is Docker compatible. Note, the Dockerfile parser in Makisu is opinionated in some scenarios. More details can be found [here](docs/PARSER.md).
 
 Makisu has been in use at Uber since early 2018, building thousands of images every day across 4
 different languages. The motivation and mechanism behind it are explained in https://eng.uber.com/makisu/.
@@ -53,7 +53,7 @@ makisu build -t ${TAG} --dest ${TAR_PATH} ${CONTEXT}
 
 # Running Makisu
 
-For a full list of flags, run `makisu build --help` or refer to the README [here](bin/makisu/README.md).
+For a full list of flags, run `makisu build --help` or refer to the README [here](docs/COMMAND.md).
 
 ## Makisu anywhere
 

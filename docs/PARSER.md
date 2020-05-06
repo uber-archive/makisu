@@ -29,7 +29,7 @@ The following directives are not supported: ONBUILD and SHELL.
 Syntax:
 - #!COMMIT
     - 'COMMIT' can be any case and there can be whitespace preceding '#', after '!', or after 'COMMIT'.
-    - It cannot be at the beginning of a line, since all lines beginning with '#' would be ignored. 
+    - It cannot be at the beginning of a line, since all lines beginning with '#' would be ignored.
 
 This is a special directive that indicates that a layer should be committed (used in the distributed cache). To enable this directive, `--commit=explicit` argument is required.
 
@@ -59,12 +59,13 @@ Variables are substituted using values from ARGs and ENVs within the stage.
 ## COPY
 
 Syntax:
-- COPY \[--chown=\<user\>:\<group\>\] \[--from=\<name|index\>\] \<src\> ... \<dest\>
+- COPY \[--chown=\<user\>:\<group\>\] \[--from=\<name|index\>\] \[--archive\] \<src\> ... \<dest\>
     - Arguments must be separated by whitespace.
-- COPY \[--chown=\<user\>:\<group\>\] \[--from=\<name|index\>\] \["\<src\>",... "\<dest\>"\] (this form is required for paths containing whitespace)
+- COPY \[--chown=\<user\>:\<group\>\] \[--from=\<name|index\>\] \[--archive\] \["\<src\>",... "\<dest\>"\] (this form is required for paths containing whitespace)
     - JSON format.
 
 Variables are substituted using values from ARGs and ENVs within the stage.
+`--archive` is a makisu-specific option. By default, makisu will follow docker's behavior, where `dst` itself might be owned by root if not created beforehand. Adding `--archive` will make COPY preserve the original owner and permissions of `src` and its underlying files and directories.
 
 ## ENTRYPOINT
 

@@ -12,15 +12,17 @@ Flags:
   -f, --file string                     The absolute path to the dockerfile (default "Dockerfile")
   -t, --tag string                      Image tag (required)
       --push stringArray                Registry to push image to
+      --replica stringArray             Push targets with alternative full image names "<registry>/<repo>:<tag>"
       --registry-config string          Set build-time variables
       --dest string                     Destination of the image tar
+      --target string                   Set the target build stage to build.
       --build-arg stringArray           Argument to the dockerfile as per the spec of ARG. Format is "--build-arg <arg>=<value>"
       --modifyfs                        Allow makisu to modify files outside of its internal storage dir
       --commit string                   Set to explicit to only commit at steps with '#!COMMIT' annotations; Set to implicit to commit at every ADD/COPY/RUN step (default "implicit")
       --blacklist stringArray           Makisu will ignore all changes to these locations in the resulting docker images
       --local-cache-ttl duration        Time-To-Live for local cache (default 168h0m0s)
       --redis-cache-addr string         The address of a redis server for cacheID to layer sha mapping
-      --redis-cache-password string           The password of the Redis server, should match 'requirepass' in redis.conf
+      --redis-cache-password string     The password of the Redis server, should match 'requirepass' in redis.conf
       --redis-cache-ttl duration        Time-To-Live for redis cache (default 168h0m0s)
       --http-cache-addr string          The address of the http server for cacheID to layer sha mapping
       --http-cache-header stringArray   Request header for http cache server. Format is "--http-cache-header <header>:<value>"
@@ -30,6 +32,7 @@ Flags:
       --load                            Load image into docker daemon after build. Requires access to docker socket at location defined by ${DOCKER_HOST}
       --storage string                  Directory that makisu uses for temp files and cached layers. Mount this path for better caching performance. If modifyfs is set, default to /makisu-storage; Otherwise default to /tmp/makisu-storage
       --compression string              Image compression level, could be 'no', 'speed', 'size', 'default' (default "default")
+      --preserve-root                   Copy / in the storage dir and copy it back after build.
   -h, --help                            help for build
 
 Global Flags:
