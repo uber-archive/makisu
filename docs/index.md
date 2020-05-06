@@ -119,7 +119,7 @@ Makisu caches docker image layers both locally and in docker registry (if --push
 For example, Redis can be setup as a distributed cache key-value store with this [Kubernetes job spec](examples/k8s/redis.yaml).
 Then connect Makisu to redis cache by passing `--redis-cache-addr=redis:6379` argument.
 If the Redis server is password-protected, use `--redis-cache-password=password` argument.
-Cache has a 7 day TTL by default, which can be configured with `--local-cache-ttl=7d` argument.
+Cache has a 14 day TTL by default, which can be configured with `--local-cache-ttl=14d` argument.
 
 For more options on cache, please see [Cache](CACHE.md).
 
@@ -182,7 +182,7 @@ It works very well with a subset of Docker build scenarios given a Bazel build f
 ### Kaniko
 
 Kaniko provides good compatibility with Docker and executes build commands in userspace without the need for Docker daemon, although it must still run inside a container. Kaniko offers smooth integration with Kubernetes, making it a competent tool for Kubernetes users.
-On the other hand, Makisu has some performance tweaks for large images (especially those with node_modules), allows cache to expire, and offers more control over cache generation through #!COMMIT, make it optimal for complex workflows.
+On the other hand, Makisu has some performance tweaks for large images with multi-phase builds by avoiding unnecessary disk scans, and offers more control over cache generation and layer size through #!COMMIT, make it optimal for complex workflows.
 
 ### BuildKit / img
 
@@ -195,4 +195,4 @@ Please check out our [guide](CONTRIBUTING.md).
 
 # Contact
 
-To contact us, please join our [Slack channel](https://join.slack.com/t/uber-container-tools/shared_invite/enQtNTIxODAwMDEzNjM1LWIyNzUyMTk3NTAzZGY0MDkzMzQ1YTlmMTUwZmIwNDk3YTA0ZjZjZGRhMTM2NzI0OGM3OGNjMDZiZTI2ZTY5NWY).
+To contact us, please join our [Slack channel](https://join.slack.com/t/uber-container-tools/shared_invite/enQtNTIxODAwMDEzNjM1LWIwYzIxNmUwOGY3MmVmM2MxYTczOTQ4ZDU0YjAxMTA0NDgyNzdlZTA4ZWVkZGNlMDUzZDA1ZTJiZTQ4ZDY0YTM).
