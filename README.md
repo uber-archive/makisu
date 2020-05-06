@@ -119,7 +119,7 @@ Makisu caches docker image layers both locally and in docker registry (if --push
 For example, Redis can be setup as a distributed cache key-value store with this [Kubernetes job spec](examples/k8s/redis.yaml).
 Then connect Makisu to redis cache by passing `--redis-cache-addr=redis:6379` argument.
 If the Redis server is password-protected, use `--redis-cache-password=password` argument.
-Cache has a 14 day TTL by default, which can be configured with `--local-cache-ttl=7d` argument.
+Cache has a 14 day TTL by default, which can be configured with `--local-cache-ttl=14d` argument.
 
 For more options on cache, please see [Cache](docs/CACHE.md).
 
