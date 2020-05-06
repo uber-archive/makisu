@@ -110,10 +110,10 @@ func getBuildCmd() *buildCmd {
 	buildCmd.PersistentFlags().StringVar(&buildCmd.commit, "commit", "implicit", "Set to explicit to only commit at steps with '#!COMMIT' annotations; Set to implicit to commit at every ADD/COPY/RUN step")
 	buildCmd.PersistentFlags().StringArrayVar(&buildCmd.blacklists, "blacklist", nil, "Makisu will ignore all changes to these locations in the resulting docker images")
 
-	buildCmd.PersistentFlags().DurationVar(&buildCmd.localCacheTTL, "local-cache-ttl", time.Hour*168, "Time-To-Live for local cache")
+	buildCmd.PersistentFlags().DurationVar(&buildCmd.localCacheTTL, "local-cache-ttl", time.Hour*336, "Time-To-Live for local cache")
 	buildCmd.PersistentFlags().StringVar(&buildCmd.redisCacheAddress, "redis-cache-addr", "", "The address of a redis server for cacheID to layer sha mapping")
 	buildCmd.PersistentFlags().StringVar(&buildCmd.redisCachePassword, "redis-cache-password", "", "The password of the Redis server, should match 'requirepass' in redis.conf")
-	buildCmd.PersistentFlags().DurationVar(&buildCmd.redisCacheTTL, "redis-cache-ttl", time.Hour*168, "Time-To-Live for redis cache")
+	buildCmd.PersistentFlags().DurationVar(&buildCmd.redisCacheTTL, "redis-cache-ttl", time.Hour*336, "Time-To-Live for redis cache")
 	buildCmd.PersistentFlags().StringVar(&buildCmd.httpCacheAddress, "http-cache-addr", "", "The address of the http server for cacheID to layer sha mapping")
 	buildCmd.PersistentFlags().StringArrayVar(&buildCmd.httpCacheHeaders, "http-cache-header", nil, "Request header for http cache server. Format is \"--http-cache-header <header>:<value>\"")
 
