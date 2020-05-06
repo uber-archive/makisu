@@ -182,7 +182,7 @@ It works very well with a subset of Docker build scenarios given a Bazel build f
 ### Kaniko
 
 Kaniko provides good compatibility with Docker and executes build commands in userspace without the need for Docker daemon, although it must still run inside a container. Kaniko offers smooth integration with Kubernetes, making it a competent tool for Kubernetes users.
-On the other hand, Makisu has some performance tweaks for large images (especially those with node_modules), allows cache to expire, and offers more control over cache generation through #!COMMIT, make it optimal for complex workflows.
+On the other hand, Makisu has some performance tweaks for large images with multi-phase builds by avoiding unnecessary disk scans, and offers more control over cache generation and layer size through #!COMMIT, make it optimal for complex workflows.
 
 ### BuildKit / img
 
@@ -195,4 +195,4 @@ Please check out our [guide](CONTRIBUTING.md).
 
 # Contact
 
-To contact us, please join our [Slack channel](https://join.slack.com/t/uber-container-tools/shared_invite/enQtNTIxODAwMDEzNjM1LWIyNzUyMTk3NTAzZGY0MDkzMzQ1YTlmMTUwZmIwNDk3YTA0ZjZjZGRhMTM2NzI0OGM3OGNjMDZiZTI2ZTY5NWY).
+To contact us, please join our [Slack channel](https://join.slack.com/t/uber-container-tools/shared_invite/enQtNTIxODAwMDEzNjM1LWIwYzIxNmUwOGY3MmVmM2MxYTczOTQ4ZDU0YjAxMTA0NDgyNzdlZTA4ZWVkZGNlMDUzZDA1ZTJiZTQ4ZDY0YTM).
