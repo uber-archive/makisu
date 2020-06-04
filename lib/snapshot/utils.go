@@ -23,6 +23,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/uber/makisu/lib/log"
 	"github.com/uber/makisu/lib/mountutils"
@@ -119,6 +120,7 @@ func removePathRecursive(p string, fi os.FileInfo, blacklist []string) bool {
 // removeAllChildren recursively removes all of the files that it can under the given root.
 // It skips paths in the given blacklist and continues when it fails to remove a file.
 func removeAllChildren(srcRoot string, blacklist []string) error {
+	start := time.Now()
 	children, err := ioutil.ReadDir(srcRoot)
 	if err != nil {
 		return fmt.Errorf("failed to get children of %s: %s", srcRoot, err)
@@ -126,6 +128,7 @@ func removeAllChildren(srcRoot string, blacklist []string) error {
 	for _, child := range children {
 		removePathRecursive(filepath.Join(srcRoot, child.Name()), child, blacklist)
 	}
+	log.Infow(fmt.Sprintf("* Removed %d directories under %s", len(children), srcRoot), "duration", time.Since(start).Round(time.Millisecond))
 	return nil
 }
 
