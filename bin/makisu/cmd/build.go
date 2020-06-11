@@ -239,12 +239,11 @@ func (cmd *buildCmd) Build(contextDir string) error {
 	// Optionally stash everything before build and restore after build.
 	defer storage.CleanupSandbox(cmd.storageDir)
 	if cmd.allowModifyFS && cmd.preserveRoot {
-			rootPreserver, err := storage.NewRootPreserver("/", cmd.storageDir, pathutils.DefaultBlacklist)
-			if err != nil {
-				return fmt.Errorf("failed to preserve root: %s", err)
-			}
-			defer rootPreserver.RestoreRoot()
+		rootPreserver, err := storage.NewRootPreserver("/", cmd.storageDir, pathutils.DefaultBlacklist)
+		if err != nil {
+			return fmt.Errorf("failed to preserve root: %s", err)
 		}
+		defer rootPreserver.RestoreRoot()
 	}
 
 	// Create and execute build plan.
