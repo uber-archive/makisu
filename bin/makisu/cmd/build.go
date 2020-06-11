@@ -236,19 +236,15 @@ func (cmd *buildCmd) Build(contextDir string) error {
 	}
 	defer buildContext.Cleanup()
 
-	// Make sure sandbox is cleaned after build.
-	// Optionally remove everything before and after build.
+	// Optionally stash everything before build and restore after build.
 	defer storage.CleanupSandbox(cmd.storageDir)
-	if cmd.allowModifyFS {
-		if cmd.preserveRoot {
+	if cmd.allowModifyFS && cmd.preserveRoot {
 			rootPreserver, err := storage.NewRootPreserver("/", cmd.storageDir, pathutils.DefaultBlacklist)
 			if err != nil {
 				return fmt.Errorf("failed to preserve root: %s", err)
 			}
 			defer rootPreserver.RestoreRoot()
 		}
-		buildContext.MemFS.Remove()
-		defer buildContext.MemFS.Remove()
 	}
 
 	// Create and execute build plan.
