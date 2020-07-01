@@ -22,6 +22,7 @@ var (
 		// Found through experiments.
 		"/.dockerinit",
 		"/dev",
+		"/tmp",
 	}, dockerBlacklist...)
 
 	dockerBlacklist = []string{
