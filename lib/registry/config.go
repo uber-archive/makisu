@@ -51,6 +51,7 @@ type Config struct {
 	Retries       int           `yaml:"retries" json:"retries"`
 	RetryInterval time.Duration `yaml:"retry_interval" json:"retry_interval"`
 	RetryBackoff  float64       `yaml:"retry_backoff" json:"retry_backoff"`
+	BackoffMax    time.Duration `yaml:"backoff_max" json:"backoff_max"`
 	PushRate      float64       `yaml:"push_rate" json:"push_rate"`
 	// If not specify, a default chunk size will be used.
 	// Set it to -1 to turn off chunk upload.
@@ -76,6 +77,9 @@ func (c Config) applyDefaults() Config {
 	if c.RetryBackoff == 0 {
 		c.RetryBackoff = 2
 	}
+	if c.BackoffMax == 0 {
+		c.BackoffMax = 30 * time.Second
+	}
 	if c.PushRate == 0 {
 		c.PushRate = 100 * 1024 * 1024 // 100 MB/s
 	}
@@ -90,7 +94,8 @@ func (c *Config) sendRetry() httputil.SendOption {
 	return httputil.SendRetry(
 		httputil.RetryMax(c.Retries),
 		httputil.RetryInterval(c.RetryInterval),
-		httputil.RetryBackoff(c.RetryBackoff))
+		httputil.RetryBackoff(c.RetryBackoff),
+		httputil.RetryBackoffMax(c.BackoffMax))
 }
 
 // UpdateGlobalConfig updates the global registry config given either:
