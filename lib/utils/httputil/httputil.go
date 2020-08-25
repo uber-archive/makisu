@@ -304,10 +304,15 @@ func Send(method, rawurl string, options ...SendOption) (resp *http.Response, er
 				opts.retry.backoffMax)
 		}
 		resp, err = client.Do(req)
+
+		httpFallbackDisabled := opts.httpFallbackDisabled
+		if !httpFallbackDisabled && is5xxResponse(resp) {
+			httpFallbackDisabled = true
+		}
 		// Retry without tls. During migration there would be a time when the
 		// component receiving the tls request does not serve https response.
 		// TODO (@evelynl): disable retry after tls migration.
-		if err != nil && req.URL.Scheme == "https" && resp.StatusCode < 500 && !opts.httpFallbackDisabled {
+		if err != nil && req.URL.Scheme == "https" && !httpFallbackDisabled {
 			log.Warnf("Failed to send https request: %s. Retrying with http...", err)
 			var httpReq *http.Request
 			httpReq, err = newRequest(method, opts)
@@ -384,4 +389,8 @@ func min(a, b time.Duration) time.Duration {
 		return a
 	}
 	return b
+}
+
+func is5xxResponse(resp *http.Response) bool {
+	return resp != nil && resp.StatusCode >= 500
 }
