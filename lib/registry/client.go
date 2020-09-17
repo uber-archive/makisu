@@ -363,7 +363,7 @@ func (c DockerRegistryClient) pullLayerHelper(
 
 // PushLayer pushes the image layer to the registry.
 func (c DockerRegistryClient) PushLayer(layerDigest image.Digest) error {
-	return c.pushLayerWithBackoff(layerDigest, true)
+	return c.pushLayerWithBackoff(layerDigest, false)
 }
 
 // PushImageConfig pushes image config blob to the registry.
