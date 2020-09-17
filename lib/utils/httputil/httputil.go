@@ -24,8 +24,16 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/cenkalti/backoff"
 	"github.com/uber/makisu/lib/log"
 )
+
+var retryableCodes = map[int]struct{}{
+	http.StatusTooManyRequests:    {},
+	http.StatusBadGateway:         {},
+	http.StatusServiceUnavailable: {},
+	http.StatusGatewayTimeout:     {},
+}
 
 // StatusError occurs if an HTTP response has an unexpected status code.
 type StatusError struct {
@@ -89,6 +97,18 @@ func IsAccepted(err error) bool {
 // IsForbidden returns true if statis code is 403 "forbidden"
 func IsForbidden(err error) bool {
 	return IsStatus(err, http.StatusForbidden)
+}
+
+func isRetryable(code int) bool {
+	_, ok := retryableCodes[code]
+	return ok
+}
+
+// IsRetryable returns true if the statis code indicates that the request is
+// retryable.
+func IsRetryable(err error) bool {
+	statusErr, ok := err.(StatusError)
+	return ok && isRetryable(statusErr.Status)
 }
 
 // NetworkError occurs on any Send error which occurred while trying to send
@@ -181,42 +201,35 @@ func SendClient(client *http.Client) SendOption {
 }
 
 type retryOptions struct {
-	max               int
-	interval          time.Duration
-	backoffMultiplier float64
-	backoffMax        time.Duration
+	backoff    backoff.BackOff
+	extraCodes map[int]bool
 }
 
 // RetryOption allows overriding defaults for the SendRetry option.
 type RetryOption func(*retryOptions)
 
-// RetryMax sets the max number of retries.
-func RetryMax(max int) RetryOption {
-	return func(o *retryOptions) { o.max = max }
-}
-
-// RetryInterval sets the interval between retries.
-func RetryInterval(interval time.Duration) RetryOption {
-	return func(o *retryOptions) { o.interval = interval }
-}
-
 // RetryBackoff adds exponential backoff between retries.
-func RetryBackoff(backoffMultiplier float64) RetryOption {
-	return func(o *retryOptions) { o.backoffMultiplier = backoffMultiplier }
+func RetryBackoff(b backoff.BackOff) RetryOption {
+	return func(o *retryOptions) { o.backoff = b }
 }
 
-// RetryBackoffMax sets the max duration backoff can reach.
-func RetryBackoffMax(backoffMax time.Duration) RetryOption {
-	return func(o *retryOptions) { o.backoffMax = backoffMax }
+// RetryCodes adds more status codes to be retried (in addition to the default
+// retryableCodes).
+func RetryCodes(codes ...int) RetryOption {
+	return func(o *retryOptions) {
+		for _, c := range codes {
+			o.extraCodes[c] = true
+		}
+	}
 }
 
 // SendRetry will we retry the request on network / 5XX errors.
 func SendRetry(options ...RetryOption) SendOption {
 	retry := retryOptions{
-		max:               3,
-		interval:          250 * time.Millisecond,
-		backoffMultiplier: 1, // Defaults with no backoff.
-		backoffMax:        30 * time.Second,
+		backoff: backoff.WithMaxRetries(
+			backoff.NewConstantBackOff(250*time.Millisecond),
+			2),
+		extraCodes: make(map[int]bool),
 	}
 	for _, o := range options {
 		o(&retry)
@@ -261,24 +274,24 @@ func SendContext(ctx context.Context) SendOption {
 }
 
 // Send sends an HTTP request. May return NetworkError or StatusError (see above).
-func Send(method, rawurl string, options ...SendOption) (resp *http.Response, err error) {
+func Send(method, rawurl string, options ...SendOption) (*http.Response, error) {
 	u, err := url.Parse(rawurl)
 	if err != nil {
 		return nil, fmt.Errorf("parse url: %s", err)
 	}
-	opts := sendOptions{
+	opts := &sendOptions{
 		body:                 nil,
 		timeout:              60 * time.Second,
 		acceptedCodes:        map[int]bool{http.StatusOK: true},
 		headers:              map[string]string{},
-		retry:                retryOptions{max: 1},
+		retry:                retryOptions{backoff: &backoff.StopBackOff{}},
 		transport:            nil, // Use HTTP default.
 		ctx:                  context.Background(),
 		url:                  u,
 		httpFallbackDisabled: false,
 	}
 	for _, o := range options {
-		o(&opts)
+		o(opts)
 	}
 
 	req, err := newRequest(method, opts)
@@ -295,16 +308,9 @@ func Send(method, rawurl string, options ...SendOption) (resp *http.Response, er
 		}
 	}
 
-	interval := opts.retry.interval
-	for i := 0; i < opts.retry.max; i++ {
-		if i > 0 {
-			time.Sleep(interval)
-			interval = min(
-				time.Duration(float64(interval)*opts.retry.backoffMultiplier),
-				opts.retry.backoffMax)
-		}
+	var resp *http.Response
+	for {
 		resp, err = client.Do(req)
-
 		httpFallbackDisabled := opts.httpFallbackDisabled
 		if !httpFallbackDisabled && is5xxResponse(resp) {
 			httpFallbackDisabled = true
@@ -314,18 +320,25 @@ func Send(method, rawurl string, options ...SendOption) (resp *http.Response, er
 		// TODO (@evelynl): disable retry after tls migration.
 		if err != nil && req.URL.Scheme == "https" && !httpFallbackDisabled {
 			log.Warnf("Failed to send https request: %s. Retrying with http...", err)
-			var httpReq *http.Request
-			httpReq, err = newRequest(method, opts)
+			originalErr := err
+			resp, err = fallbackToHTTP(client, method, opts)
 			if err != nil {
-				return nil, err
+				// Sometimes the request fails for a reason unrelated to https.
+				// To keep this reason visible, we always include the original
+				// error.
+				err = fmt.Errorf(
+					"failed to fallback https to http, original https error: %s,\n"+
+						"fallback http error: %s", originalErr, err)
 			}
-			httpReq.URL.Scheme = "http"
-			resp, err = client.Do(httpReq)
 		}
-		if err != nil {
-			continue
-		}
-		if resp.StatusCode >= 500 && !opts.acceptedCodes[resp.StatusCode] {
+		if err != nil ||
+			(isRetryable(resp.StatusCode) && !opts.acceptedCodes[resp.StatusCode]) ||
+			(opts.retry.extraCodes[resp.StatusCode]) {
+			d := opts.retry.backoff.NextBackOff()
+			if d == backoff.Stop {
+				break // Backoff timed out.
+			}
+			time.Sleep(d)
 			continue
 		}
 		break
@@ -369,7 +382,7 @@ func Delete(url string, options ...SendOption) (*http.Response, error) {
 	return Send("DELETE", url, options...)
 }
 
-func newRequest(method string, opts sendOptions) (*http.Request, error) {
+func newRequest(method string, opts *sendOptions) (*http.Request, error) {
 	req, err := http.NewRequest(method, opts.url.String(), opts.body)
 	if err != nil {
 		return nil, fmt.Errorf("new request: %s", err)
@@ -382,6 +395,18 @@ func newRequest(method string, opts sendOptions) (*http.Request, error) {
 		req.Header.Set(key, val)
 	}
 	return req, nil
+}
+
+func fallbackToHTTP(
+	client *http.Client, method string, opts *sendOptions) (*http.Response, error) {
+
+	req, err := newRequest(method, opts)
+	if err != nil {
+		return nil, err
+	}
+	req.URL.Scheme = "http"
+
+	return client.Do(req)
 }
 
 func min(a, b time.Duration) time.Duration {

@@ -26,6 +26,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/cenkalti/backoff"
 	"github.com/juju/ratelimit"
 
 	"github.com/uber/makisu/lib/concurrency"
@@ -362,13 +363,33 @@ func (c DockerRegistryClient) pullLayerHelper(
 
 // PushLayer pushes the image layer to the registry.
 func (c DockerRegistryClient) PushLayer(layerDigest image.Digest) error {
-	return c.pushLayerHelper(layerDigest, false)
+	return c.pushLayerWithBackoff(layerDigest, true)
 }
 
 // PushImageConfig pushes image config blob to the registry.
 // Same as PushLayer, with slightly different log message.
 func (c DockerRegistryClient) PushImageConfig(layerDigest image.Digest) error {
-	return c.pushLayerHelper(layerDigest, true)
+	return c.pushLayerWithBackoff(layerDigest, true)
+}
+
+func (c DockerRegistryClient) pushLayerWithBackoff(layerDigest image.Digest, isConfig bool) error {
+	multiError := utils.NewMultiErrors()
+	b := c.config.backoff()
+	for {
+		err := c.pushLayerHelper(layerDigest, isConfig)
+		// TODO: break on non-retryable errors.
+		if err != nil {
+			multiError.Add(err)
+			d := b.NextBackOff()
+			if d == backoff.Stop {
+				break
+			}
+			time.Sleep(d)
+			continue
+		}
+		break
+	}
+	return multiError.Collect()
 }
 
 func (c DockerRegistryClient) pushLayerHelper(layerDigest image.Digest, isConfig bool) error {
