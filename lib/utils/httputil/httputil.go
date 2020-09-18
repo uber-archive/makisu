@@ -225,10 +225,12 @@ func RetryCodes(codes ...int) RetryOption {
 
 // SendRetry will we retry the request on network / 5XX errors.
 func SendRetry(options ...RetryOption) SendOption {
+	b := backoff.NewExponentialBackOff()
+	b.InitialInterval = 250 * time.Millisecond
+	b.Multiplier = 1 // No backoff.
+	b.MaxInterval = 30 * time.Second
 	retry := retryOptions{
-		backoff: backoff.WithMaxRetries(
-			backoff.NewConstantBackOff(250*time.Millisecond),
-			2),
+		backoff:    backoff.WithMaxRetries(b, 3),
 		extraCodes: make(map[int]bool),
 	}
 	for _, o := range options {
@@ -311,14 +313,10 @@ func Send(method, rawurl string, options ...SendOption) (*http.Response, error) 
 	var resp *http.Response
 	for {
 		resp, err = client.Do(req)
-		httpFallbackDisabled := opts.httpFallbackDisabled
-		if !httpFallbackDisabled && is5xxResponse(resp) {
-			httpFallbackDisabled = true
-		}
 		// Retry without tls. During migration there would be a time when the
 		// component receiving the tls request does not serve https response.
 		// TODO (@evelynl): disable retry after tls migration.
-		if err != nil && req.URL.Scheme == "https" && !httpFallbackDisabled {
+		if err != nil && shouldFallbackToHTTP(req, resp, opts) && !opts.httpFallbackDisabled {
 			log.Warnf("Failed to send https request: %s. Retrying with http...", err)
 			originalErr := err
 			resp, err = fallbackToHTTP(client, method, opts)
@@ -327,13 +325,11 @@ func Send(method, rawurl string, options ...SendOption) (*http.Response, error) 
 				// To keep this reason visible, we always include the original
 				// error.
 				err = fmt.Errorf(
-					"failed to fallback https to http, original https error: %s,\n"+
+					"failed to fallback from https to http, original https error: %s,\n"+
 						"fallback http error: %s", originalErr, err)
 			}
 		}
-		if err != nil ||
-			(isRetryable(resp.StatusCode) && !opts.acceptedCodes[resp.StatusCode]) ||
-			(opts.retry.extraCodes[resp.StatusCode]) {
+		if err != nil || shouldRetry(resp, opts) {
 			d := opts.retry.backoff.NextBackOff()
 			if d == backoff.Stop {
 				break // Backoff timed out.
@@ -409,13 +405,25 @@ func fallbackToHTTP(
 	return client.Do(req)
 }
 
+func shouldFallbackToHTTP(req *http.Request, resp *http.Response, opts *sendOptions) bool {
+	if req.URL.Scheme == "http" { // Already in HTTP.
+		return false
+	}
+	// Try fallback on non-retryable errors.
+	return !shouldRetry(resp, opts)
+}
+
+func shouldRetry(resp *http.Response, opts *sendOptions) bool {
+	if resp != nil {
+		return (isRetryable(resp.StatusCode) && !opts.acceptedCodes[resp.StatusCode]) ||
+			(opts.retry.extraCodes[resp.StatusCode])
+	}
+	return false
+}
+
 func min(a, b time.Duration) time.Duration {
 	if a < b {
 		return a
 	}
 	return b
-}
-
-func is5xxResponse(resp *http.Response) bool {
-	return resp != nil && resp.StatusCode >= 500
 }

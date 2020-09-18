@@ -89,7 +89,7 @@ func TestSendRetryOnTransportErrors(t *testing.T) {
 
 	transport := mockhttp.NewMockRoundTripper(ctrl)
 
-	transport.EXPECT().RoundTrip(gomock.Any()).Return(nil, errors.New("some network error")).Times(3)
+	transport.EXPECT().RoundTrip(gomock.Any()).Return(nil, errors.New("some network error")).Times(4)
 
 	_, err := Get(
 		_testURL,
