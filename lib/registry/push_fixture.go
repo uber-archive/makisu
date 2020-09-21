@@ -92,6 +92,7 @@ func (t pushTransportFixture) RoundTrip(r *http.Request) (*http.Response, error)
 	if !found {
 		return &http.Response{
 			StatusCode: http.StatusNotFound,
+			Body:       ioutil.NopCloser(bytes.NewReader([]byte{})),
 			Header:     make(http.Header),
 		}, nil
 	}

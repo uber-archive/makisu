@@ -23,6 +23,7 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/cenkalti/backoff"
 	"github.com/uber/makisu/lib/registry/security"
 	"github.com/uber/makisu/lib/utils"
 	"github.com/uber/makisu/lib/utils/httputil"
@@ -48,7 +49,8 @@ type RepositoryMap map[string]Config
 type Config struct {
 	Concurrency     int           `yaml:"concurrency" json:"concurrency"`
 	Timeout         time.Duration `yaml:"timeout" json:"timeout"`
-	Retries         int           `yaml:"retries" json:"retries"`
+	RetryDisabled   bool          `yaml:"retry_disabled" json:"retry_disabled"`
+	Retries         uint64        `yaml:"retries" json:"retries"`
 	RetryInterval   time.Duration `yaml:"retry_interval" json:"retry_interval"`
 	RetryBackoff    float64       `yaml:"retry_backoff" json:"retry_backoff"`
 	RetryBackoffMax time.Duration `yaml:"retry_backoff_max" json:"retry_backoff_max"`
@@ -90,12 +92,19 @@ func (c Config) applyDefaults() Config {
 	return c
 }
 
+func (c *Config) backoff() backoff.BackOff {
+	if c.RetryDisabled {
+		return &backoff.StopBackOff{}
+	}
+	b := backoff.NewExponentialBackOff()
+	b.InitialInterval = c.RetryInterval
+	b.Multiplier = c.RetryBackoff
+	b.MaxInterval = c.RetryBackoffMax
+	return backoff.WithMaxRetries(b, c.Retries)
+}
+
 func (c *Config) sendRetry() httputil.SendOption {
-	return httputil.SendRetry(
-		httputil.RetryMax(c.Retries),
-		httputil.RetryInterval(c.RetryInterval),
-		httputil.RetryBackoff(c.RetryBackoff),
-		httputil.RetryBackoffMax(c.RetryBackoffMax))
+	return httputil.SendRetry(httputil.RetryBackoff(c.backoff()))
 }
 
 // UpdateGlobalConfig updates the global registry config given either:

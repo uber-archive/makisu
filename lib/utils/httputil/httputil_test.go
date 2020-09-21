@@ -23,6 +23,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cenkalti/backoff"
 	"github.com/golang/mock/gomock"
 	"github.com/pressly/chi"
 	"github.com/stretchr/testify/require"
@@ -69,17 +70,15 @@ func TestSendRetry(t *testing.T) {
 
 	transport := mockhttp.NewMockRoundTripper(ctrl)
 
-	for _, status := range []int{503, 500, 200} {
+	for _, status := range []int{503, 502, 200} {
 		transport.EXPECT().RoundTrip(gomock.Any()).Return(newResponse(status), nil)
 	}
 
-	start := time.Now()
 	_, err := Get(
 		_testURL,
-		SendRetry(RetryMax(5), RetryInterval(200*time.Millisecond)),
+		SendRetry(),
 		SendTransport(transport))
 	require.NoError(err)
-	require.InDelta(400*time.Millisecond, time.Since(start), float64(50*time.Millisecond))
 }
 
 func TestSendRetryOnTransportErrors(t *testing.T) {
@@ -90,18 +89,16 @@ func TestSendRetryOnTransportErrors(t *testing.T) {
 
 	transport := mockhttp.NewMockRoundTripper(ctrl)
 
-	transport.EXPECT().RoundTrip(gomock.Any()).Return(nil, errors.New("some network error")).Times(3)
+	transport.EXPECT().RoundTrip(gomock.Any()).Return(nil, errors.New("some network error")).Times(4)
 
-	start := time.Now()
 	_, err := Get(
 		_testURL,
-		SendRetry(RetryMax(3), RetryInterval(200*time.Millisecond)),
+		SendRetry(),
 		SendTransport(transport))
 	require.Error(err)
-	require.InDelta(400*time.Millisecond, time.Since(start), float64(50*time.Millisecond))
 }
 
-func TestSendRetryOn5XX(t *testing.T) {
+func TestSendRetryWithCodes(t *testing.T) {
 	require := require.New(t)
 
 	ctrl := gomock.NewController(t)
@@ -109,60 +106,23 @@ func TestSendRetryOn5XX(t *testing.T) {
 
 	transport := mockhttp.NewMockRoundTripper(ctrl)
 
-	transport.EXPECT().RoundTrip(gomock.Any()).Return(newResponse(503), nil).Times(3)
+	gomock.InOrder(
+		transport.EXPECT().RoundTrip(gomock.Any()).Return(newResponse(400), nil),
+		transport.EXPECT().RoundTrip(gomock.Any()).Return(newResponse(503), nil),
+		transport.EXPECT().RoundTrip(gomock.Any()).Return(newResponse(404), nil),
+		transport.EXPECT().RoundTrip(gomock.Any()).Return(newResponse(500), nil), // Non-retryable.
+	)
 
-	start := time.Now()
 	_, err := Get(
 		_testURL,
-		SendRetry(RetryMax(3), RetryInterval(200*time.Millisecond)),
-		SendTransport(transport))
-	require.Error(err)
-	require.Equal(503, err.(StatusError).Status)
-	require.InDelta(400*time.Millisecond, time.Since(start), float64(50*time.Millisecond))
-}
-
-func TestSendRetryBackoff(t *testing.T) {
-	require := require.New(t)
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	transport := mockhttp.NewMockRoundTripper(ctrl)
-
-	transport.EXPECT().RoundTrip(gomock.Any()).Return(nil, errors.New("some error")).Times(4)
-
-	start := time.Now()
-	_, err := Get(
-		_testURL,
-		// Intervals should be 200, 300, 450.
-		SendRetry(RetryMax(4), RetryInterval(200*time.Millisecond), RetryBackoff(1.5)),
-		SendTransport(transport))
-	require.Error(err)
-	require.InDelta(950*time.Millisecond, time.Since(start), float64(50*time.Millisecond))
-}
-
-func TestSendRetryBackoffMax(t *testing.T) {
-	require := require.New(t)
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	transport := mockhttp.NewMockRoundTripper(ctrl)
-
-	transport.EXPECT().RoundTrip(gomock.Any()).Return(nil, errors.New("some error")).Times(4)
-
-	start := time.Now()
-	_, err := Get(
-		_testURL,
-		// Interval should be 200, 300, 300 (max).
 		SendRetry(
-			RetryMax(4),
-			RetryInterval(200*time.Millisecond),
-			RetryBackoff(1.5),
-			RetryBackoffMax(300*time.Millisecond)),
+			RetryBackoff(backoff.WithMaxRetries(
+				backoff.NewConstantBackOff(200*time.Millisecond),
+				10)),
+			RetryCodes(400, 404)),
 		SendTransport(transport))
 	require.Error(err)
-	require.InDelta(800*time.Millisecond, time.Since(start), float64(50*time.Millisecond))
+	require.Equal(500, err.(StatusError).Status) // Last code returned.
 }
 
 func TestStatusChecking(t *testing.T) {

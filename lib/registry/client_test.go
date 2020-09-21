@@ -152,3 +152,14 @@ func TestPushImage(t *testing.T) {
 	require.NoError(err)
 	require.NoError(p.Push(testutil.SampleImageTag))
 }
+
+func TestPushLayerRetry(t *testing.T) {
+	require := require.New(t)
+	ctx, cleanup := context.BuildContextFixtureWithSampleImage()
+	defer cleanup()
+
+	p, err := PushClientFixture(ctx)
+	require.NoError(err)
+	p.config.Retries = 1
+	require.EqualError(p.PushLayer(image.NewEmptyDigest()), "push layer content : get layer file stat: file does not exist; push layer content : get layer file stat: file does not exist")
+}

@@ -11,6 +11,7 @@ require (
 	github.com/aws/aws-sdk-go v1.30.1 // indirect
 	github.com/awslabs/amazon-ecr-credential-helper v0.4.0
 	github.com/axw/gocov v0.0.0-20170322000131-3a69a0d2a4ef
+	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/client9/misspell v0.3.4
 	github.com/docker/distribution v2.7.0+incompatible
 	github.com/docker/docker-credential-helpers v0.6.1
