@@ -12,7 +12,7 @@ def new_image_name():
 def docker_image_exists(image):
     output = subprocess.check_output([
         'docker', 'images', image, '--format', '"{{.Repository}}:{{.Tag}}"'
-    ])
+    ], encoding='utf-8')
     return image in output
 
 
