@@ -377,12 +377,21 @@ func (c DockerRegistryClient) pushLayerWithBackoff(layerDigest image.Digest, isC
 	b := c.config.backoff()
 	for {
 		err := c.pushLayerHelper(layerDigest, isConfig)
-		// TODO: break on non-retryable errors.
 		if err != nil {
 			multiError.Add(err)
 			d := b.NextBackOff()
 			if d == backoff.Stop {
 				break
+			}
+			if !httputil.IsNetworkError(err) && !httputil.IsRetryable(err) {
+				if !httputil.IsStatus(err, http.StatusInternalServerError) {
+					break
+				}
+				// Retry when registry returns unexpected code 500. Since
+				// building an image could be rather expensive, we allow the
+				// client to be more forgiving on temporarily unexpected
+				// condition on registry side.
+				log.Infof("* Unexpected registry response: %s, retrying...", err)
 			}
 			time.Sleep(d)
 			continue
@@ -394,7 +403,7 @@ func (c DockerRegistryClient) pushLayerWithBackoff(layerDigest image.Digest, isC
 
 func (c DockerRegistryClient) pushLayerHelper(layerDigest image.Digest, isConfig bool) error {
 	if found, err := c.layerExists(layerDigest); err != nil {
-		return fmt.Errorf("check layer exists: %s/%s (%s): %s", c.registry, c.repository, layerDigest, err)
+		return fmt.Errorf("check layer exists: %s/%s (%s): %w", c.registry, c.repository, layerDigest, err)
 	} else if found {
 		if isConfig {
 			log.Infof("* Skipped pushing existing image config %s:%s", c.repository, layerDigest)
@@ -419,7 +428,7 @@ func (c DockerRegistryClient) pushLayerHelper(layerDigest image.Digest, isConfig
 		httputil.SendAcceptedCodes(http.StatusAccepted),
 		httputil.SendHeaders(map[string]string{"Host": c.registry}))
 	if err != nil {
-		return fmt.Errorf("send start push layer request %s: %s", URL, err)
+		return fmt.Errorf("send start push layer request %s: %w", URL, err)
 	}
 	defer resp.Body.Close()
 	URL = resp.Header.Get("Location")
@@ -434,7 +443,7 @@ func (c DockerRegistryClient) pushLayerHelper(layerDigest image.Digest, isConfig
 	}
 	URL, err = c.pushLayerContent(layerDigest, URL)
 	if err != nil {
-		return fmt.Errorf("push layer content %s: %s", layerDigest, err)
+		return fmt.Errorf("push layer content %s: %w", layerDigest, err)
 	}
 
 	parsed, err := url.Parse(URL)
@@ -445,7 +454,7 @@ func (c DockerRegistryClient) pushLayerHelper(layerDigest image.Digest, isConfig
 	q.Add("digest", string(layerDigest))
 	parsed.RawQuery = q.Encode()
 	if err := c.commitLayer(parsed.String()); err != nil {
-		return fmt.Errorf("commit layer push %s: %s", layerDigest, err)
+		return fmt.Errorf("commit layer push %s: %w", layerDigest, err)
 	}
 	if isConfig {
 		log.Infof("* Finished pushing image config %s", layerDigest)
@@ -472,7 +481,7 @@ func (c DockerRegistryClient) manifestExists(tag string) (bool, error) {
 		c.config.sendRetry(),
 		httputil.SendAcceptedCodes(http.StatusOK, http.StatusNotFound, http.StatusBadRequest))
 	if err != nil {
-		return false, fmt.Errorf("check manifest exists: %s", err)
+		return false, fmt.Errorf("check manifest exists: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -499,7 +508,7 @@ func (c DockerRegistryClient) layerExists(digest image.Digest) (bool, error) {
 		c.config.sendRetry(),
 		httputil.SendAcceptedCodes(http.StatusOK, http.StatusNotFound))
 	if err != nil {
-		return false, fmt.Errorf("check manifest exists: %s", err)
+		return false, fmt.Errorf("check manifest exists: %w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusNotFound {
@@ -529,7 +538,7 @@ func (c DockerRegistryClient) pushLayerContent(digest image.Digest, location str
 	for start < size {
 		location, err = c.pushOneLayerChunk(location, start, endInclusive, r)
 		if err != nil {
-			return location, fmt.Errorf("push layer chunk: %s", err)
+			return location, fmt.Errorf("push layer chunk: %w", err)
 		}
 		start, endInclusive = endInclusive+1, utils.Min(start+pushChunk-1, size-1)
 	}
@@ -564,7 +573,7 @@ func (c DockerRegistryClient) pushOneLayerChunk(location string, start, endInclu
 		httputil.SendHeaders(headers),
 		httputil.SendBody(ratelimit.Reader(r, readerOptions)))
 	if err != nil {
-		return "", fmt.Errorf("send push chunk request: %s", err)
+		return "", fmt.Errorf("send push chunk request: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -597,7 +606,7 @@ func (c DockerRegistryClient) commitLayer(location string) error {
 		httputil.SendAcceptedCodes(http.StatusCreated, http.StatusNoContent),
 		httputil.SendHeaders(headers))
 	if err != nil {
-		return fmt.Errorf("commit: %s", err)
+		return fmt.Errorf("commit: %w", err)
 	}
 	defer resp.Body.Close()
 	return nil
