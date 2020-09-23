@@ -1,4 +1,6 @@
-FROM golang:1.12.6 AS builder
+ARG GO_VERSION
+
+FROM golang:${GO_VERSION} AS builder
 
 RUN mkdir -p /workspace/github.com/uber/makisu
 WORKDIR /workspace/github.com/uber/makisu
@@ -10,6 +12,7 @@ RUN make vendor
 ADD .git ./.git
 ADD bin ./bin
 ADD lib ./lib
+ADD mocks ./mocks
 RUN make bins
 
 FROM alpine:3.6
