@@ -21,7 +21,7 @@ require (
 	github.com/docker/go-units v0.3.3 // indirect
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
 	github.com/go-redis/redis v6.14.2+incompatible
-	github.com/golang/mock v1.2.0
+	github.com/golang/mock v1.4.4
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
 	github.com/google/go-cmp v0.4.0
 	github.com/gorilla/context v1.1.1 // indirect
@@ -52,6 +52,6 @@ require (
 	golang.org/x/lint v0.0.0-20190301231843-5614ed5bae6f
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45 // indirect
-	golang.org/x/tools v0.0.0-20190311215038-5c2858a9cfe5
+	golang.org/x/tools v0.0.0-20190425150028-36563e24a262
 	gopkg.in/yaml.v2 v2.2.2
 )

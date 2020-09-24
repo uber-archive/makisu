@@ -31,7 +31,7 @@ EXT_TOOLS_DIR = ext-tools/$(OS)
 
 BUILD_LDFLAGS = -X $(PACKAGE_NAME)/lib/utils.BuildHash=$(PACKAGE_VERSION)
 GO_FLAGS = -gcflags '-N -l' -ldflags "$(BUILD_LDFLAGS)"
-GO_VERSION = 1.12
+GO_VERSION = 1.14
 
 REGISTRY ?= gcr.io/uber-container-tools
 
@@ -86,10 +86,10 @@ env: test/python/requirements.txt
 ### Target to build the makisu docker images.
 .PHONY: images publish
 images:
-	docker build -t $(REGISTRY)/makisu:$(PACKAGE_VERSION) -f Dockerfile .
+	docker build --build-arg GO_VERSION="$(GO_VERSION)" -t $(REGISTRY)/makisu:$(PACKAGE_VERSION) -f Dockerfile .
 	docker tag $(REGISTRY)/makisu:$(PACKAGE_VERSION) makisu:$(PACKAGE_VERSION)
 	docker tag $(REGISTRY)/makisu:$(PACKAGE_VERSION) makisu:latest
-	docker build -t $(REGISTRY)/makisu-alpine:$(PACKAGE_VERSION) -f Dockerfile.alpine .
+	docker build --build-arg GO_VERSION="$(GO_VERSION)" -t $(REGISTRY)/makisu-alpine:$(PACKAGE_VERSION) -f Dockerfile.alpine .
 	docker tag $(REGISTRY)/makisu-alpine:$(PACKAGE_VERSION) makisu-alpine:$(PACKAGE_VERSION)
 	docker tag $(REGISTRY)/makisu-alpine:$(PACKAGE_VERSION) makisu-alpine:latest
 
