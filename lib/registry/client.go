@@ -377,22 +377,22 @@ func (c DockerRegistryClient) pushLayerWithBackoff(layerDigest image.Digest, isC
 	b := c.config.backoff()
 	for {
 		err := c.pushLayerHelper(layerDigest, isConfig)
-		if err != nil {
-			multiError.Add(err)
-			d := b.NextBackOff()
-			if d == backoff.Stop {
-				break
-			}
-			if !httputil.IsNetworkError(err) && !httputil.IsRetryable(err) {
-				if !httputil.IsStatus(err, http.StatusInternalServerError) {
-					break
-				}
-				// Retry when registry returns unexpected code 500. Since
-				// building an image could be rather expensive, we allow the
-				// client to be more forgiving on temporarily unexpected
-				// condition on registry side.
-				log.Infof("* Unexpected registry response: %s, retrying...", err)
-			}
+		if err == nil {
+			break
+		}
+		multiError.Add(err)
+		d := b.NextBackOff()
+		if d == backoff.Stop {
+			break
+		}
+		// Retry when registry returns network error, retryable error or
+		// unexpected code 500. Since building an image could be rather
+		// expensive, we allow the client to be more forgiving on
+		// temporarily unexpected condition on registry side.
+		if httputil.IsNetworkError(err) ||
+			httputil.IsRetryable(err) ||
+			httputil.IsStatus(err, http.StatusInternalServerError) {
+			log.Infof("* Failed to push layer: %s, retrying...", err)
 			time.Sleep(d)
 			continue
 		}
