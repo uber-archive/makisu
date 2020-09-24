@@ -31,7 +31,7 @@ EXT_TOOLS_DIR = ext-tools/$(OS)
 
 BUILD_LDFLAGS = -X $(PACKAGE_NAME)/lib/utils.BuildHash=$(PACKAGE_VERSION)
 GO_FLAGS = -gcflags '-N -l' -ldflags "$(BUILD_LDFLAGS)"
-GO_VERSION = 1.12
+GO_VERSION = 1.14
 
 REGISTRY ?= gcr.io/uber-container-tools
 
