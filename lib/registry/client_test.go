@@ -15,7 +15,10 @@
 package registry
 
 import (
+	"bytes"
+	"fmt"
 	"io/ioutil"
+	"net/http"
 	"path"
 	"testing"
 
@@ -158,8 +161,33 @@ func TestPushLayerRetry(t *testing.T) {
 	ctx, cleanup := context.BuildContextFixtureWithSampleImage()
 	defer cleanup()
 
+	digest := image.Digest("sha256:" + testutil.SampleLayerTarDigest)
+	image := image.MustParseName(fmt.Sprintf("localhost:5055/%s:%s", testutil.SampleImageRepoName, testutil.SampleImageTag))
+	url := uploadRequest{image}.getCommitURL(digest)
+	// Override the last commit response so it always fails.
+	responseOverride := responseOverride{
+		Method: "PUT",
+		Target: simpleRequest{url},
+		Response: &http.Response{
+			StatusCode: http.StatusServiceUnavailable,
+			Body:       ioutil.NopCloser(bytes.NewReader([]byte{})),
+			Header:     make(http.Header),
+		},
+	}
+	p, err := PushClientFixture(ctx, responseOverride)
+	require.NoError(err)
+	p.config.Retries = 1
+	commitError := fmt.Sprintf("commit layer push %s: commit: PUT "+url+" 503", digest)
+	require.EqualError(p.PushLayer(digest), commitError+"; "+commitError)
+}
+
+func TestPushLayerNoRetry(t *testing.T) {
+	require := require.New(t)
+	ctx, cleanup := context.BuildContextFixtureWithSampleImage()
+	defer cleanup()
+
 	p, err := PushClientFixture(ctx)
 	require.NoError(err)
 	p.config.Retries = 1
-	require.EqualError(p.PushLayer(image.NewEmptyDigest()), "push layer content : get layer file stat: file does not exist; push layer content : get layer file stat: file does not exist")
+	require.EqualError(p.PushLayer(image.NewEmptyDigest()), "push layer content : get layer file stat: file does not exist")
 }

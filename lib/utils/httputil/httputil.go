@@ -17,6 +17,7 @@ package httputil
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -70,8 +71,11 @@ func (e StatusError) Error() string {
 
 // IsStatus returns true if err is a StatusError of the given status.
 func IsStatus(err error, status int) bool {
-	statusErr, ok := err.(StatusError)
-	return ok && statusErr.Status == status
+	var e StatusError
+	if errors.As(err, &e) {
+		return e.Status == status
+	}
+	return false
 }
 
 // IsCreated returns true if err is a "created", 201
@@ -107,8 +111,11 @@ func isRetryable(code int) bool {
 // IsRetryable returns true if the statis code indicates that the request is
 // retryable.
 func IsRetryable(err error) bool {
-	statusErr, ok := err.(StatusError)
-	return ok && isRetryable(statusErr.Status)
+	var e StatusError
+	if errors.As(err, &e) {
+		return isRetryable(e.Status)
+	}
+	return false
 }
 
 // NetworkError occurs on any Send error which occurred while trying to send
@@ -123,8 +130,8 @@ func (e NetworkError) Error() string {
 
 // IsNetworkError returns true if err is a NetworkError.
 func IsNetworkError(err error) bool {
-	_, ok := err.(NetworkError)
-	return ok
+	var e NetworkError
+	return errors.As(err, &e)
 }
 
 type sendOptions struct {
