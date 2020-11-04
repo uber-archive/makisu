@@ -292,6 +292,8 @@ func (fs *MemFS) AddLayerByCopyOps(cs []*CopyOperation, w *tar.Writer) error {
 // It also waits at least one sec, in case mtime doesn't have sub-second
 // resolution.
 func (fs *MemFS) sync() {
+	start := time.Now()
+
 	// Ensure this function takes at least one sec.
 	block := make(chan interface{}, 1)
 	go func() {
@@ -303,6 +305,9 @@ func (fs *MemFS) sync() {
 	syscall.Sync()
 
 	<-block
+
+	duration := time.Since(start).Round(time.Millisecond)
+	log.Infow("* Synchronized file system", "duration", duration)
 }
 
 // createLayerByScan computes the differences between the file system and merged
