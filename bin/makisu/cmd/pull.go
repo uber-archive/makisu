@@ -22,6 +22,7 @@ type pullCmd struct {
 
 	cacerts        string
 	extract        string
+	registryConfig string
 }
 
 func getPullCmd() *pullCmd {
@@ -43,6 +44,7 @@ func getPullCmd() *pullCmd {
 	}
 
 	pullCmd.PersistentFlags().StringVar(&pullCmd.cacerts, "cacerts", "/etc/ssl/certs", "The location of the CA certs to use for TLS authentication with the registry.")
+	pullCmd.PersistentFlags().StringVar(&pullCmd.registryConfig, "registry-config", "", "Set build-time variables")
 
 	pullCmd.PersistentFlags().StringVar(&pullCmd.extract, "extract", "", "The destination of the rootfs that we will untar the image to.")
 	return pullCmd
@@ -52,6 +54,10 @@ func (cmd *pullCmd) Pull(imageName string) {
 	store, err := storage.NewImageStore("/tmp/makisu-storage")
 	if err != nil {
 		panic(err)
+	}
+
+	if err := initRegistryConfig(cmd.registryConfig); err != nil {
+		panic(fmt.Errorf("failed to initialize registry configuration: %s", err))
 	}
 
 	pullImage, err := image.ParseNameForPull(imageName)
