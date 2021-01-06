@@ -20,23 +20,21 @@ import (
 type pullCmd struct {
 	*cobra.Command
 
-	registry string
-	tag      string
-	cacerts  string
-	extract  string
+	cacerts        string
+	extract        string
 }
 
 func getPullCmd() *pullCmd {
 	pullCmd := &pullCmd{
 		Command: &cobra.Command{
-			Use: "pull --dest <destination of rootfs> <image repository>",
+			Use:                   "pull --dest <destination of rootfs> <image>",
 			DisableFlagsInUseLine: true,
-			Short: "Pull docker image from registry into the storage directory of makisu.",
+			Short:                 "Pull docker image from registry into the storage directory of makisu.",
 		},
 	}
 	pullCmd.Args = func(cmd *cobra.Command, args []string) error {
 		if len(args) != 1 {
-			return errors.New("Requires an image repository as argument")
+			return errors.New("Requires an image as argument")
 		}
 		return nil
 	}
@@ -44,28 +42,26 @@ func getPullCmd() *pullCmd {
 		pullCmd.Pull(args[0])
 	}
 
-	pullCmd.PersistentFlags().StringVar(&pullCmd.registry, "registry", "index.docker.io", "The registry to pull the image from.")
-	pullCmd.PersistentFlags().StringVar(&pullCmd.tag, "tag", "latest", "The tag of the image to pull.")
 	pullCmd.PersistentFlags().StringVar(&pullCmd.cacerts, "cacerts", "/etc/ssl/certs", "The location of the CA certs to use for TLS authentication with the registry.")
 
 	pullCmd.PersistentFlags().StringVar(&pullCmd.extract, "extract", "", "The destination of the rootfs that we will untar the image to.")
 	return pullCmd
 }
 
-func (cmd *pullCmd) Pull(repository string) {
+func (cmd *pullCmd) Pull(imageName string) {
 	store, err := storage.NewImageStore("/tmp/makisu-storage")
 	if err != nil {
 		panic(err)
 	}
 
-	registry.DefaultDockerHubConfiguration.Security.TLS.CA.Cert.Path = cmd.cacerts
-	registry.ConfigurationMap[image.DockerHubRegistry] = make(registry.RepositoryMap)
-	registry.ConfigurationMap[image.DockerHubRegistry]["library/*"] = registry.DefaultDockerHubConfiguration
-
-	client := registry.New(store, cmd.registry, repository)
-	manifest, err := client.Pull(cmd.tag)
+	pullImage, err := image.ParseNameForPull(imageName)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("parse pull image %s: %s", pullImage, err))
+	}
+	client := registry.New(store, pullImage.GetRegistry(), pullImage.GetRepository())
+	manifest, err := client.Pull(pullImage.GetTag())
+	if err != nil {
+		panic(fmt.Errorf("pull image %s: %s", imageName, err))
 	}
 
 	// If extract is not specified, exit here.
