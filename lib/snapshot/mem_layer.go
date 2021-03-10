@@ -23,6 +23,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/uber/makisu/lib/log"
 	"github.com/uber/makisu/lib/pathutils"
 	"github.com/uber/makisu/lib/tario"
 )
@@ -114,7 +115,9 @@ func (f *whiteoutMemFile) updateMemFS(node *memFSNode) error {
 			if i != len(parts)-1 {
 				return fmt.Errorf("missing intermediate dir %s in %s", part, f.del)
 			}
-			return fmt.Errorf("whiteout nonexistent path %s", f.del)
+			// This could happen to files that's cleaned up in the background, like
+			// python package's .dist-info or .pth file.
+			log.Warnf("Trying to whiteout nonexistent path: %s", f.del)
 		}
 	}
 	return nil
