@@ -116,7 +116,7 @@ func (f *whiteoutMemFile) updateMemFS(node *memFSNode) error {
 				return fmt.Errorf("missing intermediate dir %s in %s", part, f.del)
 			}
 			// This could happen to files that's cleaned up in the background, like
-			// python package's dist-info file.
+			// python package's .dist-info or .pth file.
 			log.Warnf("Trying to whiteout nonexistent path: %s", f.del)
 		}
 	}
