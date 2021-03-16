@@ -303,7 +303,7 @@ func TestUpdateMemFS(t *testing.T) {
 		require.Equal(os.ErrNotExist, err)
 	})
 
-	t.Run("WhiteoutNonexistentCausesError", func(t *testing.T) {
+	t.Run("WhiteoutNonexistentNotCausingError", func(t *testing.T) {
 		require := require.New(t)
 
 		tmpRoot, err := ioutil.TempDir("/tmp", "makisu-test")
@@ -333,7 +333,7 @@ func TestUpdateMemFS(t *testing.T) {
 		require.NoError(addDirectoryToLayer(l2, tmpRoot, dst21, 0755))
 		dst22 := "/test11/.wh.test13"
 		require.NoError(addDirectoryToLayer(l2, tmpRoot, dst22, 0755))
-		require.Error(fs.merge(l2))
+		require.NoError(fs.merge(l2))
 	})
 }
 
