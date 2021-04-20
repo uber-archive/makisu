@@ -5,6 +5,10 @@
 [![GoReportCard](https://goreportcard.com/badge/github.com/uber/makisu)](https://goreportcard.com/report/github.com/uber/makisu)
 [![Github Release](https://img.shields.io/github/release/uber/makisu.svg)](https://github.com/uber/makisu/releases)
 
+**This project will be deprecated and be archived by 4th of May 2021**
+
+The makisu project is no longer actively maintained and will soon be archived. Please read the details [in this issue](https://github.com/uber/makisu/issues/365).
+
 Makisu is a fast and flexible Docker image build tool designed for unprivileged containerized environments such as Mesos or Kubernetes.
 
 Some highlights of Makisu:
