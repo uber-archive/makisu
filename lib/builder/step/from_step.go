@@ -74,10 +74,20 @@ func (s *FromStep) GetAlias() string {
 	return s.alias
 }
 
-// SetCacheID sets the cacheID of the step using the name of the base image.
-// TODO: Use the sha of that image instead of the image name itself.
+// SetCacheID sets the cacheID of the step using the sha of that image.
 func (s *FromStep) SetCacheID(ctx *context.BuildContext, seed string) error {
-	checksum := crc32.ChecksumIEEE([]byte(seed + string(s.directive) + s.image))
+	manifest, err := s.getManifest(ctx.ImageStore)
+	if err != nil {
+		log.Infof("Could not get manifest: %s. Using hash of from %s as cacheID.", err, string(s.directive)+s.image)
+		checksum := crc32.ChecksumIEEE([]byte(seed + string(s.directive) + s.image))
+		s.cacheID = fmt.Sprintf("%x", checksum)
+		return nil
+	}
+	layerDigest := ""
+	for _, layer := range manifest.Layers {
+		layerDigest += string(layer.Digest)
+	}
+	checksum := crc32.ChecksumIEEE([]byte(seed + layerDigest))
 	s.cacheID = fmt.Sprintf("%x", checksum)
 	return nil
 }
