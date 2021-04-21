@@ -11,6 +11,7 @@ import (
 	"github.com/andres-erbsen/clock"
 	"github.com/spf13/cobra"
 	"github.com/uber/makisu/lib/docker/image"
+	"github.com/uber/makisu/lib/log"
 	"github.com/uber/makisu/lib/registry"
 	"github.com/uber/makisu/lib/snapshot"
 	"github.com/uber/makisu/lib/storage"
@@ -20,18 +21,19 @@ import (
 type pullCmd struct {
 	*cobra.Command
 
-	registry string
-	tag      string
-	cacerts  string
-	extract  string
+	registryConfig string
+	registry       string
+	tag            string
+	cacerts        string
+	extract        string
 }
 
 func getPullCmd() *pullCmd {
 	pullCmd := &pullCmd{
 		Command: &cobra.Command{
-			Use: "pull --dest <destination of rootfs> <image repository>",
+			Use:                   "pull --dest <destination of rootfs> <image repository>",
 			DisableFlagsInUseLine: true,
-			Short: "Pull docker image from registry into the storage directory of makisu.",
+			Short:                 "Pull docker image from registry into the storage directory of makisu.",
 		},
 	}
 	pullCmd.Args = func(cmd *cobra.Command, args []string) error {
@@ -41,15 +43,29 @@ func getPullCmd() *pullCmd {
 		return nil
 	}
 	pullCmd.Run = func(cmd *cobra.Command, args []string) {
+		if err := pullCmd.processFlags(); err != nil {
+			log.Errorf("failed to process flags: %s", err)
+			os.Exit(1)
+		}
+
 		pullCmd.Pull(args[0])
 	}
 
+	pullCmd.PersistentFlags().StringVar(&pullCmd.registryConfig, "registry-config", "", "Supply path to registry configuration file")
 	pullCmd.PersistentFlags().StringVar(&pullCmd.registry, "registry", "index.docker.io", "The registry to pull the image from.")
 	pullCmd.PersistentFlags().StringVar(&pullCmd.tag, "tag", "latest", "The tag of the image to pull.")
 	pullCmd.PersistentFlags().StringVar(&pullCmd.cacerts, "cacerts", "/etc/ssl/certs", "The location of the CA certs to use for TLS authentication with the registry.")
 
 	pullCmd.PersistentFlags().StringVar(&pullCmd.extract, "extract", "", "The destination of the rootfs that we will untar the image to.")
 	return pullCmd
+}
+
+func (cmd *pullCmd) processFlags() error {
+	if err := initRegistryConfig(cmd.registryConfig); err != nil {
+		return fmt.Errorf("failed to initialize registry configuration: %s", err)
+	}
+
+	return nil
 }
 
 func (cmd *pullCmd) Pull(repository string) {

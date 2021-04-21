@@ -101,7 +101,7 @@ func getBuildCmd() *buildCmd {
 
 	buildCmd.PersistentFlags().StringArrayVar(&buildCmd.pushRegistries, "push", nil, "Registry to push image to")
 	buildCmd.PersistentFlags().StringArrayVar(&buildCmd.replicas, "replica", nil, "Push targets with alternative full image names \"<registry>/<repo>:<tag>\"")
-	buildCmd.PersistentFlags().StringVar(&buildCmd.registryConfig, "registry-config", "", "Set build-time variables")
+	buildCmd.PersistentFlags().StringVar(&buildCmd.registryConfig, "registry-config", "", "Supply path to registry configuration file")
 	buildCmd.PersistentFlags().StringVar(&buildCmd.destination, "dest", "", "Destination of the image tar")
 
 	buildCmd.PersistentFlags().StringVar(&buildCmd.target, "target", "", "Set the target build stage to build.")

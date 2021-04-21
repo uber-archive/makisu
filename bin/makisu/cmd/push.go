@@ -73,7 +73,7 @@ func getPushCmd() *pushCmd {
 
 	pushCmd.PersistentFlags().StringArrayVar(&pushCmd.pushRegistries, "push", nil, "Registry to push image to")
 	pushCmd.PersistentFlags().StringArrayVar(&pushCmd.replicas, "replica", nil, "Push targets with alternative full image names \"<registry>/<repo>:<tag>\"")
-	pushCmd.PersistentFlags().StringVar(&pushCmd.registryConfig, "registry-config", "", "Set build-time variables")
+	pushCmd.PersistentFlags().StringVar(&pushCmd.registryConfig, "registry-config", "", "Supply path to registry configuration file")
 
 	pushCmd.MarkFlagRequired("tag")
 	pushCmd.Flags().SortFlags = false
