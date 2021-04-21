@@ -234,6 +234,17 @@ func (plan *BuildPlan) Execute() (*image.DistributionManifest, error) {
 }
 
 func (plan *BuildPlan) executeStage(stage *buildStage, lastStage, copiedFrom bool) error {
+	if stage.opts.requireOnDisk {
+		if !stage.opts.allowModifyFS {
+			return fmt.Errorf("fs not allowed to be modified")
+		}
+		// Clean up local fs before build if current stage relies on local fs
+		// (i.e. contains RUN, or is source of COPY --from).
+		if err := stage.cleanup(); err != nil {
+			return fmt.Errorf("cleanup stage %s before build: %s", stage.alias, err)
+		}
+	}
+
 	if err := stage.build(plan.cacheMgr, lastStage, copiedFrom); err != nil {
 		return fmt.Errorf("build stage %s: %s", stage.alias, err)
 	}
@@ -244,10 +255,6 @@ func (plan *BuildPlan) executeStage(stage *buildStage, lastStage, copiedFrom boo
 		// modifyfs=false. That combination was rejected in NewPlan().
 		if err := stage.checkpoint(plan.copyFromDirs[stage.alias]); err != nil {
 			return fmt.Errorf("checkpoint stage %s: %s", stage.alias, err)
-		}
-
-		if err := stage.cleanup(); err != nil {
-			return fmt.Errorf("cleanup stage %s: %s", stage.alias, err)
 		}
 	}
 

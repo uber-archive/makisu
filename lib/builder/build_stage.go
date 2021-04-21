@@ -175,9 +175,6 @@ func (stage *buildStage) build(cacheMgr cache.Manager, lastStage, copiedFrom boo
 	for i, node := range stage.nodes {
 		// Build current step from the previous image config (possibly cached).
 		modifyFS := stage.opts.requireOnDisk || copiedFrom
-		if modifyFS && !stage.opts.allowModifyFS {
-			return fmt.Errorf("fs not allowed to be modified")
-		}
 		skipBuild := i < stage.latestFetched() && i > 0
 		lastStep := i == len(stage.nodes)-1
 		forceCommit := i == 0 || (lastStage && lastStep) || stage.opts.forceCommit
